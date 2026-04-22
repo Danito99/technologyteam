@@ -1,1 +1,590 @@
-
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TechAcademia — Mis materias y grupos</title>
+  <link rel="stylesheet" href="../css/global.css">
+  <style>
+    .nivel-section { margin-bottom: 20px; }
+    .nivel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .nivel-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .grupo-row {
+      display: grid;
+      grid-template-columns: 100px 1fr 100px 120px 90px 80px;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+    }
+    .grupo-row:last-child { border-bottom: none; }
+    .grupo-row.header {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-3);
+      padding-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+    .grupo-nombre {
+      font-weight: 600;
+      color: var(--text);
+    }
+    .alumnos-count {
+      font-size: 11px;
+      color: var(--text-3);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.4);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      width: 100%;
+      max-width: 480px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    .modal-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: var(--text);
+    }
+    .modal-footer {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+    .alumno-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+    }
+    .alumno-item:last-child { border-bottom: none; }
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--text);
+      color: white;
+      padding: 10px 16px;
+      border-radius: var(--radius-s);
+      font-size: 12px;
+      z-index: 200;
+      display: none;
+      animation: slideIn .2s ease;
+    }
+    @keyframes slideIn { from { transform: translateY(10px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+    .empty-row { 
+      text-align: center; 
+      padding: 20px; 
+      color: var(--text-3); 
+      font-size: 12px;
+      font-style: italic;
+    }
+    .periodos-tag {
+      font-size: 10px;
+      color: var(--text-3);
+      background: var(--bg);
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <div id="sidebar-container"></div>
+ 
+  <div class="main-area">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title">Mis materias y grupos</div>
+        <div class="topbar-sub" id="ciclo-label">Ciclo 2025–2026</div>
+      </div>
+      <button class="btn btn-primary" id="btn-nuevo-grupo">+ Agregar grupo</button>
+    </div>
+ 
+    <div class="page-content">
+      <div id="loading" class="loading">Cargando tus grupos...</div>
+      <div id="content" style="display:none;">
+ 
+        <div class="alert alert-info mb-12" id="alert-inicio" style="display:none;">
+          <strong>Paso 1 del ciclo:</strong> Registra tus materias y grupos. Esto alimentará tu plan analítico y planes de clase.
+        </div>
+ 
+        <!-- Primaria -->
+        <div class="nivel-section" id="sec-primaria" style="display:none;">
+          <div class="nivel-header">
+            <div class="nivel-title">
+              <span class="badge-nivel badge-pri">Primaria</span>
+              <span id="count-primaria" class="text-muted text-small"></span>
+            </div>
+          </div>
+          <div class="card mb-0">
+            <div class="grupo-row header">
+              <span>Grupo</span><span>Materia</span><span>Alumnos</span><span>Periodos</span><span>Sistema</span><span></span>
+            </div>
+            <div id="rows-primaria"></div>
+          </div>
+        </div>
+ 
+        <!-- Secundaria -->
+        <div class="nivel-section" id="sec-secundaria" style="display:none;">
+          <div class="nivel-header">
+            <div class="nivel-title">
+              <span class="badge-nivel badge-sec">Secundaria</span>
+              <span id="count-secundaria" class="text-muted text-small"></span>
+            </div>
+          </div>
+          <div class="card mb-0">
+            <div class="grupo-row header">
+              <span>Grupo</span><span>Materia</span><span>Alumnos</span><span>Periodos</span><span>Sistema</span><span></span>
+            </div>
+            <div id="rows-secundaria"></div>
+          </div>
+        </div>
+ 
+        <!-- Preparatoria -->
+        <div class="nivel-section" id="sec-preparatoria" style="display:none;">
+          <div class="nivel-header">
+            <div class="nivel-title">
+              <span class="badge-nivel badge-prep">Preparatoria</span>
+              <span id="count-preparatoria" class="text-muted text-small"></span>
+            </div>
+          </div>
+          <div class="card mb-0">
+            <div class="grupo-row header">
+              <span>Grupo</span><span>Materia</span><span>Alumnos</span><span>Periodos</span><span>Sistema</span><span></span>
+            </div>
+            <div id="rows-preparatoria"></div>
+          </div>
+        </div>
+ 
+        <!-- Sin grupos -->
+        <div id="sin-grupos" style="display:none;">
+          <div class="card" style="text-align:center;padding:40px;">
+            <div style="font-size:32px;margin-bottom:12px;">📚</div>
+            <div style="font-weight:600;margin-bottom:6px;">Aún no tienes grupos registrados</div>
+            <div class="text-muted text-small mb-12">Comienza agregando tu primer grupo para este ciclo.</div>
+            <button class="btn btn-primary" onclick="document.getElementById('btn-nuevo-grupo').click()">+ Agregar primer grupo</button>
+          </div>
+        </div>
+ 
+      </div>
+    </div>
+  </div>
+</div>
+ 
+<!-- MODAL: Agregar / editar grupo -->
+<div class="modal-overlay" id="modal-grupo">
+  <div class="modal">
+    <div class="modal-title" id="modal-titulo">Agregar grupo</div>
+ 
+    <input type="hidden" id="edit-grupo-id">
+ 
+    <div class="form-group">
+      <label class="form-label">Nombre del grupo</label>
+      <input type="text" id="input-nombre" placeholder="ej. 9°A, 5°B, 11°A">
+    </div>
+ 
+    <div class="form-group">
+      <label class="form-label">Nivel</label>
+      <select id="input-nivel" onchange="actualizarGrado()">
+        <option value="">Selecciona...</option>
+        <option value="primaria">Primaria</option>
+        <option value="secundaria">Secundaria</option>
+        <option value="preparatoria">Preparatoria</option>
+      </select>
+    </div>
+ 
+    <div class="form-group">
+      <label class="form-label">Grado</label>
+      <select id="input-grado">
+        <option value="">Selecciona nivel primero</option>
+      </select>
+    </div>
+ 
+    <div class="form-group">
+      <label class="form-label">Nombre de la materia</label>
+      <input type="text" id="input-materia" placeholder="ej. Tecnología, Computación, Informática">
+      <div class="text-muted text-small mt-8">Puedes usar el mismo nombre para múltiples grupos.</div>
+    </div>
+ 
+    <div class="modal-footer">
+      <button class="btn" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn btn-primary" id="btn-guardar-grupo">Guardar grupo</button>
+    </div>
+  </div>
+</div>
+ 
+<!-- MODAL: Alumnos del grupo -->
+<div class="modal-overlay" id="modal-alumnos">
+  <div class="modal">
+    <div class="modal-title" id="modal-alumnos-titulo">Alumnos</div>
+ 
+    <input type="hidden" id="alumno-grupo-id">
+ 
+    <div class="flex-between mb-12">
+      <div class="text-muted text-small" id="alumno-count"></div>
+      <button class="btn btn-primary btn-sm" id="btn-agregar-alumno">+ Agregar alumno</button>
+    </div>
+ 
+    <!-- Form agregar alumno (oculto por defecto) -->
+    <div id="form-alumno" style="display:none;background:var(--bg);border-radius:var(--radius-s);padding:12px;margin-bottom:12px;">
+      <div class="grid-2" style="gap:8px;">
+        <div>
+          <label class="form-label">Nombre(s)</label>
+          <input type="text" id="input-alumno-nombre" placeholder="Nombre(s)">
+        </div>
+        <div>
+          <label class="form-label">Apellidos</label>
+          <input type="text" id="input-alumno-apellido" placeholder="Apellidos">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;">
+        <button class="btn btn-sm" onclick="cancelarAlumno()">Cancelar</button>
+        <button class="btn btn-primary btn-sm" id="btn-guardar-alumno">Guardar</button>
+      </div>
+    </div>
+ 
+    <div id="lista-alumnos"></div>
+ 
+    <div class="modal-footer">
+      <button class="btn" onclick="cerrarModalAlumnos()">Cerrar</button>
+    </div>
+  </div>
+</div>
+ 
+<div class="toast" id="toast"></div>
+ 
+<script type="module">
+  import { requireAuth }   from '../js/auth.js'
+  import { renderSidebar } from '../js/sidebar-docente.js'
+  import { supabase }      from '../js/supabase.js'
+ 
+  // ── Auth ──────────────────────────────────────────────────
+  const profile = await requireAuth('docente')
+  if (!profile) throw new Error('No autenticado')
+  await renderSidebar('materias')
+ 
+  // ── Ciclo activo ──────────────────────────────────────────
+  const { data: ciclo } = await supabase
+    .from('ciclos_escolares')
+    .select('id, nombre')
+    .eq('activo', true)
+    .single()
+ 
+  if (ciclo) {
+    document.getElementById('ciclo-label').textContent = `Ciclo ${ciclo.nombre}`
+    window._cicloId = ciclo.id
+  }
+ 
+  // ── Cargar grupos ─────────────────────────────────────────
+  async function cargarGrupos() {
+    const { data: grupos, error } = await supabase
+      .from('grupos')
+      .select(`
+        id, nombre, nivel, grado, sistema_periodos,
+        grupo_materias (
+          id,
+          materias ( nombre )
+        ),
+        alumnos ( id )
+      `)
+      .eq('docente_id', profile.id)
+      .eq('ciclo_id', window._cicloId)
+      .order('grado')
+ 
+    document.getElementById('loading').style.display = 'none'
+    document.getElementById('content').style.display = 'block'
+ 
+    if (!grupos?.length) {
+      document.getElementById('sin-grupos').style.display = 'block'
+      document.getElementById('alert-inicio').style.display = 'block'
+      return
+    }
+ 
+    const porNivel = { primaria: [], secundaria: [], preparatoria: [] }
+    grupos.forEach(g => porNivel[g.nivel]?.push(g))
+ 
+    renderNivel('primaria', porNivel.primaria)
+    renderNivel('secundaria', porNivel.secundaria)
+    renderNivel('preparatoria', porNivel.preparatoria)
+  }
+ 
+  function renderNivel(nivel, grupos) {
+    if (!grupos.length) return
+    document.getElementById(`sec-${nivel}`).style.display = 'block'
+    document.getElementById(`count-${nivel}`).textContent = `${grupos.length} grupo${grupos.length > 1 ? 's' : ''}`
+ 
+    const container = document.getElementById(`rows-${nivel}`)
+    container.innerHTML = grupos.map(g => {
+      const materias = g.grupo_materias?.map(gm => gm.materias?.nombre).filter(Boolean).join(', ') || '—'
+      const nAlumnos = g.alumnos?.length || 0
+      const sistema = g.sistema_periodos === 'trimestral' ? 'Trimestral' : 'Semestral'
+      const periodos = g.sistema_periodos === 'trimestral' ? 'T1, T2, T3' : 'Sem A, Sem B'
+      return `
+        <div class="grupo-row">
+          <span class="grupo-nombre">${g.nombre}</span>
+          <span>${materias}</span>
+          <span class="alumnos-count">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+              <circle cx="8" cy="5" r="3" stroke="currentColor" stroke-width="1.2" fill="none"/>
+              <path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="currentColor" stroke-width="1.2" fill="none"/>
+            </svg>
+            ${nAlumnos}
+          </span>
+          <span class="periodos-tag">${periodos}</span>
+          <span class="text-muted text-small">${sistema}</span>
+          <span style="display:flex;gap:4px;">
+            <button class="btn btn-sm" onclick="abrirAlumnos('${g.id}', '${g.nombre}')">Alumnos</button>
+            <button class="btn btn-sm" onclick="editarGrupo('${g.id}', '${g.nombre}', '${g.nivel}', ${g.grado}, '${g.sistema_periodos}')">✏️</button>
+          </span>
+        </div>`
+    }).join('')
+  }
+ 
+  await cargarGrupos()
+ 
+  // ── Modal grupo ───────────────────────────────────────────
+  window.cerrarModal = () => {
+    document.getElementById('modal-grupo').classList.remove('open')
+    document.getElementById('edit-grupo-id').value = ''
+    document.getElementById('input-nombre').value = ''
+    document.getElementById('input-nivel').value = ''
+    document.getElementById('input-grado').innerHTML = '<option value="">Selecciona nivel primero</option>'
+    document.getElementById('input-materia').value = ''
+  }
+ 
+  window.actualizarGrado = () => {
+    const nivel = document.getElementById('input-nivel').value
+    const sel = document.getElementById('input-grado')
+    const rangos = { primaria: [1,2,3,4,5,6], secundaria: [7,8,9], preparatoria: [10,11,12] }
+    const grados = rangos[nivel] || []
+    sel.innerHTML = grados.map(g => `<option value="${g}">${g}°</option>`).join('')
+    // Sistema de periodos automático
+    document.getElementById('input-nivel').dataset.sistema = nivel === 'preparatoria' ? 'semestral' : 'trimestral'
+  }
+ 
+  window.editarGrupo = (id, nombre, nivel, grado, sistema) => {
+    document.getElementById('modal-titulo').textContent = 'Editar grupo'
+    document.getElementById('edit-grupo-id').value = id
+    document.getElementById('input-nombre').value = nombre
+    document.getElementById('input-nivel').value = nivel
+    actualizarGrado()
+    document.getElementById('input-grado').value = grado
+    document.getElementById('modal-grupo').classList.add('open')
+  }
+ 
+  document.getElementById('btn-nuevo-grupo').addEventListener('click', () => {
+    document.getElementById('modal-titulo').textContent = 'Agregar grupo'
+    document.getElementById('modal-grupo').classList.add('open')
+  })
+ 
+  document.getElementById('btn-guardar-grupo').addEventListener('click', async () => {
+    const editId  = document.getElementById('edit-grupo-id').value
+    const nombre  = document.getElementById('input-nombre').value.trim()
+    const nivel   = document.getElementById('input-nivel').value
+    const grado   = parseInt(document.getElementById('input-grado').value)
+    const materia = document.getElementById('input-materia').value.trim()
+    const sistema = nivel === 'preparatoria' ? 'semestral' : 'trimestral'
+ 
+    if (!nombre || !nivel || !grado) {
+      mostrarToast('Completa nombre, nivel y grado', 'error')
+      return
+    }
+ 
+    const btn = document.getElementById('btn-guardar-grupo')
+    btn.textContent = 'Guardando...'
+    btn.disabled = true
+ 
+    try {
+      let grupoId = editId
+ 
+      if (editId) {
+        // Editar
+        await supabase.from('grupos').update({ nombre, nivel, grado, sistema_periodos: sistema })
+          .eq('id', editId)
+      } else {
+        // Crear grupo
+        const { data: nuevoGrupo } = await supabase.from('grupos').insert({
+          ciclo_id: window._cicloId,
+          docente_id: profile.id,
+          nombre, nivel, grado,
+          sistema_periodos: sistema
+        }).select('id').single()
+ 
+        grupoId = nuevoGrupo.id
+ 
+        // Crear o reutilizar materia
+        if (materia) {
+          let { data: mat } = await supabase.from('materias')
+            .select('id').eq('docente_id', profile.id)
+            .eq('ciclo_id', window._cicloId).eq('nombre', materia).single()
+ 
+          if (!mat) {
+            const { data: nuevaMat } = await supabase.from('materias').insert({
+              docente_id: profile.id, ciclo_id: window._cicloId, nombre: materia
+            }).select('id').single()
+            mat = nuevaMat
+          }
+ 
+          // Vincular grupo con materia
+          await supabase.from('grupo_materias').insert({ grupo_id: grupoId, materia_id: mat.id })
+        }
+      }
+ 
+      mostrarToast('Grupo guardado ✓')
+      cerrarModal()
+ 
+      // Recargar
+      document.getElementById('rows-primaria').innerHTML = ''
+      document.getElementById('rows-secundaria').innerHTML = ''
+      document.getElementById('rows-preparatoria').innerHTML = ''
+      document.getElementById('sec-primaria').style.display = 'none'
+      document.getElementById('sec-secundaria').style.display = 'none'
+      document.getElementById('sec-preparatoria').style.display = 'none'
+      document.getElementById('sin-grupos').style.display = 'none'
+      await cargarGrupos()
+ 
+    } catch (err) {
+      mostrarToast('Error al guardar: ' + err.message, 'error')
+    } finally {
+      btn.textContent = 'Guardar grupo'
+      btn.disabled = false
+    }
+  })
+ 
+  // ── Modal alumnos ─────────────────────────────────────────
+  window.abrirAlumnos = async (grupoId, grupoNombre) => {
+    document.getElementById('alumno-grupo-id').value = grupoId
+    document.getElementById('modal-alumnos-titulo').textContent = `Alumnos — ${grupoNombre}`
+    document.getElementById('modal-alumnos').classList.add('open')
+    await cargarAlumnos(grupoId)
+  }
+ 
+  window.cerrarModalAlumnos = () => {
+    document.getElementById('modal-alumnos').classList.remove('open')
+    document.getElementById('form-alumno').style.display = 'none'
+    document.getElementById('input-alumno-nombre').value = ''
+    document.getElementById('input-alumno-apellido').value = ''
+    // Recargar para actualizar conteo
+    document.getElementById('rows-primaria').innerHTML = ''
+    document.getElementById('rows-secundaria').innerHTML = ''
+    document.getElementById('rows-preparatoria').innerHTML = ''
+    document.getElementById('sec-primaria').style.display = 'none'
+    document.getElementById('sec-secundaria').style.display = 'none'
+    document.getElementById('sec-preparatoria').style.display = 'none'
+    cargarGrupos()
+  }
+ 
+  async function cargarAlumnos(grupoId) {
+    const { data: alumnos } = await supabase
+      .from('alumnos')
+      .select('id, nombre, apellido, activo')
+      .eq('grupo_id', grupoId)
+      .eq('activo', true)
+      .order('apellido')
+ 
+    const lista = document.getElementById('lista-alumnos')
+    document.getElementById('alumno-count').textContent = `${alumnos?.length || 0} alumno${alumnos?.length !== 1 ? 's' : ''}`
+ 
+    if (!alumnos?.length) {
+      lista.innerHTML = '<div class="empty-state"><p>Sin alumnos registrados aún.</p></div>'
+      return
+    }
+ 
+    lista.innerHTML = alumnos.map((a, i) => `
+      <div class="alumno-item">
+        <span>${i + 1}. <strong style="font-weight:500;">${a.apellido}</strong>, ${a.nombre}</span>
+        <button class="btn btn-sm" style="color:var(--co);border-color:var(--co);"
+          onclick="eliminarAlumno('${a.id}', '${grupoId}')">Quitar</button>
+      </div>`).join('')
+  }
+ 
+  window.cancelarAlumno = () => {
+    document.getElementById('form-alumno').style.display = 'none'
+    document.getElementById('input-alumno-nombre').value = ''
+    document.getElementById('input-alumno-apellido').value = ''
+  }
+ 
+  document.getElementById('btn-agregar-alumno').addEventListener('click', () => {
+    document.getElementById('form-alumno').style.display = 'block'
+    document.getElementById('input-alumno-nombre').focus()
+  })
+ 
+  document.getElementById('btn-guardar-alumno').addEventListener('click', async () => {
+    const grupoId  = document.getElementById('alumno-grupo-id').value
+    const nombre   = document.getElementById('input-alumno-nombre').value.trim()
+    const apellido = document.getElementById('input-alumno-apellido').value.trim()
+ 
+    if (!nombre || !apellido) {
+      mostrarToast('Ingresa nombre y apellido', 'error')
+      return
+    }
+ 
+    await supabase.from('alumnos').insert({ grupo_id: grupoId, nombre, apellido })
+    mostrarToast('Alumno agregado ✓')
+    cancelarAlumno()
+    await cargarAlumnos(grupoId)
+  })
+ 
+  window.eliminarAlumno = async (alumnoId, grupoId) => {
+    if (!confirm('¿Quitar este alumno del grupo?')) return
+    await supabase.from('alumnos').update({ activo: false }).eq('id', alumnoId)
+    await cargarAlumnos(grupoId)
+  }
+ 
+  // ── Toast ─────────────────────────────────────────────────
+  function mostrarToast(msg, tipo = 'ok') {
+    const t = document.getElementById('toast')
+    t.textContent = msg
+    t.style.background = tipo === 'error' ? 'var(--co)' : 'var(--vd)'
+    t.style.display = 'block'
+    setTimeout(() => { t.style.display = 'none' }, 2500)
+  }
+ 
+  // Cerrar modal al hacer clic fuera
+  document.getElementById('modal-grupo').addEventListener('click', e => {
+    if (e.target === document.getElementById('modal-grupo')) cerrarModal()
+  })
+  document.getElementById('modal-alumnos').addEventListener('click', e => {
+    if (e.target === document.getElementById('modal-alumnos')) cerrarModalAlumnos()
+  })
+</script>
+</body>
+</html>
+ 
