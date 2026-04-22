@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TechAcademia — Admin</title>
+  <link rel="stylesheet" href="../css/global.css">
+  <style>
+    .doc-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:14px 16px; }
+    .doc-head { display:flex; align-items:center; gap:10px; margin-bottom:12px; padding-bottom:10px; border-bottom:1px solid var(--border); }
+    .doc-metrics { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:10px; }
+    .doc-metric { background:var(--bg); border-radius:var(--radius-s); padding:8px 10px; }
+    .doc-metric .lbl { font-size:10px; color:var(--text-3); margin-bottom:2px; }
+    .doc-metric .val { font-size:18px; font-weight:600; }
+    .riesgo-item { display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid var(--border); font-size:12px; }
+    .riesgo-item:last-child { border-bottom:none; }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <div id="sidebar-container"></div>
+  <div class="main-area">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title">Resumen general</div>
+        <div class="topbar-sub" id="ciclo-label">Ciclo 2025–2026</div>
+      </div>
+      <span class="chip chip-blue" id="total-badge"></span>
+    </div>
+    <div class="page-content">
+      <div id="loading" class="loading">Cargando...</div>
+      <div id="content" style="display:none;">
+
+        <!-- Métricas globales -->
+        <div class="metrics-grid" id="metricas-globales"></div>
+
+        <!-- Tarjetas por docente -->
+        <div class="grid-2" id="cards-docentes"></div>
+
+        <!-- Alumnos en riesgo global -->
+        <div class="card">
+          <div class="flex-between mb-8">
+            <div class="card-title mb-0">Alumnos en riesgo — todos los grupos</div>
+            <a href="analytics.html" class="btn btn-sm">Ver analytics</a>
+          </div>
+          <div id="lista-riesgo"></div>
+        </div>
+
+        <div class="ia-box mt-12">
+          <div class="ia-label">Resumen IA</div>
+          <p id="ia-texto">Calculando...</p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { requireAuth }        from '../js/auth.js'
+  import { renderSidebarAdmin } from '../js/sidebar-admin.js'
+  import { supabase }           from '../js/supabase.js'
+
+  const profile = await requireAuth('admin')
+  if (!profile) throw new Error('No autenticado')
+  await renderSidebarAdmin('inicio')
+
+  const { data: ciclo } = await supabase
+    .from('ciclos_escolares').select('id,nombre').eq('activo',true).single()
+  document.getElementById('ciclo-label').textContent = `Ciclo ${ciclo?.nombre}`
+
+  // Docentes
+  const { data: docentes } = await supabase
+    .from('profiles').select('id,nombre').eq('rol','docente')
+
+  // Grupos de todos los docentes
+  const { data: grupos } = await supabase
+    .from('grupos')
+    .select('id,nombre,nivel,docente_id,grupo_materias(id,planes_clase(estado),sesiones(completada))')
+    .eq('ciclo_id', ciclo.id)
+
+  // Alumnos en riesgo (promedio < 6)
+  const { data: enRiesgo } = await supabase
+    .from('calificaciones')
+    .select('promedio_parcial,banda,alumnos(nombre,apellido,grupo_id),grupo_materias(grupos(nombre,docente_id))')
+    .lt('promedio_parcial', 6)
+
+  const totalGrupos   = grupos?.length || 0
+  const totalDocentes = docentes?.length || 0
+
+  const todosPlanes   = grupos?.flatMap(g => g.grupo_materias?.flatMap(gm => gm.planes_clase || []) || []) || []
+  const planesEntregados = todosPlanes.filter(p => ['entregado','aprobado'].includes(p.estado)).length
+  const planesPendientes = todosPlanes.filter(p => !['entregado','aprobado'].includes(p.estado)).length
+  const nRiesgo          = enRiesgo?.length || 0
+
+  document.getElementById('total-badge').textContent = `${totalGrupos} grupos · ${totalDocentes} docentes`
+
+  document.getElementById('metricas-globales').innerHTML = `
+    <div class="metric"><div class="metric-label">Total grupos</div><div class="metric-value blue">${totalGrupos}</div></div>
+    <div class="metric"><div class="metric-label">Planes entregados</div><div class="metric-value green">${planesEntregados}</div></div>
+    <div class="metric"><div class="metric-label">Planes pendientes</div><div class="metric-value amber">${planesPendientes}</div></div>
+    <div class="metric"><div class="metric-label">Alumnos en riesgo</div><div class="metric-value red">${nRiesgo}</div></div>
+  `
+
+  // Cards por docente
+  const cardsEl = document.getElementById('cards-docentes')
+  cardsEl.innerHTML = docentes?.map(d => {
+    const gDoc    = grupos?.filter(g => g.docente_id === d.id) || []
+    const planes  = gDoc.flatMap(g => g.grupo_materias?.flatMap(gm => gm.planes_clase || []) || [])
+    const sesiones= gDoc.flatMap(g => g.grupo_materias?.flatMap(gm => gm.sesiones || []) || [])
+    const dadas   = sesiones.filter(s => s.completada).length
+    const total   = sesiones.length
+    const pct     = total ? Math.round((dadas/total)*100) : 0
+    const pOk     = planes.filter(p => ['entregado','aprobado'].includes(p.estado)).length
+    const pPend   = planes.filter(p => !['entregado','aprobado'].includes(p.estado)).length
+    const rDoc    = enRiesgo?.filter(r => r.grupo_materias?.grupos?.docente_id === d.id).length || 0
+    const iniciales = d.nombre.split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase()
+    const avCls   = d.nombre.includes('Rosalba') ? 'avatar-rosalba' : 'avatar-yerim'
+
+    return `
+      <div class="doc-card">
+        <div class="doc-head">
+          <div class="avatar ${avCls}" style="width:34px;height:34px;font-size:13px;">${iniciales}</div>
+          <div style="flex:1;">
+            <div style="font-size:14px;font-weight:600;">${d.nombre}</div>
+            <div style="font-size:11px;color:var(--text-3);">${gDoc.length} grupos</div>
+          </div>
+          <a href="docentes.html" class="btn btn-sm">Ver detalle</a>
+        </div>
+        <div class="doc-metrics">
+          <div class="doc-metric"><div class="lbl">Planes OK</div><div class="val" style="color:var(--vd);">${pOk}</div></div>
+          <div class="doc-metric"><div class="lbl">Pendientes</div><div class="val" style="color:var(--am);">${pPend}</div></div>
+          <div class="doc-metric"><div class="lbl">En riesgo</div><div class="val" style="color:var(--co);">${rDoc}</div></div>
+          <div class="doc-metric"><div class="lbl">Avance</div><div class="val">${pct}%</div></div>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;${pct<40?'background:#D85A30':pct<70?'background:#EF9F27':''}"></div></div>
+      </div>`
+  }).join('') || ''
+
+  // Lista riesgo
+  const listaEl = document.getElementById('lista-riesgo')
+  if (!enRiesgo?.length) {
+    listaEl.innerHTML = '<p class="text-muted text-small" style="padding:8px 0;">Sin alumnos en riesgo este periodo.</p>'
+  } else {
+    listaEl.innerHTML = enRiesgo.slice(0,8).map(r => {
+      const nombre   = `${r.alumnos?.apellido}, ${r.alumnos?.nombre}`
+      const grupo    = r.grupo_materias?.grupos?.nombre || '—'
+      const iniciales= nombre.split('').filter(c => c === c.toUpperCase() && c !== ' ' && c !== ',').slice(0,2).join('')
+      return `
+        <div class="riesgo-item">
+          <div class="avatar" style="width:26px;height:26px;font-size:10px;background:var(--co-l);color:var(--co);">${iniciales}</div>
+          <div style="flex:1;">
+            <div style="font-weight:500;">${nombre} <span class="text-muted text-small">· ${grupo}</span></div>
+            <div style="font-size:11px;color:var(--co);">Promedio ${Number(r.promedio_parcial).toFixed(1)}</div>
+          </div>
+          <span class="chip chip-red">Riesgo</span>
+        </div>`
+    }).join('')
+  }
+
+  // IA Resumen
+  const msgs = []
+  if (planesPendientes > 0) msgs.push(`${planesPendientes} planes pendientes de entrega entre ambos docentes.`)
+  if (nRiesgo > 0) msgs.push(`${nRiesgo} alumnos en riesgo académico (promedio menor a 6.0).`)
+  if (!msgs.length) msgs.push('Todo al día. Los docentes están al corriente con planes y calificaciones.')
+  document.getElementById('ia-texto').textContent = msgs.join(' ')
+
+  document.getElementById('loading').style.display = 'none'
+  document.getElementById('content').style.display = 'block'
+</script>
+</body>
+</html>
