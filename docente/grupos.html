@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TechAcademia — Mis grupos</title>
+  <link rel="stylesheet" href="../css/global.css">
+  <style>
+    .filter-bar { display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
+    .filter-bar select { width:auto; margin:0; }
+    .grupos-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+    @media (max-width: 900px) { .grupos-grid { grid-template-columns:repeat(2,1fr); } }
+    .grupo-card {
+      background:var(--bg-card); border:1px solid var(--border);
+      border-radius:var(--radius); padding:14px 16px;
+      cursor:pointer; transition:border-color .15s;
+    }
+    .grupo-card:hover { border-color:var(--az); }
+    .gc-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; }
+    .gc-nombre { font-size:15px; font-weight:600; color:var(--text); }
+    .gc-materia { font-size:11px; color:var(--text-3); margin-top:2px; }
+    .gc-stats { display:flex; gap:12px; font-size:11px; color:var(--text-3); margin-top:8px; }
+    .gc-stat { display:flex; align-items:center; gap:4px; }
+    .stat-dot { width:7px; height:7px; border-radius:50%; }
+    .dot-verde  { background:#639922; }
+    .dot-ambar  { background:#EF9F27; }
+    .dot-gris   { background:var(--border-m); }
+    .dot-rojo   { background:var(--co); }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <div id="sidebar-container"></div>
+  <div class="main-area">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title">Mis grupos</div>
+        <div class="topbar-sub" id="topbar-sub">Ciclo 2025–2026</div>
+      </div>
+    </div>
+    <div class="page-content">
+      <div id="loading" class="loading">Cargando grupos...</div>
+      <div id="content" style="display:none;">
+        <div class="filter-bar">
+          <select id="fil-nivel" onchange="filtrar()">
+            <option value="">Todos los niveles</option>
+            <option value="primaria">Primaria</option>
+            <option value="secundaria">Secundaria</option>
+            <option value="preparatoria">Preparatoria</option>
+          </select>
+        </div>
+        <div class="grupos-grid" id="grupos-grid"></div>
+        <div id="sin-grupos" style="display:none;" class="empty-state">
+          <p>No tienes grupos registrados. <a href="materias.html">Agrégalos aquí.</a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { requireAuth }   from '../js/auth.js'
+  import { renderSidebar } from '../js/sidebar-docente.js'
+  import { supabase }      from '../js/supabase.js'
+
+  const profile = await requireAuth('docente')
+  if (!profile) throw new Error('No autenticado')
+  await renderSidebar('grupos')
+
+  const { data: ciclo } = await supabase
+    .from('ciclos_escolares').select('id,nombre').eq('activo',true).single()
+  document.getElementById('topbar-sub').textContent = `Ciclo ${ciclo?.nombre}`
+
+  // Cargar grupos con conteos
+  const { data: grupos } = await supabase
+    .from('grupos')
+    .select(`
+      id, nombre, nivel, grado, sistema_periodos,
+      grupo_materias (
+        id,
+        materias ( nombre ),
+        sesiones ( id, completada ),
+        planes_clase ( estado )
+      ),
+      alumnos ( id )
+    `)
+    .eq('docente_id', profile.id)
+    .eq('ciclo_id', ciclo.id)
+    .order('grado')
+
+  let todosGrupos = grupos || []
+
+  document.getElementById('loading').style.display = 'none'
+  document.getElementById('content').style.display = 'block'
+
+  window.filtrar = () => {
+    const nivel = document.getElementById('fil-nivel').value
+    const filtrados = nivel ? todosGrupos.filter(g => g.nivel === nivel) : todosGrupos
+    renderGrid(filtrados)
+  }
+
+  function renderGrid(lista) {
+    const grid = document.getElementById('grupos-grid')
+    const sinG  = document.getElementById('sin-grupos')
+
+    if (!lista.length) {
+      grid.innerHTML = ''
+      sinG.style.display = 'block'
+      return
+    }
+    sinG.style.display = 'none'
+
+    grid.innerHTML = lista.map(g => {
+      const materias = g.grupo_materias?.map(gm => gm.materias?.nombre).filter(Boolean).join(', ') || '—'
+      const nAlumnos = g.alumnos?.length || 0
+      const sesiones = g.grupo_materias?.flatMap(gm => gm.sesiones || []) || []
+      const dadas    = sesiones.filter(s => s.completada).length
+      const total    = sesiones.length
+      const pct      = total ? Math.round((dadas/total)*100) : 0
+
+      // Calificaciones en riesgo (via planes)
+      const planes   = g.grupo_materias?.flatMap(gm => gm.planes_clase || []) || []
+      const planPend = planes.filter(p => !['aprobado','entregado'].includes(p.estado)).length
+
+      const badgeNivel = g.nivel === 'primaria' ? 'badge-pri' : g.nivel === 'secundaria' ? 'badge-sec' : 'badge-prep'
+      const nLabel     = g.nivel === 'primaria' ? 'Pri' : g.nivel === 'secundaria' ? 'Sec' : 'Prep'
+      const sistema    = g.sistema_periodos === 'semestral' ? 'Semestral' : 'Trimestral'
+
+      return `
+        <div class="grupo-card" onclick="verGrupo('${g.id}','${encodeURIComponent(g.nombre)}')">
+          <div class="gc-top">
+            <div>
+              <div class="gc-nombre">${g.nombre}</div>
+              <div class="gc-materia">${materias}</div>
+            </div>
+            <span class="badge-nivel ${badgeNivel}">${nLabel}</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width:${pct}%;${pct < 40 ? 'background:#D85A30' : pct < 70 ? 'background:#EF9F27' : ''}"></div>
+          </div>
+          <div style="font-size:10px;color:var(--text-3);margin-top:3px;">${pct}% avance · ${sistema}</div>
+          <div class="gc-stats">
+            <span class="gc-stat"><span class="stat-dot dot-verde"></span>${dadas} sesiones dadas</span>
+            <span class="gc-stat"><span class="stat-dot dot-gris"></span>${nAlumnos} alumnos</span>
+            ${planPend > 0 ? `<span class="gc-stat"><span class="stat-dot dot-ambar"></span>${planPend} plan${planPend>1?'es':''} pend.</span>` : ''}
+          </div>
+        </div>`
+    }).join('')
+  }
+
+  window.verGrupo = (id, nombre) => {
+    window.location.href = `grupo-detalle.html?id=${id}&nombre=${nombre}`
+  }
+
+  renderGrid(todosGrupos)
+</script>
+</body>
+</html>
