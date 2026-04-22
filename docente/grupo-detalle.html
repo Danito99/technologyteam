@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TechAcademia — Detalle de grupo</title>
+  <link rel="stylesheet" href="../css/global.css">
+  <style>
+    .tabs { display:flex; border-bottom:1px solid var(--border); margin-bottom:14px; }
+    .tab  { font-size:12px; padding:7px 16px; cursor:pointer; color:var(--text-3); border-bottom:2px solid transparent; margin-bottom:-1px; white-space:nowrap; }
+    .tab.active { color:var(--az); border-bottom-color:var(--az); font-weight:500; }
+    .tab-content { display:none; }
+    .tab-content.active { display:block; }
+
+    /* Sesiones */
+    .sesion-row { display:flex; align-items:center; gap:8px; padding:7px 0; border-bottom:1px solid var(--border); font-size:12px; }
+    .sesion-row:last-child { border-bottom:none; }
+    .s-dot  { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+    .s-num  { font-size:10px; color:var(--text-3); min-width:22px; }
+    .s-title{ flex:1; }
+    .s-title.done { color:var(--text-3); text-decoration:line-through; text-decoration-color:#97C459; }
+    .s-date { font-size:10px; color:var(--text-3); }
+
+    /* Calificaciones */
+    .cal-table { width:100%; border-collapse:collapse; font-size:11px; }
+    .cal-table th { text-align:left; font-size:10px; font-weight:600; color:var(--text-3); padding:5px 7px; border-bottom:1px solid var(--border); text-transform:uppercase; letter-spacing:.04em; }
+    .cal-table td { padding:6px 7px; border-bottom:1px solid var(--border); vertical-align:middle; }
+    .cal-table tr:last-child td { border-bottom:none; }
+    .cal-input { width:48px; font-size:11px; padding:3px 5px; border:1px solid var(--border-m); border-radius:4px; text-align:center; background:var(--bg); }
+    .cal-input:focus { outline:none; border-color:var(--az); background:white; }
+    .prom-cell { font-weight:600; }
+
+    /* Historial */
+    .hist-row { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--border); font-size:12px; }
+    .hist-row:last-child { border-bottom:none; }
+
+    .materia-sel { display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap; }
+    .msel { font-size:11px; padding:4px 12px; border-radius:99px; border:1px solid var(--border-m); cursor:pointer; color:var(--text-2); }
+    .msel.active { background:var(--az); color:white; border-color:var(--az); }
+
+    .save-bar {
+      position:sticky; bottom:0; background:var(--bg-card);
+      border-top:1px solid var(--border); padding:10px 20px;
+      display:none; align-items:center; justify-content:space-between;
+      margin:0 -20px -20px; z-index:10;
+    }
+    .toast { position:fixed; bottom:70px; right:20px; background:var(--vd); color:white; padding:10px 16px; border-radius:var(--radius-s); font-size:12px; z-index:200; display:none; }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <div id="sidebar-container"></div>
+  <div class="main-area">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title" id="topbar-title">Grupo</div>
+        <div class="topbar-sub" id="topbar-sub">Cargando...</div>
+      </div>
+      <button class="btn" onclick="window.location.href='grupos.html'">← Grupos</button>
+    </div>
+
+    <div class="page-content">
+      <div id="loading" class="loading">Cargando...</div>
+      <div id="content" style="display:none;">
+
+        <div class="metrics-grid" id="metricas" style="margin-bottom:14px;"></div>
+
+        <!-- Selector de materia (si hay más de una) -->
+        <div class="materia-sel" id="materia-sel"></div>
+
+        <!-- Selector de periodo -->
+        <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;">
+          <label style="font-size:11px;color:var(--text-3);">Periodo:</label>
+          <select id="sel-periodo" style="width:auto;margin:0;font-size:11px;" onchange="onPeriodoChange()">
+            <option value="">Selecciona...</option>
+          </select>
+        </div>
+
+        <div class="tabs">
+          <div class="tab active" onclick="setTab('sesiones',this)">Sesiones</div>
+          <div class="tab" onclick="setTab('alumnos',this)">Alumnos</div>
+          <div class="tab" onclick="setTab('calificaciones',this)">Calificaciones</div>
+          <div class="tab" onclick="setTab('historial',this)">Historial de planes</div>
+        </div>
+
+        <!-- SESIONES -->
+        <div class="tab-content active" id="tab-sesiones">
+          <div class="card">
+            <div class="flex-between mb-8">
+              <div class="card-title mb-0">Sesiones del periodo</div>
+              <button class="btn btn-sm btn-primary" id="btn-add-sesion">+ Agregar sesión</button>
+            </div>
+            <div id="lista-sesiones"></div>
+          </div>
+        </div>
+
+        <!-- ALUMNOS -->
+        <div class="tab-content" id="tab-alumnos">
+          <div class="card">
+            <div class="flex-between mb-8">
+              <div class="card-title mb-0" id="alumnos-titulo">Alumnos</div>
+              <a href="materias.html" class="btn btn-sm">Gestionar alumnos</a>
+            </div>
+            <div id="lista-alumnos-tab"></div>
+          </div>
+        </div>
+
+        <!-- CALIFICACIONES -->
+        <div class="tab-content" id="tab-calificaciones">
+          <div class="card" style="margin-bottom:10px;">
+            <div class="card-title">Ponderación</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:11px;">
+              <div style="flex:1;border:1px solid var(--border);border-radius:var(--radius-s);padding:7px 10px;display:flex;justify-content:space-between;"><span>Trabajo de clase</span><span style="font-weight:600;color:var(--az);">30%</span></div>
+              <div style="flex:1;border:1px solid var(--border);border-radius:var(--radius-s);padding:7px 10px;display:flex;justify-content:space-between;"><span>Proyecto</span><span style="font-weight:600;color:var(--az);">25%</span></div>
+              <div style="flex:1;border:1px solid var(--border);border-radius:var(--radius-s);padding:7px 10px;display:flex;justify-content:space-between;"><span>Examen</span><span style="font-weight:600;color:var(--az);">40%</span></div>
+              <div style="flex:1;border:1px solid var(--border);border-radius:var(--radius-s);padding:7px 10px;display:flex;justify-content:space-between;"><span>Autoevaluación</span><span style="font-weight:600;color:var(--az);">5%</span></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="flex-between mb-8">
+              <div class="card-title mb-0">Registro de calificaciones</div>
+              <button class="btn btn-sm btn-primary" id="btn-guardar-cals">Guardar</button>
+            </div>
+            <div style="overflow-x:auto;">
+              <table class="cal-table">
+                <thead>
+                  <tr>
+                    <th>Alumno</th>
+                    <th>T. clase (30%)</th>
+                    <th>Proyecto (25%)</th>
+                    <th>Examen (40%)</th>
+                    <th>Autoe. (5%)</th>
+                    <th>Parcial</th>
+                    <th>Estado</th>
+                  </tr>
+                </thead>
+                <tbody id="cals-tbody"></tbody>
+              </table>
+            </div>
+            <div class="ia-box mt-12" id="ia-resumen-cal" style="display:none;">
+              <div class="ia-label">Resumen IA</div>
+              <p id="ia-texto"></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- HISTORIAL PLANES -->
+        <div class="tab-content" id="tab-historial">
+          <div class="card">
+            <div class="card-title">Planes de clase entregados</div>
+            <div id="lista-historial"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="save-bar" id="save-bar">
+        <span style="font-size:11px;color:var(--text-3);" id="save-status"></span>
+        <button class="btn btn-primary" id="btn-save-sesion" style="display:none;">Guardar sesiones</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+  import { requireAuth }   from '../js/auth.js'
+  import { renderSidebar } from '../js/sidebar-docente.js'
+  import { supabase }      from '../js/supabase.js'
+
+  const profile = await requireAuth('docente')
+  if (!profile) throw new Error('No autenticado')
+  await renderSidebar('grupos')
+
+  const params   = new URLSearchParams(window.location.search)
+  const grupoId  = params.get('id')
+  const nombreGrupo = decodeURIComponent(params.get('nombre') || '')
+
+  if (!grupoId) { window.location.href = 'grupos.html'; throw new Error('Sin grupo') }
+
+  document.getElementById('topbar-title').textContent = nombreGrupo
+
+  let gmSelId    = null
+  let periodoId  = null
+  let alumnos    = []
+  let sesiones   = []
+  let calsMap    = {}
+
+  // ── Ciclo activo ──────────────────────────────────────────
+  const { data: ciclo } = await supabase
+    .from('ciclos_escolares').select('id,nombre').eq('activo',true).single()
+
+  // ── Cargar grupo ──────────────────────────────────────────
+  const { data: grupo } = await supabase
+    .from('grupos')
+    .select('id,nombre,nivel,grado,sistema_periodos, grupo_materias(id, materias(nombre)), alumnos(id,nombre,apellido,activo)')
+    .eq('id', grupoId).single()
+
+  document.getElementById('topbar-sub').textContent =
+    `${grupo?.nivel} · ${ciclo?.nombre}`
+
+  alumnos = grupo?.alumnos?.filter(a => a.activo) || []
+  document.getElementById('alumnos-titulo').textContent = `Alumnos (${alumnos.length})`
+
+  // Métricas
+  document.getElementById('metricas').innerHTML = `
+    <div class="metric"><div class="metric-label">Alumnos</div><div class="metric-value blue">${alumnos.length}</div></div>
+    <div class="metric"><div class="metric-label">Materias</div><div class="metric-value">${grupo?.grupo_materias?.length || 0}</div></div>
+  `
+
+  // ── Selector de materia ───────────────────────────────────
+  const gms = grupo?.grupo_materias || []
+  const matSel = document.getElementById('materia-sel')
+
+  if (gms.length > 1) {
+    gms.forEach((gm, i) => {
+      const btn = document.createElement('button')
+      btn.className = 'msel' + (i === 0 ? ' active' : '')
+      btn.textContent = gm.materias?.nombre || '—'
+      btn.onclick = () => {
+        document.querySelectorAll('.msel').forEach(b => b.classList.remove('active'))
+        btn.classList.add('active')
+        gmSelId = gm.id
+        cargarPeriodos()
+      }
+      matSel.appendChild(btn)
+    })
+    gmSelId = gms[0].id
+  } else if (gms.length === 1) {
+    gmSelId = gms[0].id
+    matSel.style.display = 'none'
+  }
+
+  // ── Periodos ──────────────────────────────────────────────
+  const tipo = grupo?.sistema_periodos === 'semestral' ? 'semestre' : 'trimestre'
+  const { data: periodos } = await supabase
+    .from('periodos').select('id,etiqueta').eq('ciclo_id', ciclo.id)
+    .eq('tipo', tipo).order('numero').order('parcial')
+
+  const selPeriodo = document.getElementById('sel-periodo')
+  periodos?.forEach((p, i) => {
+    const o = document.createElement('option')
+    o.value = p.id; o.textContent = p.etiqueta
+    selPeriodo.appendChild(o)
+  })
+  if (periodos?.length) {
+    periodoId = periodos[0].id
+    selPeriodo.value = periodoId
+  }
+
+  document.getElementById('loading').style.display = 'none'
+  document.getElementById('content').style.display = 'block'
+
+  window.onPeriodoChange = () => {
+    periodoId = selPeriodo.value
+    cargarContenido()
+  }
+
+  await cargarContenido()
+
+  async function cargarContenido() {
+    if (!gmSelId || !periodoId) return
+    await Promise.all([cargarSesiones(), cargarAlumnos(), cargarCalificaciones(), cargarHistorial()])
+  }
+
+  // ── SESIONES ──────────────────────────────────────────────
+  async function cargarSesiones() {
+    const { data } = await supabase
+      .from('sesiones')
+      .select('id,numero,titulo,completada,fecha_completada')
+      .eq('grupo_materia_id', gmSelId)
+      .eq('periodo_id', periodoId)
+      .order('numero')
+    sesiones = data || []
+    renderSesiones()
+  }
+
+  function renderSesiones() {
+    const lista = document.getElementById('lista-sesiones')
+    if (!sesiones.length) {
+      lista.innerHTML = '<div class="empty-state"><p>Sin sesiones registradas. Agrégalas desde el plan de clase o con el botón +.</p></div>'
+      return
+    }
+    lista.innerHTML = sesiones.map((s, i) => {
+      const dotClass = s.completada ? 'dot-verde' : 'dot-ambar'
+      const titleClass = s.completada ? 'done' : ''
+      const fecha = s.fecha_completada
+        ? new Date(s.fecha_completada).toLocaleDateString('es-MX', {day:'numeric',month:'short'})
+        : ''
+      return `
+        <div class="sesion-row">
+          <span class="s-dot ${dotClass}"></span>
+          <span class="s-num">${String(s.numero).padStart(2,'0')}</span>
+          <span class="s-title ${titleClass}">${s.titulo || 'Sin título'}</span>
+          <span class="s-date">${fecha}</span>
+          ${!s.completada
+            ? `<button class="btn btn-sm btn-primary" onclick="marcarVista('${s.id}')">Marcar vista</button>`
+            : `<span class="chip chip-green" style="font-size:10px;">Vista ✓</span>`}
+        </div>`
+    }).join('')
+  }
+
+  window.marcarVista = async (sesionId) => {
+    await supabase.from('sesiones').update({
+      completada: true, fecha_completada: new Date().toISOString()
+    }).eq('id', sesionId)
+    mostrarToast('Sesión marcada como vista ✓')
+    await cargarSesiones()
+  }
+
+  document.getElementById('btn-add-sesion').addEventListener('click', async () => {
+    const titulo = prompt('Título de la sesión:')
+    if (!titulo) return
+    await supabase.from('sesiones').insert({
+      grupo_materia_id: gmSelId, periodo_id: periodoId,
+      numero: sesiones.length + 1, titulo
+    })
+    await cargarSesiones()
+  })
+
+  // ── ALUMNOS ───────────────────────────────────────────────
+  async function cargarAlumnos() {
+    const lista = document.getElementById('lista-alumnos-tab')
+    if (!alumnos.length) {
+      lista.innerHTML = '<div class="empty-state"><p>Sin alumnos. <a href="materias.html">Agrégalos aquí.</a></p></div>'
+      return
+    }
+    lista.innerHTML = `<table class="cal-table">
+      <thead><tr><th>#</th><th>Apellidos, Nombre</th><th>Estado</th></tr></thead>
+      <tbody>${alumnos.map((a, i) => `
+        <tr>
+          <td>${i + 1}</td>
+          <td><strong style="font-weight:500;">${a.apellido}</strong>, ${a.nombre}</td>
+          <td><span class="chip chip-green">Activo</span></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`
+  }
+
+  // ── CALIFICACIONES ────────────────────────────────────────
+  async function cargarCalificaciones() {
+    if (!alumnos.length) return
+
+    const { data: cals } = await supabase
+      .from('calificaciones')
+      .select('*')
+      .eq('grupo_materia_id', gmSelId)
+      .eq('periodo_id', periodoId)
+
+    calsMap = {}
+    cals?.forEach(c => { calsMap[c.alumno_id] = c })
+    renderCalificaciones()
+  }
+
+  function renderCalificaciones() {
+    const tbody = document.getElementById('cals-tbody')
+    tbody.innerHTML = alumnos.map(a => {
+      const c = calsMap[a.id] || {}
+      const prom = c.promedio_parcial ? Number(c.promedio_parcial).toFixed(1) : '—'
+      const banda = c.banda || ''
+      const bandaClass = {
+        gold1:'chip-green', green2:'chip-green', green1:'chip-green',
+        yellow1:'chip-amber', red2:'chip-red', red1:'chip-red'
+      }[banda] || ''
+      const bandaLabel = {
+        gold1:'Gold', green2:'Green 2', green1:'Green 1',
+        yellow1:'Yellow', red2:'Red 2', red1:'Red 1'
+      }[banda] || ''
+
+      return `<tr>
+        <td>${a.apellido}, ${a.nombre}</td>
+        <td><input class="cal-input" type="number" min="0" max="10" step="0.1"
+          value="${c.trabajo_clase ?? ''}" placeholder="—"
+          onchange="editCal('${a.id}','trabajo_clase',this.value)"></td>
+        <td><input class="cal-input" type="number" min="0" max="10" step="0.1"
+          value="${c.proyecto ?? ''}" placeholder="—"
+          onchange="editCal('${a.id}','proyecto',this.value)"></td>
+        <td><input class="cal-input" type="number" min="0" max="10" step="0.1"
+          value="${c.examen ?? ''}" placeholder="—"
+          onchange="editCal('${a.id}','examen',this.value)"></td>
+        <td><input class="cal-input" type="number" min="0" max="10" step="0.1"
+          value="${c.autoevaluacion ?? ''}" placeholder="—"
+          onchange="editCal('${a.id}','autoevaluacion',this.value)"></td>
+        <td class="prom-cell">${prom}</td>
+        <td>${bandaLabel ? `<span class="chip ${bandaClass}">${bandaLabel}</span>` : '—'}</td>
+      </tr>`
+    }).join('')
+
+    generarResumenIA()
+  }
+
+  window.editCal = (alumnoId, campo, valor) => {
+    if (!calsMap[alumnoId]) calsMap[alumnoId] = { alumno_id: alumnoId }
+    calsMap[alumnoId][campo] = valor === '' ? null : parseFloat(valor)
+  }
+
+  document.getElementById('btn-guardar-cals').addEventListener('click', async () => {
+    const btn = document.getElementById('btn-guardar-cals')
+    btn.disabled = true; btn.textContent = 'Guardando...'
+
+    try {
+      for (const alumno of alumnos) {
+        const c = calsMap[alumno.id]
+        if (!c) continue
+        const data = {
+          alumno_id: alumno.id, grupo_materia_id: gmSelId, periodo_id: periodoId,
+          trabajo_clase: c.trabajo_clase ?? null, proyecto: c.proyecto ?? null,
+          examen: c.examen ?? null, autoevaluacion: c.autoevaluacion ?? null
+        }
+        await supabase.from('calificaciones').upsert(data, { onConflict: 'alumno_id,grupo_materia_id,periodo_id' })
+      }
+      mostrarToast('Calificaciones guardadas ✓')
+      await cargarCalificaciones()
+    } catch(e) { mostrarToast(e.message, 'error') }
+    finally { btn.disabled = false; btn.textContent = 'Guardar' }
+  })
+
+  function generarResumenIA() {
+    const cals = alumnos.map(a => calsMap[a.id]).filter(Boolean)
+    if (!cals.length) return
+
+    const proms = cals.filter(c => c.promedio_parcial).map(c => parseFloat(c.promedio_parcial))
+    if (!proms.length) return
+
+    const riesgo   = cals.filter(c => c.promedio_parcial < 6).length
+    const atencion = cals.filter(c => c.promedio_parcial >= 6 && c.promedio_parcial < 7).length
+    const promGrupo = (proms.reduce((a,b) => a+b, 0) / proms.length).toFixed(1)
+
+    const msgs = [`Promedio del grupo: ${promGrupo}.`]
+    if (riesgo > 0) msgs.push(`${riesgo} alumno${riesgo>1?'s':''} en riesgo (menos de 6.0).`)
+    if (atencion > 0) msgs.push(`${atencion} alumno${atencion>1?'s':''} en zona de atención (6.0–6.9).`)
+
+    // Brecha autoevaluación vs examen
+    const brecha = cals.filter(c => c.autoevaluacion && c.examen && (c.autoevaluacion - c.examen) > 2)
+    if (brecha.length > 0) msgs.push(`${brecha.length} alumno${brecha.length>1?'s':''} muestra brecha entre autoevaluación y examen — posible sobreestimación.`)
+
+    document.getElementById('ia-texto').textContent = msgs.join(' ')
+    document.getElementById('ia-resumen-cal').style.display = 'block'
+  }
+
+  // ── HISTORIAL ─────────────────────────────────────────────
+  async function cargarHistorial() {
+    const { data: planes } = await supabase
+      .from('planes_clase')
+      .select('id,estado,entregado_at,modificado_at,comentario_admin,periodo_id,periodos(etiqueta)')
+      .eq('grupo_materia_id', gmSelId)
+      .order('entregado_at', { ascending: false })
+
+    const lista = document.getElementById('lista-historial')
+    if (!planes?.length) {
+      lista.innerHTML = '<div class="empty-state"><p>Sin planes entregados aún.</p></div>'
+      return
+    }
+
+    const estadoClass = { entregado:'chip-blue', aprobado:'chip-green', rechazado:'chip-red', borrador:'chip-amber' }
+    lista.innerHTML = planes.map(p => {
+      const fecha = p.entregado_at
+        ? new Date(p.entregado_at).toLocaleDateString('es-MX', {day:'numeric',month:'short',year:'numeric'})
+        : '—'
+      const mod = p.modificado_at
+        ? ` <span style="font-size:10px;color:var(--am);">· Modificado ${new Date(p.modificado_at).toLocaleDateString('es-MX',{day:'numeric',month:'short'})}</span>`
+        : ''
+      return `<div class="hist-row">
+        <div style="flex:1;">
+          <div style="font-weight:500;">${p.periodos?.etiqueta || '—'} ${mod}</div>
+          <div class="text-muted text-small">Entregado: ${fecha}</div>
+          ${p.comentario_admin ? `<div style="font-size:11px;color:var(--co);margin-top:2px;">💬 ${p.comentario_admin}</div>` : ''}
+        </div>
+        <span class="chip ${estadoClass[p.estado] || 'chip-blue'}">${p.estado}</span>
+        <button class="btn btn-sm" onclick="window.location.href='plan-editor.html?gmId=${gmSelId}&pId=${p.periodo_id}&planId=${p.id}'">Ver</button>
+      </div>`
+    }).join('')
+  }
+
+  // ── Tabs ──────────────────────────────────────────────────
+  window.setTab = (id, el) => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'))
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'))
+    el.classList.add('active')
+    document.getElementById(`tab-${id}`).classList.add('active')
+  }
+
+  window.cargarPeriodos = async () => { await cargarContenido() }
+
+  function mostrarToast(msg, tipo = 'ok') {
+    const t = document.getElementById('toast')
+    t.textContent = msg
+    t.style.background = tipo === 'error' ? 'var(--co)' : 'var(--vd)'
+    t.style.display = 'block'
+    setTimeout(() => { t.style.display = 'none' }, 2500)
+  }
+</script>
+</body>
+</html>
