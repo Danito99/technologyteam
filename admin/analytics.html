@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TechAcademia — Analytics</title>
+  <link rel="stylesheet" href="../css/global.css">
+  <style>
+    .filter-bar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; align-items:center; }
+    .filter-bar select { width:auto; margin:0; }
+
+    .resumen-grid { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:8px; margin-bottom:12px; }
+    .banda-card { border-radius:var(--radius-s); padding:10px 12px; text-align:center; border:1px solid transparent; }
+    .banda-card .pct { font-size:20px; font-weight:700; }
+    .banda-card .lbl { font-size:9px; font-weight:600; text-transform:uppercase; letter-spacing:.06em; margin-top:2px; }
+    .banda-card .meta-info { font-size:9px; margin-top:3px; opacity:.8; }
+    .bc-gold  { background:var(--gold-bg); color:var(--gold-tx); border-color:#DAA520; }
+    .bc-g2    { background:var(--g2-bg);   color:var(--g2-tx);   border-color:#1a6b1a; }
+    .bc-g1    { background:var(--g1-bg);   color:var(--g1-tx);   border-color:#2d7a2d; }
+    .bc-yel   { background:var(--yel-bg);  color:var(--yel-tx);  border-color:#EF9F27; }
+    .bc-r2    { background:var(--r2-bg);   color:var(--r2-tx);   border-color:#D85A30; }
+    .bc-r1    { background:var(--r1-bg);   color:var(--r1-tx);   border-color:#a32d2d; }
+
+    .bar-apilada { display:flex; height:16px; border-radius:99px; overflow:hidden; gap:1px; margin-bottom:6px; }
+    .bar-seg { height:100%; transition:width .4s; }
+
+    .vs-meta-row { display:flex; align-items:center; gap:10px; margin-bottom:8px; font-size:11px; }
+    .vs-label { min-width:70px; font-weight:500; }
+    .vs-bar { flex:1; height:7px; border-radius:99px; background:var(--border); overflow:hidden; position:relative; }
+    .vs-fill { height:100%; border-radius:99px; }
+    .vs-pct  { min-width:40px; text-align:right; }
+    .vs-trend { min-width:24px; text-align:center; font-size:12px; }
+
+    .tabla-grupos { width:100%; border-collapse:collapse; font-size:11px; }
+    .tabla-grupos th { text-align:left; font-size:10px; font-weight:600; color:var(--text-3); padding:5px 8px; border-bottom:1px solid var(--border); text-transform:uppercase; }
+    .tabla-grupos td { padding:7px 8px; border-bottom:1px solid var(--border); vertical-align:middle; }
+    .tabla-grupos tr:last-child td { border-bottom:none; }
+    .tabla-grupos tr:hover td { background:var(--bg); }
+
+    .mini-bar { display:flex; height:8px; border-radius:99px; overflow:hidden; gap:1px; min-width:80px; }
+    .mini-seg { height:100%; }
+
+    /* Editor de metas */
+    .meta-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .meta-row { display:flex; align-items:center; gap:10px; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-s); }
+    .meta-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+    .meta-name { flex:1; font-size:12px; }
+    .meta-rango { font-size:10px; color:var(--text-3); min-width:70px; }
+    .meta-inp { width:52px; font-size:11px; padding:4px 6px; border:1px solid var(--border-m); border-radius:4px; text-align:center; }
+
+    .tab-vista { display:flex; border-bottom:1px solid var(--border); margin-bottom:14px; }
+    .tv { font-size:12px; padding:6px 14px; cursor:pointer; color:var(--text-3); border-bottom:2px solid transparent; margin-bottom:-1px; }
+    .tv.active { color:var(--az); border-bottom-color:var(--az); font-weight:500; }
+    .tv-content { display:none; }
+    .tv-content.active { display:block; }
+
+    .toast { position:fixed; bottom:20px; right:20px; background:var(--vd); color:white; padding:10px 16px; border-radius:var(--radius-s); font-size:12px; z-index:200; display:none; }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <div id="sidebar-container"></div>
+  <div class="main-area">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title">Analytics — Bandas de rendimiento</div>
+        <div class="topbar-sub" id="topbar-sub">Ciclo 2025–2026</div>
+      </div>
+    </div>
+    <div class="page-content">
+      <div id="loading" class="loading">Cargando datos...</div>
+      <div id="content" style="display:none;">
+
+        <!-- Filtros -->
+        <div class="filter-bar">
+          <select id="fil-periodo" onchange="cargarYRender()">
+            <option value="">Todos los periodos</option>
+          </select>
+          <select id="fil-docente" onchange="renderVistas()">
+            <option value="">Todos los docentes</option>
+          </select>
+          <select id="fil-nivel" onchange="renderVistas()">
+            <option value="">Todos los niveles</option>
+            <option value="primaria">Primaria</option>
+            <option value="secundaria">Secundaria</option>
+            <option value="preparatoria">Preparatoria</option>
+          </select>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tab-vista">
+          <div class="tv active" onclick="setVista('bandas',this)">Bandas globales</div>
+          <div class="tv" onclick="setVista('grupos',this)">Por grupo</div>
+          <div class="tv" onclick="setVista('metas',this)">Configurar metas</div>
+        </div>
+
+        <!-- VISTA: BANDAS -->
+        <div class="tv-content active" id="vista-bandas">
+          <div class="resumen-grid" id="resumen-cards"></div>
+          <div class="card" style="margin-bottom:12px;">
+            <div class="card-title">Distribución de alumnos por banda</div>
+            <div class="bar-apilada" id="bar-global"></div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:10px;">
+              <span style="color:var(--gold-tx);">■ Gold 1</span>
+              <span style="color:var(--g2-tx);">■ Green 2</span>
+              <span style="color:var(--g1-tx);">■ Green 1</span>
+              <span style="color:var(--yel-tx);">■ Yellow 1</span>
+              <span style="color:var(--r2-tx);">■ Red 2</span>
+              <span style="color:var(--r1-tx);">■ Red 1</span>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Avance hacia meta anual</div>
+            <div id="vs-meta-container"></div>
+          </div>
+        </div>
+
+        <!-- VISTA: POR GRUPO -->
+        <div class="tv-content" id="vista-grupos">
+          <div class="card">
+            <div class="table-wrap">
+              <table class="tabla-grupos">
+                <thead>
+                  <tr>
+                    <th>Grupo · Materia</th><th>Docente</th><th>Nivel</th>
+                    <th>Alumnos</th><th>Distribución</th>
+                    <th>Gold</th><th>Green</th><th>Yellow</th><th>Riesgo</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-grupos"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- VISTA: METAS -->
+        <div class="tv-content" id="vista-metas">
+          <div class="card" style="margin-bottom:10px;">
+            <div class="card-title">Metas anuales · ciclo activo</div>
+            <div style="font-size:11px;color:var(--text-3);margin-bottom:12px;">
+              Estas metas aplican a todos los grupos. El sistema compara el porcentaje de alumnos en cada banda contra la meta configurada.
+            </div>
+            <div class="meta-grid" id="meta-grid"></div>
+            <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px;">
+              <button class="btn btn-primary" onclick="guardarMetas()">Guardar metas</button>
+            </div>
+          </div>
+          <div class="alert alert-warning">
+            El total de las 6 bandas debería sumar 100%. El sistema calculará los resultados reales al registrar calificaciones.
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+  import { requireAuth }        from '../js/auth.js'
+  import { renderSidebarAdmin } from '../js/sidebar-admin.js'
+  import { supabase }           from '../js/supabase.js'
+
+  const profile = await requireAuth('admin')
+  if (!profile) throw new Error('No autenticado')
+  await renderSidebarAdmin('analytics')
+
+  const { data: ciclo } = await supabase
+    .from('ciclos_escolares').select('id,nombre').eq('activo',true).single()
+  document.getElementById('topbar-sub').textContent = `Ciclo ${ciclo?.nombre}`
+
+  // Metas
+  const { data: metasDB } = await supabase
+    .from('metas_rendimiento').select('*').eq('ciclo_id', ciclo.id)
+  const metasMap = {}
+  metasDB?.forEach(m => { metasMap[m.banda] = m })
+
+  // Periodos
+  const { data: periodos } = await supabase
+    .from('periodos').select('id,etiqueta').eq('ciclo_id', ciclo.id).order('numero').order('parcial')
+  const selPeriodo = document.getElementById('fil-periodo')
+  periodos?.forEach(p => {
+    const o = document.createElement('option'); o.value = p.id; o.textContent = p.etiqueta
+    selPeriodo.appendChild(o)
+  })
+
+  // Docentes
+  const { data: docentes } = await supabase.from('profiles').select('id,nombre').eq('rol','docente')
+  const docMap = {}
+  docentes?.forEach(d => { docMap[d.id] = d.nombre })
+  const selDocente = document.getElementById('fil-docente')
+  docentes?.forEach(d => {
+    const o = document.createElement('option'); o.value = d.id; o.textContent = d.nombre
+    selDocente.appendChild(o)
+  })
+
+  // Grupos con calificaciones
+  const { data: grupos } = await supabase
+    .from('grupos')
+    .select('id,nombre,nivel,docente_id,grupo_materias(id,materias(nombre),alumnos(id))')
+    .eq('ciclo_id', ciclo.id)
+
+  let todasCals = []
+
+  document.getElementById('loading').style.display = 'none'
+  document.getElementById('content').style.display = 'block'
+
+  renderMetas()
+  await cargarYRender()
+
+  window.cargarYRender = async () => {
+    const pId = selPeriodo.value
+    const query = supabase.from('calificaciones').select('banda,promedio_parcial,grupo_materia_id')
+    if (pId) query.eq('periodo_id', pId)
+    const { data } = await query
+    todasCals = data || []
+    renderVistas()
+  }
+
+  window.renderVistas = () => {
+    const docFil   = selDocente.value
+    const nivelFil = document.getElementById('fil-nivel').value
+
+    const gmsFiltrados = grupos?.filter(g => {
+      if (docFil && g.docente_id !== docFil) return false
+      if (nivelFil && g.nivel !== nivelFil) return false
+      return true
+    }).flatMap(g => g.grupo_materias?.map(gm => gm.id) || []) || []
+
+    const calsFiltradas = todasCals.filter(c => gmsFiltrados.includes(c.grupo_materia_id))
+
+    renderBandas(calsFiltradas)
+    renderTablaGrupos(grupos, docFil, nivelFil)
+  }
+
+  function contarBandas(cals) {
+    const bc = { gold1:0, green2:0, green1:0, yellow1:0, red2:0, red1:0 }
+    let total = 0
+    cals.forEach(c => { if (c.banda && bc[c.banda] !== undefined) { bc[c.banda]++; total++ } })
+    return { bc, total }
+  }
+
+  function renderBandas(cals) {
+    const { bc, total } = contarBandas(cals)
+    const pct = (n) => total ? Math.round((n/total)*100) : 0
+
+    const bandas = [
+      { id:'gold', banda:'gold1',  cls:'bc-gold', color:'#DAA520', label:'Gold 1',   rango:'9.5–10' },
+      { id:'g2',   banda:'green2', cls:'bc-g2',   color:'#1a6b1a', label:'Green 2',  rango:'8.5–9.4' },
+      { id:'g1',   banda:'green1', cls:'bc-g1',   color:'#2d7a2d', label:'Green 1',  rango:'7.5–8.4' },
+      { id:'yel',  banda:'yellow1',cls:'bc-yel',  color:'#EF9F27', label:'Yellow 1', rango:'6.5–7.4' },
+      { id:'r2',   banda:'red2',   cls:'bc-r2',   color:'#D85A30', label:'Red 2',    rango:'6.0–6.4' },
+      { id:'r1',   banda:'red1',   cls:'bc-r1',   color:'#a32d2d', label:'Red 1',    rango:'5.0–5.9' },
+    ]
+
+    // Cards
+    document.getElementById('resumen-cards').innerHTML = bandas.map(b => {
+      const p = pct(bc[b.banda])
+      const meta = metasMap[b.banda]?.meta_pct || 0
+      const trend = p >= meta ? '▲' : '▼'
+      const tColor = p >= meta ? 'var(--vd)' : 'var(--co)'
+      return `<div class="banda-card ${b.cls}">
+        <div class="pct">${p}%</div>
+        <div class="lbl">${b.label}</div>
+        <div class="meta-info">${b.rango} · meta ${meta}% <span style="color:${tColor}">${trend}</span></div>
+      </div>`
+    }).join('')
+
+    // Barra apilada
+    document.getElementById('bar-global').innerHTML = bandas.map(b =>
+      `<div class="bar-seg" style="width:${pct(bc[b.banda])}%;background:${b.color};"></div>`
+    ).join('')
+
+    // vs Meta
+    document.getElementById('vs-meta-container').innerHTML = bandas.map(b => {
+      const p    = pct(bc[b.banda])
+      const meta = metasMap[b.banda]?.meta_pct || 0
+      const fillW = meta > 0 ? Math.min((p/meta)*100, 100) : 0
+      const trend = p >= meta ? '▲' : '▼'
+      const tColor = p >= meta ? 'var(--vd)' : 'var(--co)'
+      return `<div class="vs-meta-row">
+        <span class="vs-label" style="color:${b.color.replace('var(--','').replace(')','')}">${b.label}</span>
+        <div class="vs-bar"><div class="vs-fill" style="width:${fillW}%;background:${b.color};"></div></div>
+        <span class="vs-pct">${p}% / ${meta}%</span>
+        <span class="vs-trend" style="color:${tColor}">${trend}</span>
+      </div>`
+    }).join('')
+  }
+
+  function renderTablaGrupos(gruposList, docFil, nivelFil) {
+    const tbody = document.getElementById('tbody-grupos')
+    const filtrados = gruposList?.filter(g => {
+      if (docFil && g.docente_id !== docFil) return false
+      if (nivelFil && g.nivel !== nivelFil) return false
+      return true
+    }) || []
+
+    tbody.innerHTML = filtrados.flatMap(g =>
+      (g.grupo_materias || []).map(gm => {
+        const calGM = todasCals.filter(c => c.grupo_materia_id === gm.id)
+        const { bc, total } = contarBandas(calGM)
+        const pct = (n) => total ? Math.round((n/total)*100) : 0
+        const nAlumnos = gm.alumnos?.length || 0
+        const badgeNivel = g.nivel === 'primaria' ? 'badge-pri' : g.nivel === 'secundaria' ? 'badge-sec' : 'badge-prep'
+
+        const miniBar = total
+          ? `<div class="mini-bar">
+              <div class="mini-seg" style="width:${pct(bc.gold1)}%;background:#DAA520;"></div>
+              <div class="mini-seg" style="width:${pct(bc.green2)}%;background:#1a6b1a;"></div>
+              <div class="mini-seg" style="width:${pct(bc.green1)}%;background:#2d7a2d;"></div>
+              <div class="mini-seg" style="width:${pct(bc.yellow1)}%;background:#EF9F27;"></div>
+              <div class="mini-seg" style="width:${pct(bc.red2)}%;background:#D85A30;"></div>
+              <div class="mini-seg" style="width:${pct(bc.red1)}%;background:#a32d2d;"></div>
+             </div>`
+          : '<span class="text-muted text-small">Sin datos</span>'
+
+        return `<tr>
+          <td><strong style="font-weight:500;">${g.nombre}</strong> · ${gm.materias?.nombre || '—'}</td>
+          <td>${docMap[g.docente_id] || '—'}</td>
+          <td><span class="badge-nivel ${badgeNivel}">${g.nivel}</span></td>
+          <td>${nAlumnos}</td>
+          <td>${miniBar}</td>
+          <td style="color:var(--gold-tx);font-weight:500;">${pct(bc.gold1)}%</td>
+          <td style="color:var(--g2-tx);font-weight:500;">${pct(bc.green2 + bc.green1)}%</td>
+          <td style="color:var(--yel-tx);font-weight:500;">${pct(bc.yellow1)}%</td>
+          <td style="color:var(--co);font-weight:500;">${pct(bc.red2 + bc.red1)}%</td>
+        </tr>`
+      })
+    ).join('')
+
+    if (!tbody.innerHTML) tbody.innerHTML = '<tr><td colspan="9" class="empty-state">Sin datos para mostrar.</td></tr>'
+  }
+
+  // Metas editor
+  function renderMetas() {
+    const bandas = [
+      { banda:'gold1',  color:'#DAA520', label:'Gold 1',   rango:'9.5 – 10.0 · Outstanding' },
+      { banda:'green2', color:'#1a6b1a', label:'Green 2',  rango:'8.5 – 9.4 · High I Class'  },
+      { banda:'green1', color:'#2d7a2d', label:'Green 1',  rango:'7.5 – 8.4 · I Class'       },
+      { banda:'yellow1',color:'#EF9F27', label:'Yellow 1', rango:'6.5 – 7.4 · Satisfactory'  },
+      { banda:'red2',   color:'#D85A30', label:'Red 2',    rango:'6.0 – 6.4 · At Risk'       },
+      { banda:'red1',   color:'#a32d2d', label:'Red 1',    rango:'5.0 – 5.9 · Fail'          },
+    ]
+    document.getElementById('meta-grid').innerHTML = bandas.map(b => {
+      const metaActual = metasMap[b.banda]?.meta_pct || 0
+      return `<div class="meta-row">
+        <div class="meta-dot" style="background:${b.color};"></div>
+        <div class="meta-name">${b.label}<br><span style="font-size:10px;color:var(--text-3);">${b.rango}</span></div>
+        <input class="meta-inp" type="number" min="0" max="100" step="1"
+          id="meta-${b.banda}" value="${metaActual}" placeholder="0">
+        <span style="font-size:11px;color:var(--text-3);">%</span>
+      </div>`
+    }).join('')
+  }
+
+  window.guardarMetas = async () => {
+    const bandas = ['gold1','green2','green1','yellow1','red2','red1']
+    const rangos = { gold1:[9.5,10], green2:[8.5,9.4], green1:[7.5,8.4], yellow1:[6.5,7.4], red2:[6.0,6.4], red1:[5.0,5.9] }
+
+    try {
+      for (const banda of bandas) {
+        const pct = parseFloat(document.getElementById(`meta-${banda}`).value) || 0
+        await supabase.from('metas_rendimiento').upsert({
+          ciclo_id: ciclo.id, banda,
+          rango_min: rangos[banda][0], rango_max: rangos[banda][1],
+          meta_pct: pct
+        }, { onConflict: 'ciclo_id,banda' })
+        if (!metasMap[banda]) metasMap[banda] = {}
+        metasMap[banda].meta_pct = pct
+      }
+      mostrarToast('Metas guardadas ✓')
+      await cargarYRender()
+    } catch(e) { mostrarToast(e.message, 'error') }
+  }
+
+  window.setVista = (id, el) => {
+    document.querySelectorAll('.tv').forEach(t => t.classList.remove('active'))
+    document.querySelectorAll('.tv-content').forEach(t => t.classList.remove('active'))
+    el.classList.add('active')
+    document.getElementById(`vista-${id}`).classList.add('active')
+  }
+
+  function mostrarToast(msg, tipo = 'ok') {
+    const t = document.getElementById('toast')
+    t.textContent = msg
+    t.style.background = tipo === 'error' ? 'var(--co)' : 'var(--vd)'
+    t.style.display = 'block'
+    setTimeout(() => { t.style.display = 'none' }, 2500)
+  }
+</script>
+</body>
+</html>
