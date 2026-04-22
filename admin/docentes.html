@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TechAcademia — Docentes</title>
+  <link rel="stylesheet" href="../css/global.css">
+  <style>
+    .doc-section { margin-bottom:24px; }
+    .doc-header { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+    .doc-nombre { font-size:16px; font-weight:600; color:var(--text); }
+    .doc-sub { font-size:12px; color:var(--text-3); }
+    .cumplimiento-table { width:100%; border-collapse:collapse; font-size:11px; }
+    .cumplimiento-table th { text-align:left; font-size:10px; font-weight:600; color:var(--text-3); padding:5px 8px; border-bottom:1px solid var(--border); text-transform:uppercase; }
+    .cumplimiento-table td { padding:7px 8px; border-bottom:1px solid var(--border); }
+    .cumplimiento-table tr:last-child td { border-bottom:none; }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <div id="sidebar-container"></div>
+  <div class="main-area">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title">Docentes</div>
+        <div class="topbar-sub">Métricas y cumplimiento por docente</div>
+      </div>
+    </div>
+    <div class="page-content">
+      <div id="loading" class="loading">Cargando...</div>
+      <div id="content" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { requireAuth }        from '../js/auth.js'
+  import { renderSidebarAdmin } from '../js/sidebar-admin.js'
+  import { supabase }           from '../js/supabase.js'
+
+  const profile = await requireAuth('admin')
+  if (!profile) throw new Error('No autenticado')
+  await renderSidebarAdmin('docentes')
+
+  const { data: ciclo } = await supabase
+    .from('ciclos_escolares').select('id,nombre').eq('activo',true).single()
+
+  const { data: docentes } = await supabase
+    .from('profiles').select('id,nombre').eq('rol','docente')
+
+  const { data: grupos } = await supabase
+    .from('grupos')
+    .select('id,nombre,nivel,grado,docente_id,sistema_periodos,grupo_materias(id,materias(nombre),planes_clase(id,estado,entregado_at,periodos(etiqueta)),sesiones(id,completada))')
+    .eq('ciclo_id', ciclo.id)
+
+  const { data: periodos } = await supabase
+    .from('periodos').select('id,etiqueta,tipo').eq('ciclo_id', ciclo.id).order('numero').order('parcial')
+
+  const { data: enRiesgo } = await supabase
+    .from('calificaciones')
+    .select('promedio_parcial,grupo_materias(grupos(docente_id))')
+    .lt('promedio_parcial', 6)
+
+  document.getElementById('loading').style.display = 'none'
+  const content = document.getElementById('content')
+  content.style.display = 'block'
+
+  docentes?.forEach(d => {
+    const gDoc    = grupos?.filter(g => g.docente_id === d.id) || []
+    const sesiones= gDoc.flatMap(g => g.grupo_materias?.flatMap(gm => gm.sesiones || []) || [])
+    const dadas   = sesiones.filter(s => s.completada).length
+    const total   = sesiones.length
+    const pct     = total ? Math.round((dadas/total)*100) : 0
+    const rDoc    = enRiesgo?.filter(r => r.grupo_materias?.grupos?.docente_id === d.id).length || 0
+    const planes  = gDoc.flatMap(g => g.grupo_materias?.flatMap(gm => gm.planes_clase || []) || [])
+    const pOk     = planes.filter(p => ['entregado','aprobado'].includes(p.estado)).length
+    const pPend   = planes.filter(p => !['entregado','aprobado'].includes(p.estado)).length
+
+    const iniciales = d.nombre.split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase()
+    const avCls     = d.nombre.includes('Rosalba') ? 'avatar-rosalba' : 'avatar-yerim'
+    const nivel     = d.nombre.includes('Rosalba') ? 'Primaria · Secundaria (1°–9°)' : 'Preparatoria (10°–12°)'
+
+    // Agrupar planes por periodo
+    const periodosCumplimiento = periodos?.map(p => {
+      const tipo = p.tipo === 'semestre' ? 'semestral' : 'trimestral'
+      const esperados = gDoc.filter(g => g.sistema_periodos === tipo)
+        .flatMap(g => g.grupo_materias || []).length
+      const entregados = planes.filter(pl =>
+        ['entregado','aprobado'].includes(pl.estado) &&
+        pl.periodos?.etiqueta === p.etiqueta
+      ).length
+      const aprobados = planes.filter(pl => pl.estado === 'aprobado' && pl.periodos?.etiqueta === p.etiqueta).length
+      if (esperados === 0) return null
+      const pctCumpl = Math.round((entregados/esperados)*100)
+      const chipCls = pctCumpl === 100 ? 'chip-green' : pctCumpl >= 70 ? 'chip-amber' : 'chip-red'
+      return `<tr>
+        <td>${p.etiqueta}</td>
+        <td>${esperados}</td>
+        <td>${entregados}</td>
+        <td>${aprobados}</td>
+        <td>${esperados - entregados}</td>
+        <td><span class="chip ${chipCls}">${pctCumpl}%</span></td>
+      </tr>`
+    }).filter(Boolean).join('')
+
+    const html = `
+      <div class="doc-section">
+        <div class="doc-header">
+          <div class="avatar ${avCls}" style="width:38px;height:38px;font-size:14px;">${iniciales}</div>
+          <div>
+            <div class="doc-nombre">${d.nombre}</div>
+            <div class="doc-sub">${nivel}</div>
+          </div>
+        </div>
+        <div class="grid-4" style="margin-bottom:12px;">
+          <div class="metric"><div class="metric-label">Grupos</div><div class="metric-value blue">${gDoc.length}</div></div>
+          <div class="metric"><div class="metric-label">Sesiones dadas</div><div class="metric-value green">${dadas} / ${total}</div></div>
+          <div class="metric"><div class="metric-label">Planes entregados</div><div class="metric-value">${pOk}</div></div>
+          <div class="metric"><div class="metric-label">Alumnos en riesgo</div><div class="metric-value red">${rDoc}</div></div>
+        </div>
+        <div class="card" style="margin-bottom:6px;">
+          <div class="flex-between mb-8">
+            <div class="card-title mb-0">Avance de sesiones</div>
+            <span style="font-size:13px;font-weight:600;color:${pct>=70?'var(--vd)':pct>=40?'var(--am)':'var(--co)'};">${pct}%</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;${pct<40?'background:#D85A30':pct<70?'background:#EF9F27':''}"></div></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Cumplimiento de planes por periodo</div>
+          <table class="cumplimiento-table">
+            <thead><tr><th>Periodo</th><th>Esperados</th><th>Entregados</th><th>Aprobados</th><th>Pendientes</th><th>Cumplimiento</th></tr></thead>
+            <tbody>${periodosCumplimiento || '<tr><td colspan="6" class="text-muted text-small" style="padding:12px 8px;">Sin datos de planes aún.</td></tr>'}</tbody>
+          </table>
+        </div>
+      </div>`
+
+    content.insertAdjacentHTML('beforeend', html)
+  })
+</script>
+</body>
+</html>
