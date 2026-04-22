@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TechAcademia — Inicio</title>
+  <link rel="stylesheet" href="../css/global.css">
+</head>
+<body>
+<div class="app-layout">
+  <div id="sidebar-container"></div>
+
+  <div class="main-area">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title" id="saludo">Bienvenida</div>
+        <div class="topbar-sub" id="ciclo-label">Cargando...</div>
+      </div>
+      <span class="chip chip-blue" id="grupos-badge"></span>
+    </div>
+
+    <div class="page-content">
+      <div id="loading" class="loading">Cargando...</div>
+      <div id="content" style="display:none;">
+
+        <div class="metrics-grid" id="metrics-grid"></div>
+
+        <!-- Flujo del ciclo -->
+        <div class="card mb-12">
+          <div class="card-title">Flujo de trabajo del ciclo</div>
+          <div id="flujo-steps" style="display:flex;gap:0;align-items:center;flex-wrap:wrap;gap:8px;"></div>
+        </div>
+
+        <div class="grid-2">
+          <!-- Planes pendientes -->
+          <div class="card mb-0">
+            <div class="flex-between mb-8">
+              <div class="card-title mb-0">Planes de clase pendientes</div>
+              <a href="planes-clase.html" class="btn btn-sm">Ver todos</a>
+            </div>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead><tr><th>Grupo · Materia</th><th>Periodo</th><th>Estado</th></tr></thead>
+                <tbody id="planes-pendientes-tbody">
+                  <tr><td colspan="3" class="loading">Cargando...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Alumnos en riesgo -->
+          <div class="card mb-0">
+            <div class="flex-between mb-8">
+              <div class="card-title mb-0">Alumnos en riesgo</div>
+              <a href="calificaciones.html" class="btn btn-sm">Ver todos</a>
+            </div>
+            <div id="riesgo-lista"></div>
+          </div>
+        </div>
+
+        <div class="ia-box mt-12">
+          <div class="ia-label">Resumen IA</div>
+          <p id="ia-resumen">Calculando resumen...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { requireAuth }      from '../js/auth.js'
+  import { renderSidebar }    from '../js/sidebar-docente.js'
+  import { supabase }         from '../js/supabase.js'
+
+  const profile = await requireAuth('docente')
+  if (!profile) throw new Error('No autenticado')
+
+  await renderSidebar('inicio')
+
+  // Saludo y ciclo
+  const nombre = profile.nombre.split(' ')[0]
+  document.getElementById('saludo').textContent = `Bienvenida, ${nombre}`
+
+  // Ciclo activo
+  const { data: ciclo } = await supabase
+    .from('ciclos_escolares')
+    .select('nombre')
+    .eq('activo', true)
+    .single()
+
+  document.getElementById('ciclo-label').textContent = `Ciclo ${ciclo?.nombre || '—'}`
+
+  // Grupos del docente
+  const { data: grupos } = await supabase
+    .from('grupos')
+    .select('id, nombre, nivel, grado')
+    .eq('docente_id', profile.id)
+
+  document.getElementById('grupos-badge').textContent = `${grupos?.length || 0} grupos`
+
+  // Métricas básicas
+  const { data: planes } = await supabase
+    .from('planes_clase')
+    .select('estado, grupo_materia_id')
+
+  const entregados = planes?.filter(p => ['entregado','aprobado'].includes(p.estado)).length || 0
+  const pendientes = planes?.filter(p => ['borrador','pendiente', null].includes(p.estado)).length || 0
+
+  // Alumnos en riesgo (promedio_parcial < 6)
+  const { data: enRiesgo } = await supabase
+    .from('calificaciones')
+    .select('alumno_id, promedio_parcial, alumnos(nombre, apellido), grupo_materias(grupos(nombre))')
+    .lt('promedio_parcial', 6)
+
+  renderMetrics(grupos?.length, entregados, pendientes, enRiesgo?.length)
+  renderFlujo()
+  renderPlanesPendientes(planes)
+  renderRiesgo(enRiesgo)
+  renderIAResumen(pendientes, enRiesgo?.length, grupos?.length)
+
+  document.getElementById('loading').style.display = 'none'
+  document.getElementById('content').style.display = 'block'
+
+  // ── Renders ──────────────────────────────────────────────
+
+  function renderMetrics(nGrupos, entregados, pendientes, riesgo) {
+    document.getElementById('metrics-grid').innerHTML = `
+      <div class="metric"><div class="metric-label">Grupos activos</div><div class="metric-value blue">${nGrupos || 0}</div></div>
+      <div class="metric"><div class="metric-label">Planes entregados</div><div class="metric-value green">${entregados}</div></div>
+      <div class="metric"><div class="metric-label">Planes pendientes</div><div class="metric-value amber">${pendientes}</div></div>
+      <div class="metric"><div class="metric-label">Alumnos en riesgo</div><div class="metric-value red">${riesgo || 0}</div></div>
+    `
+  }
+
+  function renderFlujo() {
+    const steps = [
+      { n: 1, label: 'Materias y grupos', done: true },
+      { n: 2, label: 'Plan analítico',    done: true },
+      { n: 3, label: 'Planes de clase',   done: false, active: true },
+      { n: 4, label: 'Sesiones',          done: false },
+      { n: 5, label: 'Calificaciones',    done: false },
+    ]
+    const el = document.getElementById('flujo-steps')
+    el.innerHTML = steps.map((s, i) => {
+      const cls = s.done ? 'background:var(--vd-l);color:var(--vd)' :
+                  s.active ? 'background:var(--az);color:white' :
+                  'background:var(--bg);color:var(--text-3);border:1px solid var(--border)'
+      const line = i < steps.length - 1 ? `<div style="flex:1;height:1px;background:var(--border);min-width:12px;"></div>` : ''
+      return `
+        <div style="display:flex;align-items:center;gap:6px;font-size:11px;">
+          <div style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;${cls}">${s.n}</div>
+          <span style="color:${s.active ? 'var(--az)' : s.done ? 'var(--vd)' : 'var(--text-3)'};">${s.label}</span>
+        </div>${line}`
+    }).join('')
+  }
+
+  function renderPlanesPendientes(planes) {
+    const pendientes = planes?.filter(p => !['aprobado'].includes(p.estado)) || []
+    const tbody = document.getElementById('planes-pendientes-tbody')
+    if (!pendientes.length) {
+      tbody.innerHTML = `<tr><td colspan="3" class="text-muted text-small" style="padding:12px 8px;">Todo al día ✓</td></tr>`
+      return
+    }
+    tbody.innerHTML = pendientes.slice(0, 5).map(p => {
+      const estadoCls = p.estado === 'borrador' ? 'chip-amber' :
+                        p.estado === 'entregado' ? 'chip-blue' : 'chip-red'
+      const estadoLabel = p.estado || 'Pendiente'
+      return `<tr>
+        <td>${p.grupo_materia_id || '—'}</td>
+        <td class="text-muted text-small">T2 · P2</td>
+        <td><span class="chip ${estadoCls}">${estadoLabel}</span></td>
+      </tr>`
+    }).join('')
+  }
+
+  function renderRiesgo(alumnos) {
+    const el = document.getElementById('riesgo-lista')
+    if (!alumnos?.length) {
+      el.innerHTML = `<p class="text-muted text-small" style="padding:8px 0;">Sin alumnos en riesgo este periodo.</p>`
+      return
+    }
+    el.innerHTML = alumnos.slice(0, 4).map(a => {
+      const nombre  = `${a.alumnos?.nombre || ''} ${a.alumnos?.apellido || ''}`.trim()
+      const grupo   = a.grupo_materias?.grupos?.nombre || '—'
+      const iniciales = nombre.split(' ').map(p => p[0]).slice(0,2).join('').toUpperCase()
+      const prom    = Number(a.promedio_parcial).toFixed(1)
+      return `
+        <div class="flex-center gap-8" style="padding:6px 0;border-bottom:1px solid var(--border);">
+          <div class="avatar" style="background:var(--co-l);color:var(--co);">${iniciales}</div>
+          <div style="flex:1;">
+            <div style="font-size:12px;font-weight:500;">${nombre} <span class="text-muted text-small">· ${grupo}</span></div>
+            <div style="font-size:11px;color:var(--co);">Promedio ${prom}</div>
+          </div>
+          <span class="chip chip-red">Riesgo</span>
+        </div>`
+    }).join('')
+  }
+
+  function renderIAResumen(pendientes, riesgo, grupos) {
+    const msgs = []
+    if (pendientes > 0) msgs.push(`${pendientes} plan${pendientes > 1 ? 'es' : ''} de clase pendiente${pendientes > 1 ? 's' : ''} de entrega.`)
+    if (riesgo > 0) msgs.push(`${riesgo} alumno${riesgo > 1 ? 's' : ''} en riesgo identificado${riesgo > 1 ? 's' : ''} este periodo.`)
+    if (!msgs.length) msgs.push('Todo al día. Continúa con el registro de sesiones y calificaciones.')
+    document.getElementById('ia-resumen').textContent = msgs.join(' ')
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TechAcademia — Acceso</title>
+  <link rel="stylesheet" href="css/global.css">
+  <style>
+    body { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .login-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 36px 32px;
+      width: 100%;
+      max-width: 380px;
+    }
+    .login-brand { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+    .login-sub   { font-size: 13px; color: var(--text-3); margin-bottom: 28px; }
+    .error-msg   { display: none; }
+  </style>
+</head>
+<body>
+  <div class="login-card">
+    <div class="login-brand">TechAcademia</div>
+    <div class="login-sub">Academia de Tecnología · Ciclo 2025–2026</div>
+
+    <div id="error-msg" class="alert alert-danger error-msg" style="display:none;"></div>
+
+    <div class="form-group">
+      <label class="form-label">Correo electrónico</label>
+      <input type="email" id="email" placeholder="tu@correo.com" autocomplete="email">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Contraseña</label>
+      <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+    </div>
+
+    <button class="btn btn-primary w-full" id="btn-login" style="justify-content:center;margin-top:8px;">
+      Ingresar
+    </button>
+  </div>
+
+  <script type="module">
+    import { supabase } from './js/supabase.js'
+
+    // Si ya hay sesión activa, redirigir directo
+    const { data: { session } } = await supabase.auth.getSession()
+    if (session) await redirigirPorRol(session.user.id)
+
+    document.getElementById('btn-login').addEventListener('click', async () => {
+      const email    = document.getElementById('email').value.trim()
+      const password = document.getElementById('password').value
+      const errEl    = document.getElementById('error-msg')
+      const btn      = document.getElementById('btn-login')
+
+      errEl.style.display = 'none'
+      btn.textContent = 'Ingresando...'
+      btn.disabled = true
+
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+        if (error) throw error
+        await redirigirPorRol(data.user.id)
+      } catch (err) {
+        errEl.textContent = 'Correo o contraseña incorrectos.'
+        errEl.style.display = 'block'
+        btn.textContent = 'Ingresar'
+        btn.disabled = false
+      }
+    })
+
+    // Enter en el campo de contraseña dispara login
+    document.getElementById('password').addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('btn-login').click()
+    })
+
+    async function redirigirPorRol(userId) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('rol')
+        .eq('id', userId)
+        .single()
+
+      if (profile?.rol === 'admin')   window.location.href = '/admin/inicio.html'
+      else if (profile?.rol === 'docente') window.location.href = '/docente/inicio.html'
+      else window.location.href = '/index.html'
+    }
+  </script>
+</body>
+</html>
