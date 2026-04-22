@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TechAcademia — Revisión de planes</title>
+  <link rel="stylesheet" href="../css/global.css">
+  <style>
+    .tab-filter { display:flex; gap:4px; margin-bottom:14px; }
+    .tf { font-size:11px; padding:4px 12px; border-radius:99px; border:1px solid var(--border-m); cursor:pointer; color:var(--text-2); }
+    .tf.active { background:var(--az); color:white; border-color:var(--az); }
+    .plan-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:14px 16px; margin-bottom:10px; }
+    .plan-header { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:10px; }
+    .plan-actions { display:flex; gap:6px; flex-shrink:0; }
+    .sesion-preview { background:var(--bg); border-radius:var(--radius-s); padding:10px 12px; margin-top:10px; font-size:11px; }
+    .sesion-preview-title { font-size:10px; font-weight:600; color:var(--text-3); text-transform:uppercase; letter-spacing:.05em; margin-bottom:8px; }
+    .sp-row { padding:4px 0; border-bottom:1px solid var(--border); display:grid; grid-template-columns:20px 1fr 1fr 1fr; gap:8px; }
+    .sp-row:last-child { border-bottom:none; }
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:100; align-items:center; justify-content:center; }
+    .modal-overlay.open { display:flex; }
+    .modal { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:22px; width:100%; max-width:420px; }
+    .toast { position:fixed; bottom:20px; right:20px; background:var(--vd); color:white; padding:10px 16px; border-radius:var(--radius-s); font-size:12px; z-index:200; display:none; }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <div id="sidebar-container"></div>
+  <div class="main-area">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title">Revisión de planes de clase</div>
+        <div class="topbar-sub">Aprueba o rechaza los planes entregados por los docentes</div>
+      </div>
+      <span class="chip chip-red" id="badge-pendientes" style="display:none;"></span>
+    </div>
+    <div class="page-content">
+      <div id="loading" class="loading">Cargando planes...</div>
+      <div id="content" style="display:none;">
+        <div class="tab-filter">
+          <button class="tf active" onclick="setTab('entregado',this)">Por revisar</button>
+          <button class="tf" onclick="setTab('aprobado',this)">Aprobados</button>
+          <button class="tf" onclick="setTab('rechazado',this)">Rechazados</button>
+          <button class="tf" onclick="setTab('',this)">Todos</button>
+        </div>
+        <div id="lista-planes"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal rechazo -->
+<div class="modal-overlay" id="modal-rechazo">
+  <div class="modal">
+    <div style="font-size:15px;font-weight:600;margin-bottom:12px;">Rechazar plan</div>
+    <input type="hidden" id="rechazo-plan-id">
+    <div class="form-group">
+      <label class="form-label">Comentario para el docente <span style="color:var(--co);">*</span></label>
+      <textarea class="inp" id="rechazo-comentario" style="min-height:80px;" placeholder="Explica qué debe corregirse..."></textarea>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
+      <button class="btn" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn btn-danger" onclick="confirmarRechazo()">Rechazar plan</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+  import { requireAuth }        from '../js/auth.js'
+  import { renderSidebarAdmin } from '../js/sidebar-admin.js'
+  import { supabase }           from '../js/supabase.js'
+
+  const profile = await requireAuth('admin')
+  if (!profile) throw new Error('No autenticado')
+  await renderSidebarAdmin('revision-planes')
+
+  let tabActual = 'entregado'
+  let todosPlanes = []
+
+  const { data: ciclo } = await supabase
+    .from('ciclos_escolares').select('id').eq('activo',true).single()
+
+  // Cargar todos los planes con sus sesiones
+  const { data: planes } = await supabase
+    .from('planes_clase')
+    .select(`
+      id, estado, entregado_at, modificado_at, comentario_admin,
+      nombre_proyecto, metodologia, ejes_articuladores, ajustes_razonados,
+      grupo_materias ( id, grupos(nombre,nivel,docente_id), materias(nombre) ),
+      periodos ( etiqueta ),
+      plan_clase_sesiones ( numero, objetivo_particular, inicio, desarrollo, cierre )
+    `)
+    .order('entregado_at', { ascending: false })
+
+  // Nombres de docentes
+  const { data: docentes } = await supabase
+    .from('profiles').select('id,nombre').eq('rol','docente')
+  const docMap = {}
+  docentes?.forEach(d => { docMap[d.id] = d.nombre })
+
+  todosPlanes = planes || []
+
+  const pendientes = todosPlanes.filter(p => p.estado === 'entregado').length
+  const badgeEl = document.getElementById('badge-pendientes')
+  if (pendientes > 0) {
+    badgeEl.textContent = `${pendientes} por revisar`
+    badgeEl.style.display = 'inline-block'
+  }
+
+  document.getElementById('loading').style.display = 'none'
+  document.getElementById('content').style.display = 'block'
+
+  window.setTab = (estado, btn) => {
+    tabActual = estado
+    document.querySelectorAll('.tf').forEach(b => b.classList.remove('active'))
+    btn.classList.add('active')
+    renderPlanes()
+  }
+
+  function renderPlanes() {
+    const lista = document.getElementById('lista-planes')
+    const filtrados = tabActual
+      ? todosPlanes.filter(p => p.estado === tabActual)
+      : todosPlanes
+
+    if (!filtrados.length) {
+      lista.innerHTML = '<div class="empty-state"><p>No hay planes con este filtro.</p></div>'
+      return
+    }
+
+    const estadoClass = { entregado:'chip-blue', aprobado:'chip-green', rechazado:'chip-red', borrador:'chip-amber' }
+
+    lista.innerHTML = filtrados.map(p => {
+      const gm      = p.grupo_materias
+      const docId   = gm?.grupos?.docente_id
+      const docNombre = docMap[docId] || '—'
+      const grupo   = gm?.grupos?.nombre || '—'
+      const materia = gm?.materias?.nombre || '—'
+      const nivel   = gm?.grupos?.nivel || '—'
+      const periodo = p.periodos?.etiqueta || '—'
+      const fecha   = p.entregado_at
+        ? new Date(p.entregado_at).toLocaleDateString('es-MX', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})
+        : '—'
+      const mod     = p.modificado_at
+        ? `<span style="font-size:10px;color:var(--am);margin-left:6px;">Modificado ${new Date(p.modificado_at).toLocaleDateString('es-MX',{day:'numeric',month:'short'})}</span>`
+        : ''
+
+      const sesiones = (p.plan_clase_sesiones || []).sort((a,b) => a.numero - b.numero)
+      const sesionesHtml = sesiones.length
+        ? `<div class="sesion-preview">
+            <div class="sesion-preview-title">Sesiones (${sesiones.length})</div>
+            ${sesiones.slice(0,3).map(s => `
+              <div class="sp-row">
+                <span style="font-weight:600;color:var(--text-3);">${s.numero}</span>
+                <span style="color:var(--az-d);">${s.objetivo_particular || '—'}</span>
+                <span>${s.inicio ? s.inicio.substring(0,60)+'...' : '—'}</span>
+                <span>${s.desarrollo ? s.desarrollo.substring(0,60)+'...' : '—'}</span>
+              </div>`).join('')}
+            ${sesiones.length > 3 ? `<div style="font-size:10px;color:var(--text-3);padding-top:4px;">+ ${sesiones.length-3} sesiones más</div>` : ''}
+           </div>`
+        : ''
+
+      const acciones = p.estado === 'entregado'
+        ? `<button class="btn btn-sm" style="background:var(--vd);color:white;border-color:var(--vd);" onclick="aprobar('${p.id}')">✓ Aprobar</button>
+           <button class="btn btn-sm btn-danger" onclick="abrirRechazo('${p.id}')">✕ Rechazar</button>`
+        : p.estado === 'aprobado'
+        ? `<span class="chip chip-green">Aprobado ✓</span>`
+        : p.estado === 'rechazado'
+        ? `<button class="btn btn-sm" style="background:var(--vd);color:white;border-color:var(--vd);" onclick="aprobar('${p.id}')">✓ Aprobar ahora</button>`
+        : ''
+
+      return `
+        <div class="plan-card">
+          <div class="plan-header">
+            <div>
+              <div style="font-size:13px;font-weight:600;">${grupo} · ${materia} <span class="chip ${estadoClass[p.estado]}">${p.estado}</span>${mod}</div>
+              <div style="font-size:11px;color:var(--text-3);margin-top:3px;">
+                ${docNombre} · ${nivel} · ${periodo} · Entregado: ${fecha}
+              </div>
+              ${p.nombre_proyecto ? `<div style="font-size:11px;color:var(--text-2);margin-top:3px;">Proyecto: ${p.nombre_proyecto}</div>` : ''}
+              ${p.comentario_admin ? `<div style="font-size:11px;color:var(--co);margin-top:3px;">💬 Tu comentario: ${p.comentario_admin}</div>` : ''}
+            </div>
+            <div class="plan-actions">${acciones}</div>
+          </div>
+          ${sesionesHtml}
+        </div>`
+    }).join('')
+  }
+
+  window.aprobar = async (planId) => {
+    await supabase.from('planes_clase').update({
+      estado: 'aprobado', comentario_admin: null
+    }).eq('id', planId)
+
+    await supabase.from('historial_planes').insert({
+      plan_clase_id: planId,
+      snapshot: { accion: 'aprobado' },
+      accion: 'aprobado',
+      actor_id: profile.id
+    })
+
+    mostrarToast('Plan aprobado ✓')
+    todosPlanes = todosPlanes.map(p => p.id === planId ? { ...p, estado:'aprobado', comentario_admin:null } : p)
+    renderPlanes()
+    await renderSidebarAdmin('revision-planes') // actualizar badge
+  }
+
+  window.abrirRechazo = (planId) => {
+    document.getElementById('rechazo-plan-id').value = planId
+    document.getElementById('rechazo-comentario').value = ''
+    document.getElementById('modal-rechazo').classList.add('open')
+  }
+
+  window.cerrarModal = () => {
+    document.getElementById('modal-rechazo').classList.remove('open')
+  }
+
+  window.confirmarRechazo = async () => {
+    const planId     = document.getElementById('rechazo-plan-id').value
+    const comentario = document.getElementById('rechazo-comentario').value.trim()
+    if (!comentario) { mostrarToast('Escribe un comentario para el docente', 'error'); return }
+
+    await supabase.from('planes_clase').update({
+      estado: 'rechazado', comentario_admin: comentario
+    }).eq('id', planId)
+
+    await supabase.from('historial_planes').insert({
+      plan_clase_id: planId,
+      snapshot: { comentario },
+      accion: 'rechazado',
+      actor_id: profile.id
+    })
+
+    mostrarToast('Plan rechazado')
+    todosPlanes = todosPlanes.map(p => p.id === planId ? { ...p, estado:'rechazado', comentario_admin:comentario } : p)
+    cerrarModal()
+    renderPlanes()
+    await renderSidebarAdmin('revision-planes')
+  }
+
+  document.getElementById('modal-rechazo').addEventListener('click', e => {
+    if (e.target === document.getElementById('modal-rechazo')) cerrarModal()
+  })
+
+  function mostrarToast(msg, tipo = 'ok') {
+    const t = document.getElementById('toast')
+    t.textContent = msg
+    t.style.background = tipo === 'error' ? 'var(--co)' : 'var(--vd)'
+    t.style.display = 'block'
+    setTimeout(() => { t.style.display = 'none' }, 2500)
+  }
+
+  renderPlanes()
+</script>
+</body>
+</html>
