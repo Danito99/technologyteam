@@ -16,6 +16,17 @@ export async function getProfile() {
 
 // Redirige según rol. Llámalo en cada página protegida.
 export async function requireAuth(rolRequerido = null) {
+  // getSession es más rápido: no hace llamada al servidor
+  const { data: { session } } = await supabase.auth.getSession()
+
+  if (!session) {
+    const path = window.location.pathname
+    if (!path.endsWith('index.html') && path !== '/') {
+      window.location.href = '/index.html'
+    }
+    return null
+  }
+
   const profile = await getProfile()
 
   if (!profile) {
@@ -23,10 +34,14 @@ export async function requireAuth(rolRequerido = null) {
     return null
   }
 
+  // Solo redirigir si el rol no coincide Y no estamos ya en la página correcta
   if (rolRequerido && profile.rol !== rolRequerido) {
-    // Si es docente intentando entrar a /admin, lo manda a su dashboard
-    if (profile.rol === 'docente') window.location.href = '/docente/inicio.html'
-    if (profile.rol === 'admin') window.location.href = '/admin/inicio.html'
+    const path = window.location.pathname
+    if (profile.rol === 'docente' && !path.includes('/docente/')) {
+      window.location.href = '/docente/inicio.html'
+    } else if (profile.rol === 'admin' && !path.includes('/admin/')) {
+      window.location.href = '/admin/inicio.html'
+    }
     return null
   }
 
@@ -46,7 +61,7 @@ export async function logout() {
   window.location.href = '/index.html'
 }
 
-// Escucha cambios de sesión (útil para el header)
+// Escucha cambios de sesión
 export function onAuthChange(callback) {
   supabase.auth.onAuthStateChange((_event, session) => {
     callback(session)
