@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TechAcademia — Planes de clase</title>
+  <link rel="stylesheet" href="../css/global.css">
+  <style>
+    .filter-bar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; align-items:center; }
+    .filter-bar select { width:auto; margin:0; }
+    .tab-filter { display:flex; gap:4px; margin-bottom:14px; flex-wrap:wrap; }
+    .tf {
+      font-size:11px; padding:4px 12px; border-radius:99px;
+      border:1px solid var(--border-m); cursor:pointer; color:var(--text-2); background:transparent;
+    }
+    .tf.active { background:var(--az); color:white; border-color:var(--az); }
+    .plan-card {
+      background:var(--bg-card); border:1px solid var(--border);
+      border-radius:var(--radius); padding:14px 16px; margin-bottom:10px;
+      display:grid; grid-template-columns:1fr auto; gap:12px; align-items:center;
+    }
+    .plan-card:last-child { margin-bottom:0; }
+    .plan-grupo { font-size:13px; font-weight:600; color:var(--text); }
+    .plan-meta  { font-size:11px; color:var(--text-3); margin-top:3px; }
+    .plan-actions { display:flex; gap:6px; align-items:center; }
+    .mod-badge {
+      font-size:9px; padding:1px 6px; border-radius:99px;
+      background:var(--vd-l); color:var(--vd); font-weight:500; margin-left:6px;
+    }
+    .empty-state { text-align:center; padding:40px 20px; color:var(--text-3); }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <div id="sidebar-container"></div>
+  <div class="main-area">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title">Planes de clase</div>
+        <div class="topbar-sub">Historial y entregas</div>
+      </div>
+      <button class="btn btn-primary" onclick="window.location.href='plan-editor.html'">+ Nuevo plan</button>
+    </div>
+
+    <div class="page-content">
+      <div id="loading" class="loading">Cargando planes...</div>
+      <div id="content" style="display:none;">
+
+        <div class="filter-bar">
+          <select id="fil-grupo" onchange="filtrar()">
+            <option value="">Todos los grupos</option>
+          </select>
+          <select id="fil-periodo" onchange="filtrar()">
+            <option value="">Todos los periodos</option>
+          </select>
+        </div>
+
+        <div class="tab-filter">
+          <button class="tf active" data-estado="" onclick="setEstado('',this)">Todos</button>
+          <button class="tf" data-estado="pendiente" onclick="setEstado('pendiente',this)">Pendientes</button>
+          <button class="tf" data-estado="borrador" onclick="setEstado('borrador',this)">Borradores</button>
+          <button class="tf" data-estado="entregado" onclick="setEstado('entregado',this)">Entregados</button>
+          <button class="tf" data-estado="aprobado" onclick="setEstado('aprobado',this)">Aprobados</button>
+          <button class="tf" data-estado="rechazado" onclick="setEstado('rechazado',this)">Rechazados</button>
+        </div>
+
+        <div id="lista-planes"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { requireAuth }   from '../js/auth.js'
+  import { renderSidebar } from '../js/sidebar-docente.js'
+  import { supabase }      from '../js/supabase.js'
+
+  const profile = await requireAuth('docente')
+  if (!profile) throw new Error('No autenticado')
+  await renderSidebar('planes-clase')
+
+  let todosPlanes = []
+  let estadoFiltro = ''
+
+  // Ciclo activo
+  const { data: ciclo } = await supabase
+    .from('ciclos_escolares').select('id').eq('activo', true).single()
+
+  // Grupos del docente con sus materias
+  const { data: grupos } = await supabase
+    .from('grupos')
+    .select('id, nombre, nivel, sistema_periodos, grupo_materias(id, materias(nombre))')
+    .eq('docente_id', profile.id).eq('ciclo_id', ciclo.id).order('nombre')
+
+  // Periodos
+  const { data: periodos } = await supabase
+    .from('periodos').select('id, etiqueta, tipo').eq('ciclo_id', ciclo.id).order('numero').order('parcial')
+
+  // Poblar filtros
+  const filGrupo = document.getElementById('fil-grupo')
+  grupos?.forEach(g => {
+    g.grupo_materias?.forEach(gm => {
+      const o = document.createElement('option')
+      o.value = gm.id
+      o.textContent = `${g.nombre} · ${gm.materias?.nombre || '—'}`
+      filGrupo.appendChild(o)
+    })
+  })
+
+  const filPeriodo = document.getElementById('fil-periodo')
+  periodos?.forEach(p => {
+    const o = document.createElement('option')
+    o.value = p.id
+    o.textContent = p.etiqueta
+    filPeriodo.appendChild(o)
+  })
+
+  // Construir mapa de todos los grupo_materia + periodo posibles
+  const gmIds = grupos?.flatMap(g => g.grupo_materias?.map(gm => ({ gmId: gm.id, gmLabel: `${g.nombre} · ${gm.materias?.nombre}`, sistema: g.sistema_periodos }))) || []
+
+  // Cargar planes existentes
+  const { data: planesDB } = await supabase
+    .from('planes_clase')
+    .select('id, estado, entregado_at, modificado_at, comentario_admin, grupo_materia_id, periodo_id')
+    .in('grupo_materia_id', gmIds.map(x => x.gmId))
+
+  // Construir lista completa (existentes + pendientes)
+  const planesMap = {}
+  planesDB?.forEach(p => { planesMap[`${p.grupo_materia_id}_${p.periodo_id}`] = p })
+
+  todosPlanes = []
+  gmIds.forEach(({ gmId, gmLabel, sistema }) => {
+    const tipo = sistema === 'semestral' ? 'semestre' : 'trimestre'
+    const psFiltrados = periodos?.filter(p => p.tipo === tipo) || []
+    psFiltrados.forEach(p => {
+      const key = `${gmId}_${p.id}`
+      const plan = planesMap[key]
+      todosPlanes.push({
+        id: plan?.id || null,
+        estado: plan?.estado || 'pendiente',
+        entregado_at: plan?.entregado_at,
+        modificado_at: plan?.modificado_at,
+        comentario_admin: plan?.comentario_admin,
+        grupo_materia_id: gmId,
+        periodo_id: p.id,
+        gmLabel,
+        periodoLabel: p.etiqueta
+      })
+    })
+  })
+
+  document.getElementById('loading').style.display = 'none'
+  document.getElementById('content').style.display = 'block'
+
+  window.filtrar = () => renderLista()
+  window.setEstado = (estado, btn) => {
+    estadoFiltro = estado
+    document.querySelectorAll('.tf').forEach(b => b.classList.remove('active'))
+    btn.classList.add('active')
+    renderLista()
+  }
+
+  function renderLista() {
+    const gmFil  = document.getElementById('fil-grupo').value
+    const pFil   = document.getElementById('fil-periodo').value
+
+    let planes = todosPlanes.filter(p => {
+      if (gmFil && p.grupo_materia_id !== gmFil) return false
+      if (pFil && p.periodo_id !== pFil) return false
+      if (estadoFiltro && p.estado !== estadoFiltro) return false
+      return true
+    })
+
+    const lista = document.getElementById('lista-planes')
+
+    if (!planes.length) {
+      lista.innerHTML = '<div class="empty-state"><p>No hay planes con estos filtros.</p></div>'
+      return
+    }
+
+    lista.innerHTML = planes.map(p => {
+      const estadoClass = {
+        pendiente: 'chip-red', borrador: 'chip-amber',
+        entregado: 'chip-blue', aprobado: 'chip-green', rechazado: 'chip-red'
+      }[p.estado] || 'chip-blue'
+
+      const estadoLabel = {
+        pendiente:'Pendiente', borrador:'Borrador',
+        entregado:'Entregado', aprobado:'Aprobado', rechazado:'Rechazado'
+      }[p.estado] || p.estado
+
+      const fechaEntrega = p.entregado_at
+        ? new Date(p.entregado_at).toLocaleDateString('es-MX', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })
+        : '—'
+
+      const modBadge = p.modificado_at
+        ? `<span class="mod-badge">Modificado ${new Date(p.modificado_at).toLocaleDateString('es-MX', {day:'numeric',month:'short'})}</span>`
+        : ''
+
+      const comentario = p.comentario_admin
+        ? `<div style="font-size:11px;color:var(--co);margin-top:4px;">💬 ${p.comentario_admin}</div>`
+        : ''
+
+      const btnAccion = p.estado === 'pendiente'
+        ? `<button class="btn btn-primary btn-sm" onclick="irEditor('${p.grupo_materia_id}','${p.periodo_id}')">Iniciar</button>`
+        : p.estado === 'borrador'
+        ? `<button class="btn btn-sm" style="border-color:var(--az);color:var(--az);" onclick="irEditor('${p.grupo_materia_id}','${p.periodo_id}','${p.id}')">Continuar</button>`
+        : `<button class="btn btn-sm" onclick="irEditor('${p.grupo_materia_id}','${p.periodo_id}','${p.id}')">Ver</button>`
+
+      return `
+        <div class="plan-card">
+          <div>
+            <div class="plan-grupo">${p.gmLabel} <span class="chip ${estadoClass}">${estadoLabel}</span>${modBadge}</div>
+            <div class="plan-meta">${p.periodoLabel} · Entregado: ${fechaEntrega}</div>
+            ${comentario}
+          </div>
+          <div class="plan-actions">${btnAccion}</div>
+        </div>`
+    }).join('')
+  }
+
+  window.irEditor = (gmId, pId, planId = '') => {
+    const params = new URLSearchParams({ gmId, pId })
+    if (planId) params.set('planId', planId)
+    window.location.href = `plan-editor.html?${params}`
+  }
+
+  renderLista()
+</script>
+</body>
+</html>
