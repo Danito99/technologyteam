@@ -637,7 +637,8 @@
 
     const reader = new FileReader()
     reader.onload = (ev) => {
-      const texto = ev.target.result
+      let texto = ev.target.result
+      if (texto.charCodeAt(0) === 0xFEFF) texto = texto.slice(1)
       const lineas = texto.split('\n').map(l => l.trim()).filter(Boolean)
 
       // Detectar si tiene encabezado
@@ -680,7 +681,9 @@
         </table>`
       document.getElementById('csv-preview').style.display = 'block'
     }
+    // Intentar UTF-8 primero, si falla usar latin1
     reader.readAsText(file, 'UTF-8')
+    reader.onerror = () => { reader.readAsText(file, 'latin1') }
   })
 
   window.cancelarCSV = () => {
