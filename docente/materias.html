@@ -127,7 +127,7 @@
 <body>
 <div class="app-layout">
   <div id="sidebar-container"></div>
- 
+
   <div class="main-area">
     <div class="topbar">
       <div>
@@ -136,15 +136,15 @@
       </div>
       <button class="btn btn-primary" id="btn-nuevo-grupo">+ Agregar grupo</button>
     </div>
- 
+
     <div class="page-content">
       <div id="loading" class="loading">Cargando tus grupos...</div>
       <div id="content" style="display:none;">
- 
+
         <div class="alert alert-info mb-12" id="alert-inicio" style="display:none;">
           <strong>Paso 1 del ciclo:</strong> Registra tus materias y grupos. Esto alimentará tu plan analítico y planes de clase.
         </div>
- 
+
         <!-- Primaria -->
         <div class="nivel-section" id="sec-primaria" style="display:none;">
           <div class="nivel-header">
@@ -160,7 +160,7 @@
             <div id="rows-primaria"></div>
           </div>
         </div>
- 
+
         <!-- Secundaria -->
         <div class="nivel-section" id="sec-secundaria" style="display:none;">
           <div class="nivel-header">
@@ -176,7 +176,7 @@
             <div id="rows-secundaria"></div>
           </div>
         </div>
- 
+
         <!-- Preparatoria -->
         <div class="nivel-section" id="sec-preparatoria" style="display:none;">
           <div class="nivel-header">
@@ -192,7 +192,7 @@
             <div id="rows-preparatoria"></div>
           </div>
         </div>
- 
+
         <!-- Sin grupos -->
         <div id="sin-grupos" style="display:none;">
           <div class="card" style="text-align:center;padding:40px;">
@@ -202,24 +202,24 @@
             <button class="btn btn-primary" onclick="document.getElementById('btn-nuevo-grupo').click()">+ Agregar primer grupo</button>
           </div>
         </div>
- 
+
       </div>
     </div>
   </div>
 </div>
- 
+
 <!-- MODAL: Agregar / editar grupo -->
 <div class="modal-overlay" id="modal-grupo">
   <div class="modal">
     <div class="modal-title" id="modal-titulo">Agregar grupo</div>
- 
+
     <input type="hidden" id="edit-grupo-id">
- 
+
     <div class="form-group">
       <label class="form-label">Nombre del grupo</label>
       <input type="text" id="input-nombre" placeholder="ej. 9°A, 5°B, 11°A">
     </div>
- 
+
     <div class="form-group">
       <label class="form-label">Nivel</label>
       <select id="input-nivel" onchange="actualizarGrado()">
@@ -229,49 +229,73 @@
         <option value="preparatoria">Preparatoria</option>
       </select>
     </div>
- 
+
     <div class="form-group">
       <label class="form-label">Grado</label>
       <select id="input-grado">
         <option value="">Selecciona nivel primero</option>
       </select>
     </div>
- 
+
     <div class="form-group">
       <label class="form-label">Nombre de la materia</label>
       <input type="text" id="input-materia" placeholder="ej. Tecnología, Computación, Informática">
       <div class="text-muted text-small mt-8">Puedes usar el mismo nombre para múltiples grupos.</div>
     </div>
- 
+
     <div class="modal-footer">
       <button class="btn" onclick="cerrarModal()">Cancelar</button>
       <button class="btn btn-primary" id="btn-guardar-grupo">Guardar grupo</button>
     </div>
   </div>
 </div>
- 
+
 <!-- MODAL: Alumnos del grupo -->
 <div class="modal-overlay" id="modal-alumnos">
-  <div class="modal">
+  <div class="modal" style="max-width:560px;">
     <div class="modal-title" id="modal-alumnos-titulo">Alumnos</div>
- 
+
     <input type="hidden" id="alumno-grupo-id">
- 
+
     <div class="flex-between mb-12">
       <div class="text-muted text-small" id="alumno-count"></div>
-      <button class="btn btn-primary btn-sm" id="btn-agregar-alumno">+ Agregar alumno</button>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-sm" id="btn-importar-csv">⬆ Importar CSV</button>
+        <button class="btn btn-sm" id="btn-descargar-plantilla">⬇ Plantilla</button>
+        <button class="btn btn-primary btn-sm" id="btn-agregar-alumno">+ Agregar uno</button>
+      </div>
     </div>
- 
-    <!-- Form agregar alumno (oculto por defecto) -->
+
+    <!-- Zona importar CSV -->
+    <div id="zona-csv" style="display:none;background:var(--bg);border:2px dashed var(--border-m);border-radius:var(--radius-s);padding:16px;margin-bottom:12px;text-align:center;">
+      <div style="font-size:12px;color:var(--text-2);margin-bottom:8px;">Arrastra tu CSV aquí o selecciónalo</div>
+      <input type="file" id="input-csv" accept=".csv" style="display:none;">
+      <button class="btn btn-sm" onclick="document.getElementById('input-csv').click()">Seleccionar archivo CSV</button>
+      <div style="font-size:10px;color:var(--text-3);margin-top:8px;">Columnas: No. lista · Apellido paterno · Apellido materno · Nombre(s)</div>
+      <div id="csv-preview" style="margin-top:10px;display:none;">
+        <div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:6px;" id="csv-preview-label"></div>
+        <div id="csv-preview-tabla" style="max-height:160px;overflow-y:auto;font-size:11px;"></div>
+        <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:8px;">
+          <button class="btn btn-sm" onclick="cancelarCSV()">Cancelar</button>
+          <button class="btn btn-primary btn-sm" id="btn-confirmar-csv">Importar alumnos</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form agregar alumno individual -->
     <div id="form-alumno" style="display:none;background:var(--bg);border-radius:var(--radius-s);padding:12px;margin-bottom:12px;">
-      <div class="grid-2" style="gap:8px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+        <div>
+          <label class="form-label">Apellido paterno</label>
+          <input type="text" id="input-ap-paterno" placeholder="Apellido paterno">
+        </div>
+        <div>
+          <label class="form-label">Apellido materno</label>
+          <input type="text" id="input-ap-materno" placeholder="Apellido materno">
+        </div>
         <div>
           <label class="form-label">Nombre(s)</label>
           <input type="text" id="input-alumno-nombre" placeholder="Nombre(s)">
-        </div>
-        <div>
-          <label class="form-label">Apellidos</label>
-          <input type="text" id="input-alumno-apellido" placeholder="Apellidos">
         </div>
       </div>
       <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;">
@@ -279,39 +303,39 @@
         <button class="btn btn-primary btn-sm" id="btn-guardar-alumno">Guardar</button>
       </div>
     </div>
- 
+
     <div id="lista-alumnos"></div>
- 
+
     <div class="modal-footer">
       <button class="btn" onclick="cerrarModalAlumnos()">Cerrar</button>
     </div>
   </div>
 </div>
- 
+
 <div class="toast" id="toast"></div>
- 
+
 <script type="module">
   import { requireAuth }   from '../js/auth.js'
   import { renderSidebar } from '../js/sidebar-docente.js'
   import { supabase }      from '../js/supabase.js'
- 
+
   // ── Auth ──────────────────────────────────────────────────
   const profile = await requireAuth('docente')
   if (!profile) throw new Error('No autenticado')
   await renderSidebar('materias')
- 
+
   // ── Ciclo activo ──────────────────────────────────────────
   const { data: ciclo } = await supabase
     .from('ciclos_escolares')
     .select('id, nombre')
     .eq('activo', true)
     .single()
- 
+
   if (ciclo) {
     document.getElementById('ciclo-label').textContent = `Ciclo ${ciclo.nombre}`
     window._cicloId = ciclo.id
   }
- 
+
   // ── Cargar grupos ─────────────────────────────────────────
   async function cargarGrupos() {
     const { data: grupos, error } = await supabase
@@ -327,29 +351,29 @@
       .eq('docente_id', profile.id)
       .eq('ciclo_id', window._cicloId)
       .order('grado')
- 
+
     document.getElementById('loading').style.display = 'none'
     document.getElementById('content').style.display = 'block'
- 
+
     if (!grupos?.length) {
       document.getElementById('sin-grupos').style.display = 'block'
       document.getElementById('alert-inicio').style.display = 'block'
       return
     }
- 
+
     const porNivel = { primaria: [], secundaria: [], preparatoria: [] }
     grupos.forEach(g => porNivel[g.nivel]?.push(g))
- 
+
     renderNivel('primaria', porNivel.primaria)
     renderNivel('secundaria', porNivel.secundaria)
     renderNivel('preparatoria', porNivel.preparatoria)
   }
- 
+
   function renderNivel(nivel, grupos) {
     if (!grupos.length) return
     document.getElementById(`sec-${nivel}`).style.display = 'block'
     document.getElementById(`count-${nivel}`).textContent = `${grupos.length} grupo${grupos.length > 1 ? 's' : ''}`
- 
+
     const container = document.getElementById(`rows-${nivel}`)
     container.innerHTML = grupos.map(g => {
       const materias = g.grupo_materias?.map(gm => gm.materias?.nombre).filter(Boolean).join(', ') || '—'
@@ -376,9 +400,9 @@
         </div>`
     }).join('')
   }
- 
+
   await cargarGrupos()
- 
+
   // ── Modal grupo ───────────────────────────────────────────
   window.cerrarModal = () => {
     document.getElementById('modal-grupo').classList.remove('open')
@@ -388,7 +412,7 @@
     document.getElementById('input-grado').innerHTML = '<option value="">Selecciona nivel primero</option>'
     document.getElementById('input-materia').value = ''
   }
- 
+
   window.actualizarGrado = () => {
     const nivel = document.getElementById('input-nivel').value
     const sel = document.getElementById('input-grado')
@@ -398,7 +422,7 @@
     // Sistema de periodos automático
     document.getElementById('input-nivel').dataset.sistema = nivel === 'preparatoria' ? 'semestral' : 'trimestral'
   }
- 
+
   window.editarGrupo = (id, nombre, nivel, grado, sistema) => {
     document.getElementById('modal-titulo').textContent = 'Editar grupo'
     document.getElementById('edit-grupo-id').value = id
@@ -408,12 +432,12 @@
     document.getElementById('input-grado').value = grado
     document.getElementById('modal-grupo').classList.add('open')
   }
- 
+
   document.getElementById('btn-nuevo-grupo').addEventListener('click', () => {
     document.getElementById('modal-titulo').textContent = 'Agregar grupo'
     document.getElementById('modal-grupo').classList.add('open')
   })
- 
+
   document.getElementById('btn-guardar-grupo').addEventListener('click', async () => {
     const editId  = document.getElementById('edit-grupo-id').value
     const nombre  = document.getElementById('input-nombre').value.trim()
@@ -421,19 +445,19 @@
     const grado   = parseInt(document.getElementById('input-grado').value)
     const materia = document.getElementById('input-materia').value.trim()
     const sistema = nivel === 'preparatoria' ? 'semestral' : 'trimestral'
- 
+
     if (!nombre || !nivel || !grado) {
       mostrarToast('Completa nombre, nivel y grado', 'error')
       return
     }
- 
+
     const btn = document.getElementById('btn-guardar-grupo')
     btn.textContent = 'Guardando...'
     btn.disabled = true
- 
+
     try {
       let grupoId = editId
- 
+
       if (editId) {
         // Editar
         await supabase.from('grupos').update({ nombre, nivel, grado, sistema_periodos: sistema })
@@ -446,30 +470,30 @@
           nombre, nivel, grado,
           sistema_periodos: sistema
         }).select('id').single()
- 
+
         grupoId = nuevoGrupo.id
- 
+
         // Crear o reutilizar materia
         if (materia) {
           let { data: mat } = await supabase.from('materias')
             .select('id').eq('docente_id', profile.id)
             .eq('ciclo_id', window._cicloId).eq('nombre', materia).single()
- 
+
           if (!mat) {
             const { data: nuevaMat } = await supabase.from('materias').insert({
               docente_id: profile.id, ciclo_id: window._cicloId, nombre: materia
             }).select('id').single()
             mat = nuevaMat
           }
- 
+
           // Vincular grupo con materia
           await supabase.from('grupo_materias').insert({ grupo_id: grupoId, materia_id: mat.id })
         }
       }
- 
+
       mostrarToast('Grupo guardado ✓')
       cerrarModal()
- 
+
       // Recargar
       document.getElementById('rows-primaria').innerHTML = ''
       document.getElementById('rows-secundaria').innerHTML = ''
@@ -479,7 +503,7 @@
       document.getElementById('sec-preparatoria').style.display = 'none'
       document.getElementById('sin-grupos').style.display = 'none'
       await cargarGrupos()
- 
+
     } catch (err) {
       mostrarToast('Error al guardar: ' + err.message, 'error')
     } finally {
@@ -487,7 +511,7 @@
       btn.disabled = false
     }
   })
- 
+
   // ── Modal alumnos ─────────────────────────────────────────
   window.abrirAlumnos = async (grupoId, grupoNombre) => {
     document.getElementById('alumno-grupo-id').value = grupoId
@@ -495,13 +519,14 @@
     document.getElementById('modal-alumnos').classList.add('open')
     await cargarAlumnos(grupoId)
   }
- 
+
   window.cerrarModalAlumnos = () => {
     document.getElementById('modal-alumnos').classList.remove('open')
     document.getElementById('form-alumno').style.display = 'none'
+    document.getElementById('zona-csv').style.display = 'none'
     document.getElementById('input-alumno-nombre').value = ''
-    document.getElementById('input-alumno-apellido').value = ''
-    // Recargar para actualizar conteo
+    document.getElementById('input-ap-paterno').value = ''
+    document.getElementById('input-ap-materno').value = ''
     document.getElementById('rows-primaria').innerHTML = ''
     document.getElementById('rows-secundaria').innerHTML = ''
     document.getElementById('rows-preparatoria').innerHTML = ''
@@ -510,7 +535,7 @@
     document.getElementById('sec-preparatoria').style.display = 'none'
     cargarGrupos()
   }
- 
+
   async function cargarAlumnos(grupoId) {
     const { data: alumnos } = await supabase
       .from('alumnos')
@@ -518,56 +543,182 @@
       .eq('grupo_id', grupoId)
       .eq('activo', true)
       .order('apellido')
- 
+
     const lista = document.getElementById('lista-alumnos')
     document.getElementById('alumno-count').textContent = `${alumnos?.length || 0} alumno${alumnos?.length !== 1 ? 's' : ''}`
- 
+
     if (!alumnos?.length) {
-      lista.innerHTML = '<div class="empty-state"><p>Sin alumnos registrados aún.</p></div>'
+      lista.innerHTML = '<div class="empty-state"><p>Sin alumnos registrados. Importa un CSV o agrega uno por uno.</p></div>'
       return
     }
- 
-    lista.innerHTML = alumnos.map((a, i) => `
-      <div class="alumno-item">
-        <span>${i + 1}. <strong style="font-weight:500;">${a.apellido}</strong>, ${a.nombre}</span>
-        <button class="btn btn-sm" style="color:var(--co);border-color:var(--co);"
-          onclick="eliminarAlumno('${a.id}', '${grupoId}')">Quitar</button>
-      </div>`).join('')
+
+    lista.innerHTML = `
+      <table style="width:100%;border-collapse:collapse;font-size:11px;">
+        <thead>
+          <tr style="border-bottom:1px solid var(--border);">
+            <th style="padding:5px 7px;text-align:left;font-size:10px;color:var(--text-3);font-weight:600;">#</th>
+            <th style="padding:5px 7px;text-align:left;font-size:10px;color:var(--text-3);font-weight:600;">Apellidos, Nombre(s)</th>
+            <th style="padding:5px 7px;"></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${alumnos.map((a, i) => `
+            <tr style="border-bottom:1px solid var(--border);">
+              <td style="padding:6px 7px;color:var(--text-3);">${i + 1}</td>
+              <td style="padding:6px 7px;"><strong style="font-weight:500;">${a.apellido}</strong>, ${a.nombre}</td>
+              <td style="padding:6px 7px;text-align:right;">
+                <button class="btn btn-sm" style="color:var(--co);border-color:var(--co);"
+                  onclick="eliminarAlumno('${a.id}', '${grupoId}')">Quitar</button>
+              </td>
+            </tr>`).join('')}
+        </tbody>
+      </table>`
   }
- 
+
   window.cancelarAlumno = () => {
     document.getElementById('form-alumno').style.display = 'none'
     document.getElementById('input-alumno-nombre').value = ''
-    document.getElementById('input-alumno-apellido').value = ''
+    document.getElementById('input-ap-paterno').value = ''
+    document.getElementById('input-ap-materno').value = ''
   }
- 
+
   document.getElementById('btn-agregar-alumno').addEventListener('click', () => {
+    document.getElementById('zona-csv').style.display = 'none'
     document.getElementById('form-alumno').style.display = 'block'
-    document.getElementById('input-alumno-nombre').focus()
+    document.getElementById('input-ap-paterno').focus()
   })
- 
+
   document.getElementById('btn-guardar-alumno').addEventListener('click', async () => {
-    const grupoId  = document.getElementById('alumno-grupo-id').value
-    const nombre   = document.getElementById('input-alumno-nombre').value.trim()
-    const apellido = document.getElementById('input-alumno-apellido').value.trim()
- 
-    if (!nombre || !apellido) {
-      mostrarToast('Ingresa nombre y apellido', 'error')
+    const grupoId    = document.getElementById('alumno-grupo-id').value
+    const nombre     = document.getElementById('input-alumno-nombre').value.trim()
+    const apPaterno  = document.getElementById('input-ap-paterno').value.trim()
+    const apMaterno  = document.getElementById('input-ap-materno').value.trim()
+
+    if (!nombre || !apPaterno) {
+      mostrarToast('Ingresa al menos apellido paterno y nombre', 'error')
       return
     }
- 
-    await supabase.from('alumnos').insert({ grupo_id: grupoId, nombre, apellido })
+
+    const apellidoCompleto = apMaterno ? `${apPaterno} ${apMaterno}` : apPaterno
+
+    await supabase.from('alumnos').insert({ grupo_id: grupoId, nombre, apellido: apellidoCompleto })
     mostrarToast('Alumno agregado ✓')
     cancelarAlumno()
     await cargarAlumnos(grupoId)
   })
- 
+
   window.eliminarAlumno = async (alumnoId, grupoId) => {
     if (!confirm('¿Quitar este alumno del grupo?')) return
     await supabase.from('alumnos').update({ activo: false }).eq('id', alumnoId)
     await cargarAlumnos(grupoId)
   }
- 
+
+  // ── Importar CSV ──────────────────────────────────────────
+  let alumnosCSV = []
+
+  document.getElementById('btn-importar-csv').addEventListener('click', () => {
+    document.getElementById('form-alumno').style.display = 'none'
+    document.getElementById('zona-csv').style.display = 'block'
+    document.getElementById('csv-preview').style.display = 'none'
+  })
+
+  document.getElementById('btn-descargar-plantilla').addEventListener('click', () => {
+    const csv = 'No. lista,Apellido paterno,Apellido materno,Nombre(s)\n1,García,López,Ana María\n2,Martínez,Rodríguez,Carlos'
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a')
+    a.href = url; a.download = 'plantilla_alumnos.csv'; a.click()
+    URL.revokeObjectURL(url)
+  })
+
+  document.getElementById('input-csv').addEventListener('change', (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      const texto = ev.target.result
+      const lineas = texto.split('\n').map(l => l.trim()).filter(Boolean)
+
+      // Detectar si tiene encabezado
+      const inicio = lineas[0].toLowerCase().includes('apellido') || lineas[0].toLowerCase().includes('no') ? 1 : 0
+      alumnosCSV = []
+
+      for (let i = inicio; i < lineas.length; i++) {
+        // Soportar coma y punto y coma como separador
+        const cols = lineas[i].includes(';') ? lineas[i].split(';') : lineas[i].split(',')
+        if (cols.length < 3) continue
+
+        const noLista   = cols[0]?.trim() || ''
+        const apPaterno = cols[1]?.trim() || ''
+        const apMaterno = cols[2]?.trim() || ''
+        const nombre    = cols[3]?.trim() || ''
+
+        if (!apPaterno || !nombre) continue
+
+        const apellido = apMaterno ? `${apPaterno} ${apMaterno}` : apPaterno
+        alumnosCSV.push({ noLista, nombre, apellido, apPaterno, apMaterno })
+      }
+
+      // Mostrar preview
+      document.getElementById('csv-preview-label').textContent = `${alumnosCSV.length} alumnos encontrados`
+      document.getElementById('csv-preview-tabla').innerHTML = `
+        <table style="width:100%;border-collapse:collapse;">
+          <thead><tr style="border-bottom:1px solid var(--border);">
+            <th style="padding:3px 6px;text-align:left;font-size:10px;color:var(--text-3);">#</th>
+            <th style="padding:3px 6px;text-align:left;font-size:10px;color:var(--text-3);">Apellidos</th>
+            <th style="padding:3px 6px;text-align:left;font-size:10px;color:var(--text-3);">Nombre(s)</th>
+          </tr></thead>
+          <tbody>
+            ${alumnosCSV.map(a => `
+              <tr style="border-bottom:1px solid var(--border);">
+                <td style="padding:3px 6px;color:var(--text-3);">${a.noLista}</td>
+                <td style="padding:3px 6px;">${a.apellido}</td>
+                <td style="padding:3px 6px;">${a.nombre}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>`
+      document.getElementById('csv-preview').style.display = 'block'
+    }
+    reader.readAsText(file, 'UTF-8')
+  })
+
+  window.cancelarCSV = () => {
+    document.getElementById('zona-csv').style.display = 'none'
+    document.getElementById('input-csv').value = ''
+    alumnosCSV = []
+  }
+
+  document.getElementById('btn-confirmar-csv').addEventListener('click', async () => {
+    const grupoId = document.getElementById('alumno-grupo-id').value
+    if (!alumnosCSV.length) return
+
+    const btn = document.getElementById('btn-confirmar-csv')
+    btn.disabled = true
+    btn.textContent = 'Importando...'
+
+    try {
+      // Insertar en lotes de 20
+      const lote = alumnosCSV.map(a => ({
+        grupo_id: grupoId, nombre: a.nombre, apellido: a.apellido, activo: true
+      }))
+
+      const tamLote = 20
+      for (let i = 0; i < lote.length; i += tamLote) {
+        await supabase.from('alumnos').insert(lote.slice(i, i + tamLote))
+      }
+
+      mostrarToast(`${alumnosCSV.length} alumnos importados ✓`)
+      cancelarCSV()
+      await cargarAlumnos(grupoId)
+    } catch(e) {
+      mostrarToast('Error al importar: ' + e.message, 'error')
+    } finally {
+      btn.disabled = false
+      btn.textContent = 'Importar alumnos'
+    }
+  })
+
   // ── Toast ─────────────────────────────────────────────────
   function mostrarToast(msg, tipo = 'ok') {
     const t = document.getElementById('toast')
@@ -576,7 +727,7 @@
     t.style.display = 'block'
     setTimeout(() => { t.style.display = 'none' }, 2500)
   }
- 
+
   // Cerrar modal al hacer clic fuera
   document.getElementById('modal-grupo').addEventListener('click', e => {
     if (e.target === document.getElementById('modal-grupo')) cerrarModal()
@@ -587,4 +738,3 @@
 </script>
 </body>
 </html>
- 
