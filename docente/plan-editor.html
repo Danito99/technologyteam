@@ -12,9 +12,33 @@
     .header-info textarea { min-height: 52px; }
 
     .sesion-card {
-      background: var(--bg-card); border: 1px solid var(--border);
+      background: var(--bg-card); border-left: 4px solid var(--border);
+      border-top: 1px solid var(--border); border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
       border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px;
     }
+    /* Colores por número de sesión */
+    .sesion-card.c0 { border-left-color: #F59E0B; }
+    .sesion-card.c1 { border-left-color: #8B5CF6; }
+    .sesion-card.c2 { border-left-color: #10B981; }
+    .sesion-card.c3 { border-left-color: #EF4444; }
+    .sesion-card.c4 { border-left-color: #3B82F6; }
+    .sesion-card.c5 { border-left-color: #EC4899; }
+    .sesion-card.c6 { border-left-color: #F97316; }
+    .sesion-card.c7 { border-left-color: #06B6D4; }
+    .sesion-card.c8 { border-left-color: #84CC16; }
+    .sesion-card.c9 { border-left-color: #A855F7; }
+    /* Número de sesión con el mismo color */
+    .sesion-card.c0 .sesion-num { background:#FEF3C7; color:#D97706; }
+    .sesion-card.c1 .sesion-num { background:#EDE9FE; color:#7C3AED; }
+    .sesion-card.c2 .sesion-num { background:#D1FAE5; color:#059669; }
+    .sesion-card.c3 .sesion-num { background:#FEE2E2; color:#DC2626; }
+    .sesion-card.c4 .sesion-num { background:#DBEAFE; color:#2563EB; }
+    .sesion-card.c5 .sesion-num { background:#FCE7F3; color:#DB2777; }
+    .sesion-card.c6 .sesion-num { background:#FFEDD5; color:#EA580C; }
+    .sesion-card.c7 .sesion-num { background:#CFFAFE; color:#0891B2; }
+    .sesion-card.c8 .sesion-num { background:#ECFCCB; color:#65A30D; }
+    .sesion-card.c9 .sesion-num { background:#F3E8FF; color:#9333EA; }
     .sesion-header {
       display: flex; align-items: center; gap: 10px;
       margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border);
@@ -193,20 +217,27 @@
   document.getElementById('topbar-sub').textContent =
     `${periodo?.etiqueta} · ${gm?.grupos?.nivel}`
 
-  // ── Cargar aprendizaje esperado del plan analítico ───────
+  // ── Cargar filas del plan analítico ─────────────────────
   const { data: filasPA } = await supabase
     .from('plan_analitico_filas')
-    .select('aprendizaje_esperado, saber_hacer')
+    .select('aprendizaje_esperado, saber_hacer, contenido')
     .eq('grupo_materia_id', gmId)
     .eq('periodo_id', periodoId)
     .eq('es_examen', false)
     .order('orden')
 
+  // Proceso general: todos los aprendizajes del periodo
   const aprendizajes = filasPA?.filter(f => f.aprendizaje_esperado)
     .map(f => f.aprendizaje_esperado).join(' · ') || ''
 
-  const objetivos = filasPA?.filter(f => f.saber_hacer)
-    .map(f => f.saber_hacer) || []
+  // Cada fila del plan analítico genera una sesión con su propio objetivo
+  const filasConObj = filasPA?.filter(f => f.aprendizaje_esperado || f.saber_hacer) || []
+  const objetivos = filasConObj.map(f => {
+    const partes = []
+    if (f.aprendizaje_esperado) partes.push(f.aprendizaje_esperado)
+    if (f.saber_hacer) partes.push('Saber hacer: ' + f.saber_hacer)
+    return partes.join(' | ')
+  })
 
   document.getElementById('proceso-display').textContent =
     aprendizajes || 'No hay aprendizajes esperados en el plan analítico para este periodo.'
@@ -261,6 +292,7 @@
 
     container.innerHTML = sesiones.map((s, i) => {
       const gridClass = nivel === 'preparatoria' ? 'preparatoria' : nivel === 'primaria' ? 'primaria' : 'secundaria'
+      const colorClass = 'c' + (i % 10)
 
       const camposDUA = nivel !== 'primaria'
         ? `<div>
@@ -293,7 +325,7 @@
         : ''
 
       return `
-        <div class="sesion-card">
+        <div class="sesion-card ${colorClass}">
           <div class="sesion-header">
             <div class="sesion-num">${s.numero}</div>
             <div class="sesion-objetivo">
