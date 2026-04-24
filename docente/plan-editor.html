@@ -6,93 +6,78 @@
   <title>TechAcademia — Editor plan de clase</title>
   <link rel="stylesheet" href="../css/global.css">
   <style>
-    .header-info {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;
-    }
-    .header-info textarea { min-height: 52px; }
+    .header-info { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
+    .header-info textarea { min-height:52px; }
 
     .sesion-card {
-      background: var(--bg-card); border-left: 4px solid var(--border);
-      border-top: 1px solid var(--border); border-right: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-      border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px;
+      background:var(--bg-card);
+      border-left:4px solid var(--border);
+      border-top:1px solid var(--border);
+      border-right:1px solid var(--border);
+      border-bottom:1px solid var(--border);
+      border-radius:var(--radius); padding:14px 16px; margin-bottom:12px;
     }
-    /* Colores por número de sesión */
-    .sesion-card.c0 { border-left-color: #F59E0B; }
-    .sesion-card.c1 { border-left-color: #8B5CF6; }
-    .sesion-card.c2 { border-left-color: #10B981; }
-    .sesion-card.c3 { border-left-color: #EF4444; }
-    .sesion-card.c4 { border-left-color: #3B82F6; }
-    .sesion-card.c5 { border-left-color: #EC4899; }
-    .sesion-card.c6 { border-left-color: #F97316; }
-    .sesion-card.c7 { border-left-color: #06B6D4; }
-    .sesion-card.c8 { border-left-color: #84CC16; }
-    .sesion-card.c9 { border-left-color: #A855F7; }
-    /* Número de sesión con el mismo color */
-    .sesion-card.c0 .sesion-num { background:#FEF3C7; color:#D97706; }
-    .sesion-card.c1 .sesion-num { background:#EDE9FE; color:#7C3AED; }
-    .sesion-card.c2 .sesion-num { background:#D1FAE5; color:#059669; }
-    .sesion-card.c3 .sesion-num { background:#FEE2E2; color:#DC2626; }
-    .sesion-card.c4 .sesion-num { background:#DBEAFE; color:#2563EB; }
-    .sesion-card.c5 .sesion-num { background:#FCE7F3; color:#DB2777; }
-    .sesion-card.c6 .sesion-num { background:#FFEDD5; color:#EA580C; }
-    .sesion-card.c7 .sesion-num { background:#CFFAFE; color:#0891B2; }
-    .sesion-card.c8 .sesion-num { background:#ECFCCB; color:#65A30D; }
-    .sesion-card.c9 .sesion-num { background:#F3E8FF; color:#9333EA; }
+    .sesion-card.c0{border-left-color:#F59E0B;} .sesion-card.c0 .sesion-num{background:#FEF3C7;color:#D97706;}
+    .sesion-card.c1{border-left-color:#8B5CF6;} .sesion-card.c1 .sesion-num{background:#EDE9FE;color:#7C3AED;}
+    .sesion-card.c2{border-left-color:#10B981;} .sesion-card.c2 .sesion-num{background:#D1FAE5;color:#059669;}
+    .sesion-card.c3{border-left-color:#EF4444;} .sesion-card.c3 .sesion-num{background:#FEE2E2;color:#DC2626;}
+    .sesion-card.c4{border-left-color:#3B82F6;} .sesion-card.c4 .sesion-num{background:#DBEAFE;color:#2563EB;}
+    .sesion-card.c5{border-left-color:#EC4899;} .sesion-card.c5 .sesion-num{background:#FCE7F3;color:#DB2777;}
+    .sesion-card.c6{border-left-color:#F97316;} .sesion-card.c6 .sesion-num{background:#FFEDD5;color:#EA580C;}
+    .sesion-card.c7{border-left-color:#06B6D4;} .sesion-card.c7 .sesion-num{background:#CFFAFE;color:#0891B2;}
+    .sesion-card.c8{border-left-color:#84CC16;} .sesion-card.c8 .sesion-num{background:#ECFCCB;color:#65A30D;}
+    .sesion-card.c9{border-left-color:#A855F7;} .sesion-card.c9 .sesion-num{background:#F3E8FF;color:#9333EA;}
+
     .sesion-header {
-      display: flex; align-items: center; gap: 10px;
-      margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border);
+      display:flex; align-items:center; gap:10px;
+      margin-bottom:12px; padding-bottom:10px; border-bottom:1px solid var(--border);
     }
     .sesion-num {
-      width: 28px; height: 28px; border-radius: 50%;
-      background: var(--az-l); color: var(--az);
-      font-size: 12px; font-weight: 600;
-      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      width:28px; height:28px; border-radius:50%;
+      background:var(--az-l); color:var(--az);
+      font-size:12px; font-weight:600;
+      display:flex; align-items:center; justify-content:center; flex-shrink:0;
     }
-    .sesion-objetivo {
-      flex: 1; font-size: 12px; color: var(--az-d);
-      background: var(--az-l); padding: 5px 8px; border-radius: var(--radius-s);
-    }
-    .sesion-objetivo .label {
-      font-size: 9px; font-weight: 600; color: var(--az);
-      text-transform: uppercase; letter-spacing: .06em; display: block; margin-bottom: 2px;
-    }
-    .sesion-grid {
-      display: grid; gap: 10px;
-    }
-    .sesion-grid.secundaria { grid-template-columns: 1fr 1fr 1fr 1fr 1fr; }
-    .sesion-grid.preparatoria { grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr; }
-    .sesion-grid.primaria { grid-template-columns: 1fr 1fr 1fr 1fr 1fr; }
 
-    .campo-label {
-      font-size: 10px; font-weight: 600; color: var(--text-3);
-      text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px;
+    .pda-block {
+      background:var(--bg); border-radius:var(--radius-s);
+      padding:10px 12px; margin-bottom:12px;
+      border:1px solid var(--border);
     }
-    .campo-label.required::after { content: ' *'; color: var(--co); }
+    .pda-select { width:100%; margin-bottom:8px; }
+    .pda-info { display:none; }
+    .pda-info.visible { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:6px; }
+    .pda-info-item { background:var(--az-l); border-radius:var(--radius-s); padding:7px 10px; }
+    .pda-info-item .lbl { font-size:9px; font-weight:600; color:var(--az); text-transform:uppercase; letter-spacing:.06em; margin-bottom:3px; display:block; }
+    .pda-info-item .val { font-size:11px; color:var(--az-d); line-height:1.5; }
+
+    .sesion-grid { display:grid; gap:10px; margin-top:10px; }
+    .sesion-grid.primaria     { grid-template-columns: repeat(5,1fr); }
+    .sesion-grid.secundaria   { grid-template-columns: repeat(6,1fr); }
+    .sesion-grid.preparatoria { grid-template-columns: repeat(7,1fr); }
+
+    .obj-particulares {
+      background:var(--vd-l); border-radius:var(--radius-s);
+      padding:7px 10px; font-size:11px; color:var(--vd);
+      min-height:80px; line-height:1.5;
+    }
+    .obj-particulares .lbl { font-size:9px; font-weight:600; color:var(--vd); text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px; display:block; }
+
+    .campo-label { font-size:10px; font-weight:600; color:var(--text-3); text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px; }
+    .campo-label.required::after { content:' *'; color:var(--co); }
 
     .save-bar {
-      position: sticky; bottom: 0; background: var(--bg-card);
-      border-top: 1px solid var(--border); padding: 10px 20px;
-      display: flex; align-items: center; justify-content: space-between;
-      margin: 0 -20px -20px; z-index: 10;
+      position:sticky; bottom:0; background:var(--bg-card);
+      border-top:1px solid var(--border); padding:10px 20px;
+      display:flex; align-items:center; justify-content:space-between;
+      margin:0 -20px -20px; z-index:10;
     }
-    .save-actions { display: flex; gap: 8px; }
-
-    .rechazado-banner {
-      background: var(--co-l); border: 1px solid #F0997B;
-      border-radius: var(--radius-s); padding: 10px 14px; margin-bottom: 12px;
-    }
-    .rechazado-banner .titulo { font-size: 12px; font-weight: 600; color: var(--co); margin-bottom: 4px; }
-    .rechazado-banner p { font-size: 11px; color: var(--co); }
-
-    .toast {
-      position: fixed; bottom: 70px; right: 20px;
-      background: var(--vd); color: white;
-      padding: 10px 16px; border-radius: var(--radius-s);
-      font-size: 12px; z-index: 200; display: none;
-    }
-
-    select.field-select { margin: 0; font-size: 11px; padding: 5px 8px; }
+    .save-actions { display:flex; gap:8px; }
+    .rechazado-banner { background:var(--co-l); border:1px solid #F0997B; border-radius:var(--radius-s); padding:10px 14px; margin-bottom:12px; }
+    .rechazado-banner .titulo { font-size:12px; font-weight:600; color:var(--co); margin-bottom:4px; }
+    .rechazado-banner p { font-size:11px; color:var(--co); }
+    .toast { position:fixed; bottom:70px; right:20px; background:var(--vd); color:white; padding:10px 16px; border-radius:var(--radius-s); font-size:12px; z-index:200; display:none; }
+    select.field-select { margin:0; font-size:11px; padding:5px 8px; }
   </style>
 </head>
 <body>
@@ -114,22 +99,14 @@
       <div id="loading" class="loading">Cargando plan...</div>
       <div id="content" style="display:none;">
 
-        <!-- Banner rechazo -->
         <div id="banner-rechazo" class="rechazado-banner" style="display:none;">
           <div class="titulo">Plan rechazado — revisa los comentarios</div>
           <p id="texto-rechazo"></p>
         </div>
 
-        <!-- Info general del plan -->
         <div class="card">
           <div class="card-title">Información general</div>
           <div class="header-info">
-            <div>
-              <div class="campo-label">Proceso de desarrollo de aprendizaje</div>
-              <div style="font-size:11px;background:var(--az-l);color:var(--az-d);padding:8px 10px;border-radius:var(--radius-s);" id="proceso-display">
-                Se cargará del plan analítico
-              </div>
-            </div>
             <div>
               <div class="campo-label">Nombre del proyecto / situación problema</div>
               <textarea class="inp" id="nombre-proyecto" placeholder="ej. Mini-sistema de gestión de tareas..."></textarea>
@@ -149,22 +126,19 @@
               <div class="campo-label">Ejes articuladores</div>
               <input type="text" class="inp" id="ejes" style="margin:0;" placeholder="ej. Pensamiento crítico, Digitalización">
             </div>
-          </div>
-          <div>
-            <div class="campo-label">Ajustes razonados</div>
-            <textarea class="inp" id="ajustes" style="min-height:40px;" placeholder="Descripción de ajustes para alumnos con necesidades específicas..."></textarea>
+            <div>
+              <div class="campo-label">Ajustes razonados</div>
+              <textarea class="inp" id="ajustes" style="min-height:40px;" placeholder="Ajustes para alumnos con necesidades específicas..."></textarea>
+            </div>
           </div>
         </div>
 
-        <!-- Sesiones -->
         <div id="sesiones-container"></div>
 
-        <!-- Botón agregar sesión -->
         <button class="btn btn-sm" id="btn-add-sesion" style="margin-bottom:70px;">+ Agregar sesión</button>
 
       </div>
 
-      <!-- Barra guardar/entregar -->
       <div class="save-bar" id="save-bar" style="display:none;">
         <span style="font-size:11px;color:var(--text-3);" id="save-status"></span>
         <div class="save-actions">
@@ -187,62 +161,41 @@
   if (!profile) throw new Error('No autenticado')
   await renderSidebar('planes-clase')
 
-  const params       = new URLSearchParams(window.location.search)
-  const gmId         = params.get('gmId')
-  const periodoId    = params.get('pId')
-  const planId       = params.get('planId')
+  const params     = new URLSearchParams(window.location.search)
+  const gmId       = params.get('gmId')
+  const periodoId  = params.get('pId')
+  const planId     = params.get('planId')
 
-  let nivel          = 'secundaria'
-  let sesiones       = []
-  let planActualId   = planId || null
-  let estadoActual   = 'borrador'
+  let nivel        = 'secundaria'
+  let sesiones     = []
+  let planActualId = planId || null
+  let estadoActual = 'borrador'
+  let filasPA      = []
 
-  if (!gmId || !periodoId) {
-    window.location.href = 'planes-clase.html'
-    throw new Error('Faltan parámetros')
-  }
+  if (!gmId || !periodoId) { window.location.href = 'planes-clase.html'; throw new Error('Faltan parámetros') }
 
-  // ── Cargar datos del grupo-materia ───────────────────────
   const { data: gm } = await supabase
     .from('grupo_materias')
-    .select('id, grupos(nombre, nivel, sistema_periodos), materias(nombre)')
+    .select('id, grupos(nombre,nivel,sistema_periodos), materias(nombre)')
     .eq('id', gmId).single()
 
   const { data: periodo } = await supabase
     .from('periodos').select('etiqueta').eq('id', periodoId).single()
 
   nivel = gm?.grupos?.nivel || 'secundaria'
-  document.getElementById('topbar-title').textContent =
-    `Plan de clase — ${gm?.grupos?.nombre} · ${gm?.materias?.nombre}`
-  document.getElementById('topbar-sub').textContent =
-    `${periodo?.etiqueta} · ${gm?.grupos?.nivel}`
+  document.getElementById('topbar-title').textContent = `Plan de clase — ${gm?.grupos?.nombre} · ${gm?.materias?.nombre}`
+  document.getElementById('topbar-sub').textContent   = `${periodo?.etiqueta} · ${gm?.grupos?.nivel}`
 
-  // ── Cargar filas del plan analítico ─────────────────────
-  const { data: filasPA } = await supabase
+  const { data: filas } = await supabase
     .from('plan_analitico_filas')
-    .select('aprendizaje_esperado, saber_hacer, contenido')
+    .select('id, semana, contenido, aprendizaje_esperado, saber_hacer')
     .eq('grupo_materia_id', gmId)
     .eq('periodo_id', periodoId)
     .eq('es_examen', false)
     .order('orden')
 
-  // Proceso general: todos los aprendizajes del periodo
-  const aprendizajes = filasPA?.filter(f => f.aprendizaje_esperado)
-    .map(f => f.aprendizaje_esperado).join(' · ') || ''
+  filasPA = filas || []
 
-  // Cada fila del plan analítico genera una sesión con su propio objetivo
-  const filasConObj = filasPA?.filter(f => f.aprendizaje_esperado || f.saber_hacer) || []
-  const objetivos = filasConObj.map(f => {
-    const partes = []
-    if (f.aprendizaje_esperado) partes.push(f.aprendizaje_esperado)
-    if (f.saber_hacer) partes.push('Saber hacer: ' + f.saber_hacer)
-    return partes.join(' | ')
-  })
-
-  document.getElementById('proceso-display').textContent =
-    aprendizajes || 'No hay aprendizajes esperados en el plan analítico para este periodo.'
-
-  // ── Cargar plan existente ────────────────────────────────
   if (planActualId) {
     const { data: plan } = await supabase
       .from('planes_clase')
@@ -252,30 +205,32 @@
     if (plan) {
       estadoActual = plan.estado
       document.getElementById('nombre-proyecto').value = plan.nombre_proyecto || ''
-      document.getElementById('metodologia').value = plan.metodologia || 'Aprendizaje basado en proyectos'
-      document.getElementById('ejes').value = plan.ejes_articuladores || ''
-      document.getElementById('ajustes').value = plan.ajustes_razonados || ''
+      document.getElementById('metodologia').value     = plan.metodologia || 'Aprendizaje basado en proyectos'
+      document.getElementById('ejes').value            = plan.ejes_articuladores || ''
+      document.getElementById('ajustes').value         = plan.ajustes_razonados || ''
 
       if (plan.estado === 'rechazado' && plan.comentario_admin) {
         document.getElementById('banner-rechazo').style.display = 'block'
-        document.getElementById('texto-rechazo').textContent = plan.comentario_admin
+        document.getElementById('texto-rechazo').textContent    = plan.comentario_admin
       }
 
       sesiones = (plan.plan_clase_sesiones || [])
-        .sort((a, b) => a.numero - b.numero)
+        .sort((a,b) => a.numero - b.numero)
         .map(s => ({ ...s }))
     }
   }
 
-  // Si no hay sesiones, crear una por cada objetivo del plan analítico
-  if (!sesiones.length && objetivos.length) {
-    sesiones = objetivos.map((obj, i) => ({
-      numero: i + 1, objetivo_particular: obj,
-      inicio: '', desarrollo: '', cierre: '',
-      monitoreo: '', evaluacion: '', dua: '', tipo_actividad: ''
-    }))
-  } else if (!sesiones.length) {
-    sesiones = [{ numero: 1, objetivo_particular: '', inicio: '', desarrollo: '', cierre: '', monitoreo: '', evaluacion: '', dua: '', tipo_actividad: '' }]
+  if (!sesiones.length) {
+    if (filasPA.length) {
+      sesiones = filasPA.map((f, i) => ({
+        numero: i + 1, pda_fila_id: f.id,
+        objetivo_particular: f.saber_hacer || '',
+        inicio: '', desarrollo: '', cierre: '',
+        monitoreo: '', evaluacion: '', dua: '', tipo_actividad: ''
+      }))
+    } else {
+      sesiones = [{ numero:1, pda_fila_id:'', objetivo_particular:'', inicio:'', desarrollo:'', cierre:'', monitoreo:'', evaluacion:'', dua:'', tipo_actividad:'' }]
+    }
   }
 
   actualizarEstadoChip()
@@ -285,98 +240,134 @@
   document.getElementById('content').style.display = 'block'
   document.getElementById('save-bar').style.display = 'flex'
 
-  // ── Render sesiones ───────────────────────────────────────
   function renderSesiones() {
     const container = document.getElementById('sesiones-container')
-    const bloqueado = ['aprobado'].includes(estadoActual)
+    const bloqueado = estadoActual === 'aprobado'
 
     container.innerHTML = sesiones.map((s, i) => {
+      const colorClass       = 'c' + (i % 10)
+      const filaSeleccionada = filasPA.find(f => f.id === s.pda_fila_id)
+
+      const pdaOpts = filasPA.map(f => `
+        <option value="${f.id}" ${s.pda_fila_id === f.id ? 'selected' : ''}>
+          ${f.semana ? f.semana + ' — ' : ''}${f.contenido || f.aprendizaje_esperado || 'Sin título'}
+        </option>`).join('')
+
+      const pdaBlock = `
+        <div class="pda-block">
+          <div class="campo-label">Proceso de desarrollo de aprendizaje (PDA)</div>
+          <select class="pda-select field-select" ${bloqueado?'disabled':''} onchange="onPdaChange(${i},this.value)">
+            <option value="">— Selecciona el PDA de esta sesión —</option>
+            ${pdaOpts}
+          </select>
+          <div class="pda-info ${filaSeleccionada?'visible':''}" id="pda-info-${i}">
+            <div class="pda-info-item">
+              <span class="lbl">Contenido general</span>
+              <div class="val" id="pda-contenido-${i}">${filaSeleccionada?.contenido||'—'}</div>
+            </div>
+            <div class="pda-info-item">
+              <span class="lbl">Aprendizaje esperado</span>
+              <div class="val" id="pda-aprendizaje-${i}">${filaSeleccionada?.aprendizaje_esperado||'—'}</div>
+            </div>
+          </div>
+        </div>`
+
+      const objPart = nivel !== 'primaria' ? `
+        <div>
+          <div class="campo-label">Obj. Particulares</div>
+          <div class="obj-particulares" id="obj-part-${i}">
+            <span class="lbl">Saber y saber hacer ← plan analítico</span>
+            ${filaSeleccionada?.saber_hacer || '<span style="opacity:.5;font-style:italic;">Selecciona un PDA arriba</span>'}
+          </div>
+        </div>` : ''
+
+      const camposEval = `
+        <div>
+          <div class="campo-label">Monitoreo</div>
+          <select class="field-select w-full" ${bloqueado?'disabled':''} onchange="editSesion(${i},'monitoreo',this.value)">
+            <option value="" ${!s.monitoreo?'selected':''}>—</option>
+            <option ${s.monitoreo==='Semáforo'?'selected':''}>Semáforo</option>
+            <option ${s.monitoreo==='Chequeo afirmativo'?'selected':''}>Chequeo afirmativo</option>
+            <option ${s.monitoreo==='Monitoreo en tiempo real'?'selected':''}>Monitoreo en tiempo real</option>
+            <option ${s.monitoreo==='Pulgares'?'selected':''}>Pulgares</option>
+            <option ${s.monitoreo==='Ticket de salida'?'selected':''}>Ticket de salida</option>
+          </select>
+        </div>
+        <div>
+          <div class="campo-label">Evaluación</div>
+          <select class="field-select w-full" ${bloqueado?'disabled':''} onchange="editSesion(${i},'evaluacion',this.value)">
+            <option value="" ${!s.evaluacion?'selected':''}>—</option>
+            <option ${s.evaluacion==='Rúbrica'?'selected':''}>Rúbrica</option>
+            <option ${s.evaluacion==='Lista de cotejo'?'selected':''}>Lista de cotejo</option>
+            <option ${s.evaluacion==='Ticket de salida'?'selected':''}>Ticket de salida</option>
+            <option ${s.evaluacion==='Mapas mentales'?'selected':''}>Mapas mentales</option>
+            <option ${s.evaluacion==='Portafolio'?'selected':''}>Portafolio</option>
+            <option ${s.evaluacion==='Observación'?'selected':''}>Observación</option>
+          </select>
+        </div>`
+
+      const campoDUA = nivel !== 'primaria' ? `
+        <div>
+          <div class="campo-label">DUA</div>
+          <select class="field-select w-full" ${bloqueado?'disabled':''} onchange="editSesion(${i},'dua',this.value)">
+            <option value="" ${!s.dua?'selected':''}>—</option>
+            <option ${s.dua==='Percepción'?'selected':''}>Percepción</option>
+            <option ${s.dua==='Idioma y símbolos'?'selected':''}>Idioma y símbolos</option>
+            <option ${s.dua==='Comprensión'?'selected':''}>Comprensión</option>
+            <option ${s.dua==='Acción física'?'selected':''}>Acción física</option>
+            <option ${s.dua==='Expresión y comunicación'?'selected':''}>Expresión y comunicación</option>
+            <option ${s.dua==='Función ejecutiva'?'selected':''}>Función ejecutiva</option>
+            <option ${s.dua==='Con propósito y motivado'?'selected':''}>Con propósito y motivado</option>
+          </select>
+        </div>` : ''
+
+      const campoTipoAct = nivel === 'preparatoria' ? `
+        <div>
+          <div class="campo-label">Tipo actividad</div>
+          <select class="field-select w-full" ${bloqueado?'disabled':''} onchange="editSesion(${i},'tipo_actividad',this.value)">
+            <option value="" ${!s.tipo_actividad?'selected':''}>—</option>
+            <option ${s.tipo_actividad==='Trabajo de clase'?'selected':''}>Trabajo de clase</option>
+            <option ${s.tipo_actividad==='Diagnóstico'?'selected':''}>Diagnóstico</option>
+            <option ${s.tipo_actividad==='Socioemocional'?'selected':''}>Socioemocional</option>
+            <option ${s.tipo_actividad==='Evaluación'?'selected':''}>Evaluación</option>
+            <option ${s.tipo_actividad==='Proyecto'?'selected':''}>Proyecto</option>
+          </select>
+        </div>` : ''
+
       const gridClass = nivel === 'preparatoria' ? 'preparatoria' : nivel === 'primaria' ? 'primaria' : 'secundaria'
-      const colorClass = 'c' + (i % 10)
-
-      const camposDUA = nivel !== 'primaria'
-        ? `<div>
-            <div class="campo-label">DUA</div>
-            <select class="field-select w-full" ${bloqueado ? 'disabled' : ''} onchange="editSesion(${i},'dua',this.value)">
-              <option value="" ${!s.dua ? 'selected' : ''}>—</option>
-              <option ${s.dua==='Percepción'?'selected':''}>Percepción</option>
-              <option ${s.dua==='Idioma y símbolos'?'selected':''}>Idioma y símbolos</option>
-              <option ${s.dua==='Comprensión'?'selected':''}>Comprensión</option>
-              <option ${s.dua==='Acción física'?'selected':''}>Acción física</option>
-              <option ${s.dua==='Expresión y comunicación'?'selected':''}>Expresión y comunicación</option>
-              <option ${s.dua==='Función ejecutiva'?'selected':''}>Función ejecutiva</option>
-              <option ${s.dua==='Con propósito y motivado'?'selected':''}>Con propósito y motivado</option>
-            </select>
-           </div>`
-        : ''
-
-      const campoTipoAct = nivel === 'preparatoria'
-        ? `<div>
-            <div class="campo-label">Tipo actividad</div>
-            <select class="field-select w-full" ${bloqueado ? 'disabled' : ''} onchange="editSesion(${i},'tipo_actividad',this.value)">
-              <option value="" ${!s.tipo_actividad ? 'selected' : ''}>—</option>
-              <option ${s.tipo_actividad==='Trabajo de clase'?'selected':''}>Trabajo de clase</option>
-              <option ${s.tipo_actividad==='Diagnóstico'?'selected':''}>Diagnóstico</option>
-              <option ${s.tipo_actividad==='Socioemocional'?'selected':''}>Socioemocional</option>
-              <option ${s.tipo_actividad==='Evaluación'?'selected':''}>Evaluación</option>
-              <option ${s.tipo_actividad==='Proyecto'?'selected':''}>Proyecto</option>
-            </select>
-           </div>`
-        : ''
 
       return `
         <div class="sesion-card ${colorClass}">
           <div class="sesion-header">
             <div class="sesion-num">${s.numero}</div>
-            <div class="sesion-objetivo">
-              <span class="label">Objetivo particular ← plan analítico</span>
-              <span>${s.objetivo_particular || 'Sin objetivo asignado'}</span>
-            </div>
-            ${!bloqueado ? `<button class="btn btn-sm" style="color:var(--co);border-color:var(--co);" onclick="eliminarSesion(${i})">✕</button>` : ''}
+            <div style="flex:1;font-size:13px;font-weight:600;color:var(--text);">Sesión ${s.numero}</div>
+            ${!bloqueado ? `<button class="btn btn-sm" style="color:var(--co);border-color:var(--co);" onclick="eliminarSesion(${i})">✕ Eliminar</button>` : ''}
           </div>
+
+          ${pdaBlock}
+
           <div class="sesion-grid ${gridClass}">
             <div>
               <div class="campo-label required">Inicio</div>
-              <textarea class="inp" style="min-height:70px;margin:0;font-size:11px;" ${bloqueado?'disabled':''}
+              <textarea class="inp" style="min-height:80px;margin:0;font-size:11px;" ${bloqueado?'disabled':''}
                 onchange="editSesion(${i},'inicio',this.value)"
-                placeholder="Activación de conocimientos previos...">${s.inicio || ''}</textarea>
+                placeholder="Activación de conocimientos previos...">${s.inicio||''}</textarea>
             </div>
             <div>
               <div class="campo-label required">Desarrollo</div>
-              <textarea class="inp" style="min-height:70px;margin:0;font-size:11px;" ${bloqueado?'disabled':''}
+              <textarea class="inp" style="min-height:80px;margin:0;font-size:11px;" ${bloqueado?'disabled':''}
                 onchange="editSesion(${i},'desarrollo',this.value)"
-                placeholder="Actividad principal de la sesión...">${s.desarrollo || ''}</textarea>
+                placeholder="Actividad principal de la sesión...">${s.desarrollo||''}</textarea>
             </div>
             <div>
               <div class="campo-label required">Cierre</div>
-              <textarea class="inp" style="min-height:70px;margin:0;font-size:11px;" ${bloqueado?'disabled':''}
+              <textarea class="inp" style="min-height:80px;margin:0;font-size:11px;" ${bloqueado?'disabled':''}
                 onchange="editSesion(${i},'cierre',this.value)"
-                placeholder="Síntesis, reflexión, ticket de salida...">${s.cierre || ''}</textarea>
+                placeholder="Síntesis, reflexión, ticket de salida...">${s.cierre||''}</textarea>
             </div>
-            <div>
-              <div class="campo-label">Monitoreo</div>
-              <select class="field-select w-full" ${bloqueado?'disabled':''} onchange="editSesion(${i},'monitoreo',this.value)">
-                <option value="" ${!s.monitoreo?'selected':''}>—</option>
-                <option ${s.monitoreo==='Semáforo'?'selected':''}>Semáforo</option>
-                <option ${s.monitoreo==='Chequeo afirmativo'?'selected':''}>Chequeo afirmativo</option>
-                <option ${s.monitoreo==='Monitoreo en tiempo real'?'selected':''}>Monitoreo en tiempo real</option>
-                <option ${s.monitoreo==='Pulgares'?'selected':''}>Pulgares</option>
-                <option ${s.monitoreo==='Ticket de salida'?'selected':''}>Ticket de salida</option>
-              </select>
-            </div>
-            <div>
-              <div class="campo-label">Evaluación</div>
-              <select class="field-select w-full" ${bloqueado?'disabled':''} onchange="editSesion(${i},'evaluacion',this.value)">
-                <option value="" ${!s.evaluacion?'selected':''}>—</option>
-                <option ${s.evaluacion==='Rúbrica'?'selected':''}>Rúbrica</option>
-                <option ${s.evaluacion==='Lista de cotejo'?'selected':''}>Lista de cotejo</option>
-                <option ${s.evaluacion==='Ticket de salida'?'selected':''}>Ticket de salida</option>
-                <option ${s.evaluacion==='Mapas mentales'?'selected':''}>Mapas mentales</option>
-                <option ${s.evaluacion==='Portafolio'?'selected':''}>Portafolio</option>
-                <option ${s.evaluacion==='Observación'?'selected':''}>Observación</option>
-              </select>
-            </div>
-            ${camposDUA}
+            ${objPart}
+            ${camposEval}
+            ${campoDUA}
             ${campoTipoAct}
           </div>
         </div>`
@@ -385,115 +376,107 @@
     document.getElementById('btn-add-sesion').style.display = bloqueado ? 'none' : 'inline-flex'
   }
 
-  window.editSesion = (i, campo, valor) => { sesiones[i][campo] = valor }
+  window.onPdaChange = (i, filaId) => {
+    sesiones[i].pda_fila_id = filaId
+    const fila = filasPA.find(f => f.id === filaId)
+    const infoEl = document.getElementById(`pda-info-${i}`)
+    if (fila) {
+      document.getElementById(`pda-contenido-${i}`).textContent   = fila.contenido || '—'
+      document.getElementById(`pda-aprendizaje-${i}`).textContent = fila.aprendizaje_esperado || '—'
+      infoEl.classList.add('visible')
+      sesiones[i].objetivo_particular = fila.saber_hacer || ''
+      const objEl = document.getElementById(`obj-part-${i}`)
+      if (objEl) objEl.innerHTML = `<span class="lbl">Saber y saber hacer ← plan analítico</span>${fila.saber_hacer || '—'}`
+    } else {
+      infoEl.classList.remove('visible')
+      sesiones[i].objetivo_particular = ''
+    }
+  }
+
+  window.editSesion    = (i, campo, valor) => { sesiones[i][campo] = valor }
   window.eliminarSesion = (i) => {
-    if (sesiones.length <= 1) { mostrarToast('El plan debe tener al menos una sesión', 'error'); return }
-    sesiones.splice(i, 1)
-    sesiones.forEach((s, idx) => s.numero = idx + 1)
+    if (sesiones.length <= 1) { mostrarToast('El plan debe tener al menos una sesión','error'); return }
+    sesiones.splice(i,1)
+    sesiones.forEach((s,idx) => s.numero = idx+1)
     renderSesiones()
   }
 
   document.getElementById('btn-add-sesion').addEventListener('click', () => {
-    sesiones.push({
-      numero: sesiones.length + 1, objetivo_particular: '',
-      inicio: '', desarrollo: '', cierre: '', monitoreo: '', evaluacion: '', dua: '', tipo_actividad: ''
-    })
+    sesiones.push({ numero:sesiones.length+1, pda_fila_id:'', objetivo_particular:'', inicio:'', desarrollo:'', cierre:'', monitoreo:'', evaluacion:'', dua:'', tipo_actividad:'' })
     renderSesiones()
-    document.getElementById('sesiones-container').lastElementChild?.scrollIntoView({ behavior: 'smooth' })
+    document.getElementById('sesiones-container').lastElementChild?.scrollIntoView({behavior:'smooth'})
   })
 
-  // ── Guardar ───────────────────────────────────────────────
   async function guardar(nuevoEstado) {
-    const nombre_proyecto    = document.getElementById('nombre-proyecto').value.trim()
-    const metodologia        = document.getElementById('metodologia').value
-    const ejes_articuladores = document.getElementById('ejes').value.trim()
-    const ajustes_razonados  = document.getElementById('ajustes').value.trim()
-
     const planData = {
-      grupo_materia_id: gmId, periodo_id: periodoId,
-      estado: nuevoEstado, nombre_proyecto, metodologia,
-      ejes_articuladores, ajustes_razonados,
-      ...(nuevoEstado === 'entregado' ? { entregado_at: new Date().toISOString() } : {}),
-      ...(planActualId && estadoActual === 'entregado' && nuevoEstado === 'entregado'
-        ? { modificado_at: new Date().toISOString() } : {})
+      grupo_materia_id: gmId, periodo_id: periodoId, estado: nuevoEstado,
+      nombre_proyecto:    document.getElementById('nombre-proyecto').value.trim(),
+      metodologia:        document.getElementById('metodologia').value,
+      ejes_articuladores: document.getElementById('ejes').value.trim(),
+      ajustes_razonados:  document.getElementById('ajustes').value.trim(),
+      ...(nuevoEstado==='entregado' ? {entregado_at:new Date().toISOString()} : {}),
+      ...(planActualId && estadoActual==='entregado' && nuevoEstado==='entregado' ? {modificado_at:new Date().toISOString()} : {})
     }
 
     let pid = planActualId
     if (pid) {
-      await supabase.from('planes_clase').update(planData).eq('id', pid)
-      // Historial
-      await supabase.from('historial_planes').insert({
-        plan_clase_id: pid,
-        snapshot: { planData, sesiones },
-        accion: nuevoEstado === 'entregado' ? (estadoActual === 'entregado' ? 'modificado' : 'entregado') : 'modificado',
-        actor_id: profile.id
-      })
+      await supabase.from('planes_clase').update(planData).eq('id',pid)
+      await supabase.from('historial_planes').insert({ plan_clase_id:pid, snapshot:{planData,sesiones}, accion:nuevoEstado==='entregado'?(estadoActual==='entregado'?'modificado':'entregado'):'modificado', actor_id:profile.id })
     } else {
-      const { data: nuevo } = await supabase.from('planes_clase').insert(planData).select('id').single()
-      pid = nuevo.id
-      planActualId = pid
-      await supabase.from('historial_planes').insert({
-        plan_clase_id: pid, snapshot: { planData, sesiones },
-        accion: nuevoEstado === 'entregado' ? 'entregado' : 'modificado',
-        actor_id: profile.id
-      })
+      const {data:nuevo} = await supabase.from('planes_clase').insert(planData).select('id').single()
+      pid = nuevo.id; planActualId = pid
+      await supabase.from('historial_planes').insert({ plan_clase_id:pid, snapshot:{planData,sesiones}, accion:nuevoEstado==='entregado'?'entregado':'modificado', actor_id:profile.id })
     }
 
-    // Guardar sesiones
-    await supabase.from('plan_clase_sesiones').delete().eq('plan_clase_id', pid)
+    await supabase.from('plan_clase_sesiones').delete().eq('plan_clase_id',pid)
     if (sesiones.length) {
       await supabase.from('plan_clase_sesiones').insert(
         sesiones.map(s => ({
-          plan_clase_id: pid, numero: s.numero,
-          objetivo_particular: s.objetivo_particular || null,
-          inicio: s.inicio || null, desarrollo: s.desarrollo || null,
-          cierre: s.cierre || null, monitoreo: s.monitoreo || null,
-          evaluacion: s.evaluacion || null,
-          dua: s.dua || null, tipo_actividad: s.tipo_actividad || null
+          plan_clase_id:pid, numero:s.numero,
+          objetivo_particular: s.objetivo_particular||null,
+          inicio:s.inicio||null, desarrollo:s.desarrollo||null, cierre:s.cierre||null,
+          monitoreo:s.monitoreo||null, evaluacion:s.evaluacion||null,
+          dua:s.dua||null, tipo_actividad:s.tipo_actividad||null
         }))
       )
     }
 
     estadoActual = nuevoEstado
     actualizarEstadoChip()
-    mostrarToast(nuevoEstado === 'entregado' ? 'Plan entregado ✓' : 'Borrador guardado ✓')
-    document.getElementById('save-status').textContent = `Guardado ${new Date().toLocaleTimeString('es-MX', {hour:'2-digit',minute:'2-digit'})}`
+    mostrarToast(nuevoEstado==='entregado' ? 'Plan entregado ✓' : 'Borrador guardado ✓')
+    document.getElementById('save-status').textContent = `Guardado ${new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})}`
   }
 
   document.getElementById('btn-borrador').addEventListener('click', async () => {
     const btn = document.getElementById('btn-borrador')
-    btn.disabled = true; btn.textContent = 'Guardando...'
-    try { await guardar('borrador') } catch(e) { mostrarToast(e.message, 'error') }
-    finally { btn.disabled = false; btn.textContent = 'Guardar borrador' }
+    btn.disabled=true; btn.textContent='Guardando...'
+    try { await guardar('borrador') } catch(e) { mostrarToast(e.message,'error') }
+    finally { btn.disabled=false; btn.textContent='Guardar borrador' }
   })
 
   document.getElementById('btn-entregar').addEventListener('click', async () => {
     if (!confirm('¿Entregar este plan al administrador?')) return
     const btn = document.getElementById('btn-entregar')
-    btn.disabled = true; btn.textContent = 'Entregando...'
-    try { await guardar('entregado') } catch(e) { mostrarToast(e.message, 'error') }
-    finally { btn.disabled = false; btn.textContent = 'Entregar plan' }
+    btn.disabled=true; btn.textContent='Entregando...'
+    try { await guardar('entregado') } catch(e) { mostrarToast(e.message,'error') }
+    finally { btn.disabled=false; btn.textContent='Entregar plan' }
   })
 
   function actualizarEstadoChip() {
     const chip = document.getElementById('estado-chip')
-    const clases = { pendiente:'chip-red', borrador:'chip-amber', entregado:'chip-blue', aprobado:'chip-green', rechazado:'chip-red' }
-    const labels = { pendiente:'Pendiente', borrador:'Borrador', entregado:'Entregado', aprobado:'Aprobado', rechazado:'Rechazado' }
-    chip.className = `chip ${clases[estadoActual] || 'chip-blue'}`
-    chip.textContent = labels[estadoActual] || estadoActual
-
-    const bloqueado = estadoActual === 'aprobado'
-    document.getElementById('btn-borrador').style.display  = bloqueado ? 'none' : ''
-    document.getElementById('btn-entregar').style.display  = bloqueado ? 'none' : ''
-    if (bloqueado) document.getElementById('save-status').textContent = 'Plan aprobado — solo lectura'
+    const cls  = {pendiente:'chip-red',borrador:'chip-amber',entregado:'chip-blue',aprobado:'chip-green',rechazado:'chip-red'}
+    const lbl  = {pendiente:'Pendiente',borrador:'Borrador',entregado:'Entregado',aprobado:'Aprobado',rechazado:'Rechazado'}
+    chip.className=`chip ${cls[estadoActual]||'chip-blue'}`; chip.textContent=lbl[estadoActual]||estadoActual
+    const bloqueado = estadoActual==='aprobado'
+    document.getElementById('btn-borrador').style.display = bloqueado?'none':''
+    document.getElementById('btn-entregar').style.display = bloqueado?'none':''
+    if (bloqueado) document.getElementById('save-status').textContent='Plan aprobado — solo lectura'
   }
 
-  function mostrarToast(msg, tipo = 'ok') {
-    const t = document.getElementById('toast')
-    t.textContent = msg
-    t.style.background = tipo === 'error' ? 'var(--co)' : 'var(--vd)'
-    t.style.display = 'block'
-    setTimeout(() => { t.style.display = 'none' }, 2500)
+  function mostrarToast(msg,tipo='ok') {
+    const t=document.getElementById('toast')
+    t.textContent=msg; t.style.background=tipo==='error'?'var(--co)':'var(--vd)'; t.style.display='block'
+    setTimeout(()=>{t.style.display='none'},2500)
   }
 </script>
 </body>
