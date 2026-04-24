@@ -319,6 +319,8 @@
   }
 
   // ── Cargar periodos ───────────────────────────────────────
+  // En el plan analítico mostramos solo T1, T2, T3 (no parciales)
+  // Para preparatoria: Sem A, Sem B
   async function cargarPeriodos(sistema) {
     const tipo = sistema === 'semestral' ? 'semestre' : 'trimestre'
     const { data: periodos } = await supabase
@@ -328,19 +330,33 @@
       .eq('tipo', tipo)
       .order('numero').order('parcial')
 
+    // Agrupar: para el plan analítico usamos el primer parcial de cada número
+    // T1·P1 representa el Trimestre 1 completo en el plan analítico
+    const grupos = {}
+    periodos?.forEach(p => {
+      if (!grupos[p.numero]) grupos[p.numero] = p
+    })
+    const periodosAgrupados = Object.values(grupos)
+
+    // Etiquetas amigables
+    const etiquetas = {
+      trimestre: { 1: 'Trimestre 1', 2: 'Trimestre 2', 3: 'Trimestre 3' },
+      semestre:  { 1: 'Semestre A',  2: 'Semestre B' }
+    }
+
     const tabsEl = document.getElementById('tab-periodos')
     tabsEl.innerHTML = ''
-    periodos?.forEach((p, i) => {
+    periodosAgrupados.forEach((p, i) => {
       const btn = document.createElement('button')
       btn.className = 'tab-periodo' + (i === 0 ? ' active' : '')
-      btn.textContent = p.etiqueta
+      btn.textContent = etiquetas[tipo]?.[p.numero] || p.etiqueta
       btn.dataset.periodoId = p.id
       btn.onclick = () => seleccionarPeriodo(p.id, btn)
       tabsEl.appendChild(btn)
     })
 
-    if (periodos?.length) {
-      periodoId = periodos[0].id
+    if (periodosAgrupados.length) {
+      periodoId = periodosAgrupados[0].id
       await cargarFilas()
     }
 
