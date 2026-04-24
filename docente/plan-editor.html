@@ -152,6 +152,25 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- Modal: ¿cambia la información general? -->
+<div id="modal-info-general" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;align-items:center;justify-content:center;flex-direction:column;">
+  <div style="background:white;border-radius:20px;padding:28px 32px;max-width:440px;width:90%;box-shadow:0 20px 40px rgba(0,0,0,.15);">
+    <div style="font-size:22px;margin-bottom:8px;">📋</div>
+    <div style="font-size:16px;font-weight:700;color:#0F172A;margin-bottom:8px;">¿Cambia la información general?</div>
+    <div style="font-size:13px;color:#475569;margin-bottom:24px;line-height:1.6;">
+      ¿Esta sesión continúa con el mismo proyecto, metodología y ejes articuladores, o hay un cambio para esta sesión?
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button id="btn-continuar-info" style="flex:1;padding:10px;border-radius:10px;border:1.5px solid #E2E8F0;background:white;font-size:13px;font-weight:600;cursor:pointer;color:#475569;">
+        ✓ Continúa igual
+      </button>
+      <button id="btn-nueva-info" style="flex:1;padding:10px;border-radius:10px;border:none;background:linear-gradient(135deg,#2563EB,#1D4ED8);color:white;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 4px 12px rgba(37,99,235,.3);">
+        ✏️ Cambiar información
+      </button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
   import { requireAuth }   from '../js/auth.js'
   import { renderSidebar } from '../js/sidebar-docente.js'
@@ -346,6 +365,39 @@
 
           ${pdaBlock}
 
+          ${s.info_general_propia ? `
+          <div style="background:#F0F4FF;border-radius:12px;padding:14px 16px;margin-bottom:12px;border:1.5px solid #BFDBFE;">
+            <div style="font-size:10px;font-weight:700;color:#1D4ED8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;">📝 Información general de esta sesión</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+              <div>
+                <div style="font-size:10px;font-weight:600;color:#64748B;margin-bottom:4px;text-transform:uppercase;">Proyecto / situación</div>
+                <textarea class="inp" style="min-height:44px;margin:0;font-size:11px;" placeholder="Nombre del proyecto o situación problema..."
+                  onchange="editSesion(${i},'nombre_proyecto',this.value)">${s.nombre_proyecto||''}</textarea>
+              </div>
+              <div>
+                <div style="font-size:10px;font-weight:600;color:#64748B;margin-bottom:4px;text-transform:uppercase;">Metodología</div>
+                <select class="field-select w-full" onchange="editSesion(${i},'metodologia',this.value)">
+                  <option ${s.metodologia==='Aprendizaje basado en proyectos'?'selected':''}>Aprendizaje basado en proyectos</option>
+                  <option ${s.metodologia==='Aprendizaje basado en el servicio'?'selected':''}>Aprendizaje basado en el servicio</option>
+                  <option ${s.metodologia==='Unidades didácticas'?'selected':''}>Unidades didácticas</option>
+                  <option ${s.metodologia==='Aprendizaje colaborativo'?'selected':''}>Aprendizaje colaborativo</option>
+                  <option ${s.metodologia==='Gamificación'?'selected':''}>Gamificación</option>
+                  <option ${s.metodologia==='Otra'?'selected':''}>Otra</option>
+                </select>
+              </div>
+              <div>
+                <div style="font-size:10px;font-weight:600;color:#64748B;margin-bottom:4px;text-transform:uppercase;">Ejes articuladores</div>
+                <input type="text" class="inp" style="margin:0;" placeholder="ej. Pensamiento crítico..."
+                  value="${s.ejes||''}" onchange="editSesion(${i},'ejes',this.value)">
+              </div>
+              <div>
+                <div style="font-size:10px;font-weight:600;color:#64748B;margin-bottom:4px;text-transform:uppercase;">Ajustes razonados</div>
+                <textarea class="inp" style="min-height:44px;margin:0;font-size:11px;" placeholder="Ajustes para alumnos con necesidades..."
+                  onchange="editSesion(${i},'ajustes',this.value)">${s.ajustes||''}</textarea>
+              </div>
+            </div>
+          </div>` : ''}
+
           <div class="sesion-grid ${gridClass}">
             <div>
               <div class="campo-label required">Inicio</div>
@@ -402,10 +454,34 @@
   }
 
   document.getElementById('btn-add-sesion').addEventListener('click', () => {
-    sesiones.push({ numero:sesiones.length+1, pda_fila_id:'', objetivo_particular:'', inicio:'', desarrollo:'', cierre:'', monitoreo:'', evaluacion:'', dua:'', tipo_actividad:'' })
+    // Preguntar si cambia la información general
+    const modal = document.getElementById('modal-info-general')
+    modal.style.display = 'flex'
+  })
+
+  document.getElementById('btn-continuar-info').addEventListener('click', () => {
+    document.getElementById('modal-info-general').style.display = 'none'
+    agregarSesion(false)
+  })
+
+  document.getElementById('btn-nueva-info').addEventListener('click', () => {
+    document.getElementById('modal-info-general').style.display = 'none'
+    agregarSesion(true)
+  })
+
+  function agregarSesion(nuevaInfo) {
+    const nuevaSesion = {
+      numero: sesiones.length + 1,
+      pda_fila_id: '', objetivo_particular: '',
+      inicio: '', desarrollo: '', cierre: '',
+      monitoreo: '', evaluacion: '', dua: '', tipo_actividad: '',
+      info_general_propia: nuevaInfo,
+      nombre_proyecto: '', metodologia: '', ejes: '', ajustes: ''
+    }
+    sesiones.push(nuevaSesion)
     renderSesiones()
     document.getElementById('sesiones-container').lastElementChild?.scrollIntoView({behavior:'smooth'})
-  })
+  }
 
   async function guardar(nuevoEstado) {
     const planData = {
