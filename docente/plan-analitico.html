@@ -199,6 +199,7 @@
                   <th class="col-contenido">Contenido <span style="font-weight:400;">(obj. general)</span></th>
                   <th class="col-proceso">Proceso de desarrollo <span style="font-weight:400;">(aprendizaje esperado)</span></th>
                   <th class="col-saber">Saber y saber hacer <span style="font-weight:400;">(obj. particulares)</span></th>
+                  <th style="width:120px;">Tipo actividad</th>
                   <th class="col-acciones"></th>
                 </tr>
               </thead>
@@ -383,7 +384,7 @@
 
     const { data: filas } = await supabase
       .from('plan_analitico_filas')
-      .select('*')
+      .select('id, semana, eje_articulador, contenido, aprendizaje_esperado, saber_hacer, es_examen, orden, tipo_actividad')
       .eq('grupo_materia_id', grupoMateriaId)
       .eq('periodo_id', periodoId)
       .order('orden')
@@ -417,7 +418,7 @@
       }
       return `<tr data-idx="${i}">
         <td class="col-semana">
-          <textarea class="cell-input" rows="2" placeholder="Sem 1–2 · Ene"
+          <textarea class="cell-input" rows="2" placeholder="Sesión 1"
             onchange="editarCelda(${i}, 'semana', this.value)">${f.semana || ''}</textarea>
         </td>
         <td class="col-eje">
@@ -435,6 +436,16 @@
         <td class="col-saber">
           <textarea class="cell-input" rows="2" placeholder="Objetivos particulares"
             onchange="editarCelda(${i}, 'saber_hacer', this.value)">${f.saber_hacer || ''}</textarea>
+        </td>
+        <td>
+          <select class="cell-input" style="min-height:unset;height:36px;padding:4px 6px;"
+            onchange="editarCelda(${i}, 'tipo_actividad', this.value)">
+            <option value="" ${!f.tipo_actividad?'selected':''}>—</option>
+            <option value="Trabajo de clase"  ${f.tipo_actividad==='Trabajo de clase'?'selected':''}>Trabajo de clase</option>
+            <option value="Proyecto"          ${f.tipo_actividad==='Proyecto'?'selected':''}>Proyecto</option>
+            <option value="Autoevaluación"    ${f.tipo_actividad==='Autoevaluación'?'selected':''}>Autoevaluación</option>
+            <option value="Examen"            ${f.tipo_actividad==='Examen'?'selected':''}>Examen</option>
+          </select>
         </td>
         <td class="col-acciones">
           <button class="btn-fila" onclick="eliminarFila(${i})" title="Eliminar fila">✕</button>
@@ -463,6 +474,7 @@
       id: null, grupo_materia_id: grupoMateriaId, periodo_id: periodoId,
       semana: '', eje_articulador: '', contenido: '',
       aprendizaje_esperado: '', saber_hacer: '', es_examen: false,
+      tipo_actividad: null,
       orden: filasActuales.length
     })
     haycambios = true
@@ -507,6 +519,7 @@
           aprendizaje_esperado: f.aprendizaje_esperado || null,
           saber_hacer: f.saber_hacer || null,
           es_examen: f.es_examen || false,
+          tipo_actividad: f.tipo_actividad || null,
           orden: i
         }))
         await supabase.from('plan_analitico_filas').insert(filas)
