@@ -275,7 +275,7 @@
 
       const pdaOpts = filasPA.map(f => `
         <option value="${f.id}" ${s.pda_fila_id === f.id ? 'selected' : ''}>
-          ${f.contenido || f.aprendizaje_esperado || 'Sin título'}
+          ${f.aprendizaje_esperado || f.contenido || 'Sin título'}
         </option>`).join('')
 
       const pdaBlock = `
