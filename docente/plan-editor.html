@@ -205,11 +205,17 @@
   document.getElementById('topbar-title').textContent = `Plan de clase — ${gm?.grupos?.nombre} · ${gm?.materias?.nombre}`
   document.getElementById('topbar-sub').textContent   = `${periodo?.etiqueta} · ${gm?.grupos?.nivel}`
 
+  // Obtener el numero del trimestre/semestre del periodo actual
+  const { data: periodoActual } = await supabase
+    .from('periodos').select('numero, tipo').eq('id', periodoId).single()
+
+  // Buscar las filas del plan analítico por periodo_numero
+  // Así T1·P1, T1·P2 y T1·P3 todas ven el mismo plan analítico del Trimestre 1
   const { data: filas } = await supabase
     .from('plan_analitico_filas')
-    .select('id, semana, contenido, aprendizaje_esperado, saber_hacer')
+    .select('id, semana, contenido, aprendizaje_esperado, saber_hacer, tipo_actividad')
     .eq('grupo_materia_id', gmId)
-    .eq('periodo_id', periodoId)
+    .eq('periodo_numero', periodoActual?.numero)
     .eq('es_examen', false)
     .order('orden')
 
