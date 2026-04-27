@@ -1,383 +1,585 @@
-/* ─── Variables ─── */
-:root {
-  --az:      #2563EB;
-  --az-l:    #EFF6FF;
-  --az-d:    #1D4ED8;
-  --az-m:    #BFDBFE;
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TechAcademia — Plan analítico</title>
+  <link rel="stylesheet" href="../css/global.css">
+  <style>
+    .selector-bar {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .selector-bar select { width: auto; margin: 0; }
 
-  --vd:      #059669;
-  --vd-l:    #ECFDF5;
-  --vd-d:    #047857;
+    .tab-periodos {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .tab-periodo {
+      font-size: 11px;
+      padding: 5px 12px;
+      border-radius: 99px;
+      border: 1px solid var(--border-m);
+      cursor: pointer;
+      color: var(--text-2);
+      background: transparent;
+      transition: all .15s;
+    }
+    .tab-periodo:hover { background: var(--bg); }
+    .tab-periodo.active { background: var(--az); color: white; border-color: var(--az); }
 
-  --am:      #D97706;
-  --am-l:    #FFFBEB;
-  --am-m:    #FDE68A;
+    /* Tabla plan analítico */
+    .plan-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .plan-table th {
+      text-align: left;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-3);
+      padding: 6px 8px;
+      border-bottom: 1px solid var(--border);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      background: var(--bg);
+    }
+    .plan-table td {
+      padding: 4px 4px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    .plan-table tr:last-child td { border-bottom: none; }
+    .plan-table tr.examen-row td {
+      background: var(--bg);
+      color: var(--text-3);
+      font-style: italic;
+      font-size: 11px;
+      text-align: center;
+      padding: 6px;
+    }
+    .plan-table tr:hover:not(.examen-row) td { background: #fafaf8; }
 
-  --co:      #DC2626;
-  --co-l:    #FEF2F2;
-  --co-m:    #FECACA;
+    .cell-input {
+      width: 100%;
+      font-size: 11px;
+      padding: 5px 6px;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      background: transparent;
+      color: var(--text);
+      font-family: inherit;
+      resize: none;
+      min-height: 70px;
+      height: auto;
+      overflow: hidden;
+      transition: border-color .15s, background .15s;
+      line-height: 1.6;
+      box-sizing: border-box;
+    }
+    .cell-input:focus {
+      outline: none;
+      border-color: var(--az);
+      background: white;
+    }
+    .cell-input:hover { border-color: var(--border-m); }
+    .plan-table td { vertical-align: top; padding: 6px 4px; }
+    .plan-table tr { vertical-align: top; }
 
-  --pur:     #7C3AED;
-  --pur-l:   #F5F3FF;
+    .col-semana   { width: 90px; }
+    .col-eje      { width: 100px; }
+    .col-contenido{ width: 140px; }
+    .col-proceso  { width: 180px; }
+    .col-saber    { width: 200px; }
+    .col-acciones { width: 50px; text-align: center; }
 
-  --bg:      #F8FAFC;
-  --bg-card: #ffffff;
-  --border:  #E2E8F0;
-  --border-m:#CBD5E1;
+    .btn-fila {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-3);
+      padding: 4px;
+      border-radius: 4px;
+      font-size: 14px;
+      transition: color .15s;
+    }
+    .btn-fila:hover { color: var(--co); }
+    .btn-add-fila {
+      font-size: 11px;
+      color: var(--az);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 8px 0;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .btn-add-fila:hover { text-decoration: underline; }
 
-  --text:    #0F172A;
-  --text-2:  #475569;
-  --text-3:  #94A3B8;
+    .save-bar {
+      position: sticky;
+      bottom: 0;
+      background: var(--bg-card);
+      border-top: 1px solid var(--border);
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 0 -20px -20px;
+      z-index: 10;
+    }
+    .save-status { font-size: 11px; color: var(--text-3); }
 
-  --radius:   14px;
-  --radius-s: 10px;
-  --radius-xs: 6px;
+    .empty-plan {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-3);
+    }
 
-  --shadow:   0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
-  --shadow-m: 0 4px 6px -1px rgba(0,0,0,.07), 0 2px 4px -1px rgba(0,0,0,.04);
-  --shadow-lg:0 10px 15px -3px rgba(0,0,0,.07), 0 4px 6px -2px rgba(0,0,0,.04);
+    .toast {
+      position: fixed;
+      bottom: 70px;
+      right: 20px;
+      background: var(--vd);
+      color: white;
+      padding: 10px 16px;
+      border-radius: var(--radius-s);
+      font-size: 12px;
+      z-index: 200;
+      display: none;
+    }
 
-  --gold-bg: #FEF3C7; --gold-tx: #92400E; --gold-bd: #F59E0B;
-  --g2-bg:   #D1FAE5; --g2-tx:   #065F46;
-  --g1-bg:   #ECFDF5; --g1-tx:   #047857;
-  --yel-bg:  #FEF9C3; --yel-tx:  #713F12;
-  --r2-bg:   #FEE2E2; --r2-tx:   #991B1B;
-  --r1-bg:   #FFF1F2; --r1-tx:   #881337;
-}
+    .info-plan {
+      font-size: 11px;
+      color: var(--az-d);
+      background: var(--az-l);
+      border: 1px solid #B5D4F4;
+      border-radius: var(--radius-s);
+      padding: 8px 12px;
+      margin-bottom: 12px;
+    }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <div id="sidebar-container"></div>
 
-/* ─── Reset ─── */
-*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+  <div class="main-area">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title">Plan analítico</div>
+        <div class="topbar-sub" id="topbar-sub">Selecciona un grupo</div>
+      </div>
+      <div class="selector-bar">
+        <select id="sel-grupo" onchange="onGrupoChange()">
+          <option value="">Selecciona grupo...</option>
+        </select>
+        <select id="sel-materia" onchange="onMateriaChange()" style="display:none;">
+          <option value="">Materia...</option>
+        </select>
+      </div>
+    </div>
 
-body {
-  font-family: system-ui, -apple-system, sans-serif;
-  font-size: 14px;
-  line-height: 1.6;
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-}
+    <div class="page-content">
+      <div id="loading" class="loading">Cargando...</div>
+      <div id="content" style="display:none;">
 
-a { color:var(--az); text-decoration:none; }
-a:hover { text-decoration:underline; }
+        <div class="info-plan" id="info-plan" style="display:none;">
+          💡 Los campos <strong>Aprendizaje esperado</strong> y <strong>Saber y saber hacer</strong> se copian automáticamente como objetivos en el plan de clase.
+        </div>
 
-/* ─── Layout con topnav ─── */
-.app-layout {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
+        <!-- Tabs de periodos -->
+        <div class="tab-periodos" id="tab-periodos"></div>
 
-/* ─── Topnav ─── */
-.sidebar {
-  width: 100%;
-  min-width: unset;
-  background: white;
-  border-bottom: 1px solid var(--border);
-  box-shadow: 0 1px 8px rgba(0,0,0,.06);
-  display: flex;
-  flex-direction: column;
-  overflow: visible;
-}
+        <!-- Tabla -->
+        <div class="card mb-0" id="card-tabla" style="display:none;">
+          <div style="overflow-x:auto;">
+            <table class="plan-table" id="plan-table">
+              <thead>
+                <tr>
+                  <th class="col-semana">Periodo / Semana</th>
+                  <th class="col-eje">Eje articulador</th>
+                  <th class="col-contenido">Contenido <span style="font-weight:400;">(obj. general)</span></th>
+                  <th class="col-proceso">Proceso de desarrollo <span style="font-weight:400;">(aprendizaje esperado)</span></th>
+                  <th class="col-saber">Saber y saber hacer <span style="font-weight:400;">(obj. particulares)</span></th>
+                  <th style="width:120px;">Tipo actividad</th>
+                  <th class="col-acciones"></th>
+                </tr>
+              </thead>
+              <tbody id="plan-tbody"></tbody>
+            </table>
+          </div>
+          <div style="padding: 4px 0;">
+            <button class="btn-add-fila" id="btn-add-fila">
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                <path d="M8 2v12M2 8h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+              Agregar fila
+            </button>
+            <button class="btn-add-fila" id="btn-add-examen" style="margin-left:12px;color:var(--text-3);">
+              + Agregar fila de examen
+            </button>
+          </div>
+        </div>
 
-.sidebar-logo {
-  display: none; /* se reemplaza por el topnav */
-}
+        <div class="empty-plan" id="empty-plan" style="display:none;">
+          <div style="font-size:28px;margin-bottom:8px;">📋</div>
+          <div style="font-weight:500;margin-bottom:4px;">Sin filas en este periodo</div>
+          <div class="text-small">Agrega filas con el botón de abajo.</div>
+        </div>
 
-.topnav {
-  display: flex;
-  align-items: center;
-  padding: 0 16px;
-  height: 54px;
-  gap: 0;
-  overflow: hidden;
-}
+      </div>
 
-.topnav-brand {
-  font-size: 15px;
-  font-weight: 800;
-  color: var(--az);
-  letter-spacing: -.3px;
-  margin-right: 16px;
-  white-space: nowrap;
-  text-decoration: none;
-  flex-shrink: 0;
-}
-.topnav-brand span { color: var(--text); }
+      <!-- Barra de guardado -->
+      <div class="save-bar" id="save-bar" style="display:none;">
+        <span class="save-status" id="save-status">Sin cambios pendientes</span>
+        <button class="btn btn-primary" id="btn-guardar">Guardar plan</button>
+      </div>
+    </div>
+  </div>
+</div>
 
-.topnav-links {
-  display: flex;
-  align-items: center;
-  gap: 1px;
-  flex: 1;
-  overflow: hidden;
-  min-width: 0;
-}
+<div class="toast" id="toast"></div>
 
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 5px 10px;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-2);
-  cursor: pointer;
-  border-radius: var(--radius-s);
-  text-decoration: none;
-  transition: all .15s;
-  white-space: nowrap;
-  border: none;
-  background: transparent;
-  flex-shrink: 0;
-}
-.nav-item svg { display:none; } /* ocultar iconos para ahorrar espacio */
-.nav-item:hover { background: var(--az-l); color: var(--az); text-decoration: none; }
-.nav-item.active { background: var(--az-l); color: var(--az); font-weight: 700; }
+<script type="module">
+  import { requireAuth }   from '../js/auth.js'
+  import { renderSidebar } from '../js/sidebar-docente.js'
+  import { supabase }      from '../js/supabase.js'
 
-.nav-section {
-  font-size: 9px;
-  font-weight: 700;
-  color: var(--text-3);
-  text-transform: uppercase;
-  letter-spacing: .08em;
-  padding: 0 6px;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
+  const profile = await requireAuth('docente')
+  if (!profile) throw new Error('No autenticado')
+  await renderSidebar('plan-analitico')
 
-.topnav-divider {
-  width: 1px;
-  height: 16px;
-  background: var(--border);
-  margin: 0 6px;
-  flex-shrink: 0;
-}
+  let cicloId       = null
+  let grupoMateriaId = null
+  let periodoId     = null
+  let filasActuales = []
+  let haycambios    = false
 
-.topnav-user {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-left: 12px;
-  flex-shrink: 0;
-}
-.topnav-user .name { font-size:12px; font-weight:600; color:var(--text); white-space:nowrap; }
-.topnav-user a { font-size:11px; color:var(--text-3); white-space:nowrap; }
+  // ── Ciclo activo ──────────────────────────────────────────
+  const { data: ciclo } = await supabase
+    .from('ciclos_escolares').select('id').eq('activo', true).single()
+  cicloId = ciclo?.id
 
-.sidebar-user { display:none; }
+  // ── Cargar grupos del docente ─────────────────────────────
+  const { data: grupos } = await supabase
+    .from('grupos')
+    .select('id, nombre, nivel, grado, sistema_periodos, grupo_materias(id, materias(id, nombre))')
+    .eq('docente_id', profile.id)
+    .eq('ciclo_id', cicloId)
+    .order('grado')
 
-/* ─── Main area ─── */
-.main-area {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  min-width: 0;
-  height: calc(100vh - 58px);
-}
+  const selGrupo = document.getElementById('sel-grupo')
+  grupos?.forEach(g => {
+    const opt = document.createElement('option')
+    opt.value = g.id
+    opt.textContent = `${g.nombre} (${g.nivel})`
+    opt.dataset.sistema = g.sistema_periodos
+    opt.dataset.materias = JSON.stringify(g.grupo_materias || [])
+    selGrupo.appendChild(opt)
+  })
 
-.topbar {
-  padding: 14px 24px;
-  border-bottom: 1px solid var(--border);
-  background: white;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-shrink: 0;
-}
-.topbar-title { font-size:16px; font-weight:700; color:var(--text); letter-spacing:-.2px; }
-.topbar-sub   { font-size:12px; color:var(--text-3); margin-top:1px; }
+  document.getElementById('loading').style.display = 'none'
+  document.getElementById('content').style.display = 'block'
 
-.page-content { padding:24px; overflow-y:auto; flex:1; }
+  // ── Cambio de grupo ───────────────────────────────────────
+  window.onGrupoChange = async () => {
+    const opt = selGrupo.options[selGrupo.selectedIndex]
+    const grupoId = selGrupo.value
+    if (!grupoId) return
 
-/* ─── Cards ─── */
-.card {
-  background: white;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 16px 20px;
-  margin-bottom: 14px;
-  box-shadow: var(--shadow);
-}
-.card:last-child { margin-bottom:0; }
-.card-title {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--text);
-  margin-bottom: 14px;
-  letter-spacing: -.1px;
-}
+    const materias = JSON.parse(opt.dataset.materias || '[]')
+    const sistema  = opt.dataset.sistema
+    const selMat   = document.getElementById('sel-materia')
 
-/* ─── Métricas ─── */
-.metrics-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px,1fr));
-  gap: 12px;
-  margin-bottom: 16px;
-}
-.metric {
-  background: white;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 14px 16px;
-  box-shadow: var(--shadow);
-}
-.metric-label { font-size:11px; color:var(--text-3); margin-bottom:4px; font-weight:500; }
-.metric-value { font-size:26px; font-weight:800; color:var(--text); letter-spacing:-1px; }
-.metric-value.blue  { color:var(--az); }
-.metric-value.green { color:var(--vd); }
-.metric-value.amber { color:var(--am); }
-.metric-value.red   { color:var(--co); }
+    // Si hay más de una materia, mostrar selector
+    selMat.innerHTML = '<option value="">Materia...</option>'
+    materias.forEach(gm => {
+      const o = document.createElement('option')
+      o.value = gm.id
+      o.textContent = gm.materias?.nombre || '—'
+      selMat.appendChild(o)
+    })
 
-/* ─── Grids ─── */
-.grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px; }
-.grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; margin-bottom:14px; }
-.grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:14px; }
+    if (materias.length > 1) {
+      selMat.style.display = 'block'
+      grupoMateriaId = null
+    } else if (materias.length === 1) {
+      selMat.style.display = 'none'
+      grupoMateriaId = materias[0].id
+      await cargarPeriodos(sistema)
+    } else {
+      selMat.style.display = 'none'
+      mostrarToast('Este grupo no tiene materias asignadas. Ve a Mis materias y grupos.', 'error')
+    }
+  }
 
-/* ─── Tablas ─── */
-.table-wrap { overflow-x:auto; }
-table.data-table { width:100%; border-collapse:collapse; font-size:12px; }
-.data-table th {
-  text-align:left; color:var(--text-3); font-weight:600; font-size:11px;
-  padding:8px 10px; border-bottom:2px solid var(--border);
-  text-transform:uppercase; letter-spacing:.05em;
-}
-.data-table td { padding:9px 10px; border-bottom:1px solid var(--border); color:var(--text); vertical-align:middle; }
-.data-table tr:last-child td { border-bottom:none; }
-.data-table tr:hover td { background:var(--bg); }
+  window.onMateriaChange = async () => {
+    const selMat = document.getElementById('sel-materia')
+    grupoMateriaId = selMat.value
+    if (!grupoMateriaId) return
+    const opt = selGrupo.options[selGrupo.selectedIndex]
+    await cargarPeriodos(opt.dataset.sistema)
+  }
 
-/* ─── Chips ─── */
-.chip {
-  display:inline-block; font-size:11px; font-weight:600;
-  padding:3px 10px; border-radius:99px; white-space:nowrap;
-}
-.chip-green { background:var(--vd-l); color:var(--vd-d); }
-.chip-amber { background:var(--am-l); color:var(--am); }
-.chip-red   { background:var(--co-l); color:var(--co); }
-.chip-blue  { background:var(--az-l); color:var(--az-d); }
+  // ── Cargar periodos ───────────────────────────────────────
+  // En el plan analítico mostramos solo T1, T2, T3 (no parciales)
+  // Para preparatoria: Sem A, Sem B
+  async function cargarPeriodos(sistema) {
+    const tipo = sistema === 'semestral' ? 'semestre' : 'trimestre'
+    const { data: periodos } = await supabase
+      .from('periodos')
+      .select('id, etiqueta, numero, parcial, tipo')
+      .eq('ciclo_id', cicloId)
+      .eq('tipo', tipo)
+      .order('numero').order('parcial')
 
-.badge-nivel { font-size:10px; font-weight:700; padding:2px 8px; border-radius:99px; }
-.badge-pri  { background:#D1FAE5; color:#065F46; }
-.badge-sec  { background:#DBEAFE; color:#1E40AF; }
-.badge-prep { background:#FEF3C7; color:#92400E; }
+    // Agrupar: para el plan analítico usamos el primer parcial de cada número
+    // T1·P1 representa el Trimestre 1 completo en el plan analítico
+    const grupos = {}
+    periodos?.forEach(p => {
+      if (!grupos[p.numero]) grupos[p.numero] = p
+    })
+    const periodosAgrupados = Object.values(grupos)
 
-/* ─── Bandas ─── */
-.banda { display:inline-block; font-size:11px; font-weight:700; padding:3px 10px; border-radius:99px; }
-.banda-gold  { background:var(--gold-bg); color:var(--gold-tx); }
-.banda-green2{ background:var(--g2-bg);   color:var(--g2-tx); }
-.banda-green1{ background:var(--g1-bg);   color:var(--g1-tx); }
-.banda-yellow{ background:var(--yel-bg);  color:var(--yel-tx); }
-.banda-red2  { background:var(--r2-bg);   color:var(--r2-tx); }
-.banda-red1  { background:var(--r1-bg);   color:var(--r1-tx); }
+    // Etiquetas amigables
+    const etiquetas = {
+      trimestre: { 1: 'Trimestre 1', 2: 'Trimestre 2', 3: 'Trimestre 3' },
+      semestre:  { 1: 'Semestre A',  2: 'Semestre B' }
+    }
 
-/* ─── Botones ─── */
-.btn {
-  display:inline-flex; align-items:center; gap:6px;
-  font-size:13px; font-weight:600; padding:8px 16px;
-  border:1.5px solid var(--border-m); border-radius:var(--radius-s);
-  background:white; color:var(--text-2); cursor:pointer;
-  transition:all .15s; white-space:nowrap;
-  box-shadow:0 1px 2px rgba(0,0,0,.05);
-}
-.btn:hover { background:var(--bg); border-color:var(--az); color:var(--az); }
-.btn:active { transform:scale(.98); }
-.btn-primary {
-  background:var(--az); color:white; border-color:var(--az-d);
-  box-shadow:0 2px 8px rgba(37,99,235,.25);
-}
-.btn-primary:hover { background:var(--az-d); color:white; border-color:var(--az-d); }
-.btn-danger { background:var(--co); color:white; border-color:#B91C1C; }
-.btn-danger:hover { background:#B91C1C; color:white; }
-.btn-sm { font-size:11px; padding:5px 12px; }
+    const tabsEl = document.getElementById('tab-periodos')
+    tabsEl.innerHTML = ''
+    periodosAgrupados.forEach((p, i) => {
+      const btn = document.createElement('button')
+      btn.className = 'tab-periodo' + (i === 0 ? ' active' : '')
+      btn.textContent = etiquetas[tipo]?.[p.numero] || p.etiqueta
+      btn.dataset.periodoId = p.id
+      btn.onclick = () => seleccionarPeriodo(p.id, btn)
+      tabsEl.appendChild(btn)
+    })
 
-/* ─── Formularios ─── */
-.form-group { margin-bottom:14px; }
-.form-label { display:block; font-size:12px; font-weight:600; color:var(--text-2); margin-bottom:5px; }
-input, select, textarea {
-  width:100%; font-size:13px; padding:9px 12px;
-  border:1.5px solid var(--border); border-radius:var(--radius-s);
-  background:white; color:var(--text); font-family:inherit;
-  transition:border-color .15s, box-shadow .15s;
-}
-input:focus, select:focus, textarea:focus {
-  outline:none; border-color:var(--az);
-  box-shadow:0 0 0 3px rgba(37,99,235,.1);
-}
-textarea { resize:vertical; min-height:70px; }
+    if (periodosAgrupados.length) {
+      periodoId = periodosAgrupados[0].id
+      await cargarFilas()
+    }
 
-/* ─── Tabs ─── */
-.tabs { display:flex; border-bottom:2px solid var(--border); margin-bottom:16px; gap:4px; }
-.tab {
-  font-size:13px; font-weight:500; padding:8px 16px; cursor:pointer;
-  color:var(--text-3); border-bottom:2px solid transparent;
-  margin-bottom:-2px; white-space:nowrap; border-radius:var(--radius-s) var(--radius-s) 0 0;
-  transition:all .15s;
-}
-.tab:hover { color:var(--az); background:var(--az-l); }
-.tab.active { color:var(--az); border-bottom-color:var(--az); font-weight:700; background:var(--az-l); }
+    document.getElementById('info-plan').style.display = 'block'
+    document.getElementById('save-bar').style.display = 'flex'
+    document.getElementById('topbar-sub').textContent =
+      selGrupo.options[selGrupo.selectedIndex].textContent
+  }
 
-/* ─── Progress bar ─── */
-.progress-bar { height:7px; border-radius:99px; background:var(--border); overflow:hidden; margin-top:6px; }
-.progress-fill { height:100%; border-radius:99px; background:var(--vd); }
+  async function seleccionarPeriodo(pId, btnEl) {
+    if (haycambios) {
+      if (!confirm('Tienes cambios sin guardar. ¿Cambiar de periodo y perderlos?')) return
+    }
+    document.querySelectorAll('.tab-periodo').forEach(b => b.classList.remove('active'))
+    btnEl.classList.add('active')
+    periodoId = pId
+    haycambios = false
+    await cargarFilas()
+  }
 
-/* ─── Sessions ─── */
-.session-row { display:flex; align-items:center; gap:10px; padding:7px 0; border-bottom:1px solid var(--border); font-size:12px; }
-.session-row:last-child { border-bottom:none; }
-.session-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
-.dot-done    { background:#10B981; }
-.dot-pending { background:#F59E0B; }
-.dot-future  { background:var(--border-m); }
-.session-title { flex:1; }
-.session-title.done { color:var(--text-3); text-decoration:line-through; text-decoration-color:#10B981; }
+  // ── Cargar filas ──────────────────────────────────────────
+  async function cargarFilas() {
+    if (!grupoMateriaId || !periodoId) return
 
-/* ─── Avatar ─── */
-.avatar {
-  width:30px; height:30px; border-radius:50%;
-  display:flex; align-items:center; justify-content:center;
-  font-size:11px; font-weight:700; flex-shrink:0;
-}
-.avatar-admin   { background:var(--am-l); color:var(--am); }
-.avatar-rosalba { background:var(--vd-l); color:var(--vd-d); }
-.avatar-yerim   { background:var(--az-l); color:var(--az-d); }
+    const { data: filas } = await supabase
+      .from('plan_analitico_filas')
+      .select('id, semana, eje_articulador, contenido, aprendizaje_esperado, saber_hacer, es_examen, orden, tipo_actividad')
+      .eq('grupo_materia_id', grupoMateriaId)
+      .eq('periodo_id', periodoId)
+      .order('orden')
 
-/* ─── IA box ─── */
-.ia-box {
-  background:var(--az-l); border:1px solid var(--az-m);
-  border-radius:var(--radius); padding:12px 16px; margin-top:12px;
-}
-.ia-label { font-size:9px; font-weight:700; color:var(--az); text-transform:uppercase; letter-spacing:.1em; margin-bottom:4px; }
-.ia-box p { font-size:12px; color:var(--az-d); line-height:1.7; }
+    filasActuales = filas || []
+    renderTabla()
+  }
 
-/* ─── Alerts ─── */
-.alert { padding:12px 16px; border-radius:var(--radius-s); font-size:12px; margin-bottom:14px; }
-.alert-info    { background:var(--az-l); color:var(--az-d); border:1px solid var(--az-m); }
-.alert-success { background:var(--vd-l); color:var(--vd-d); border:1px solid #A7F3D0; }
-.alert-warning { background:var(--am-l); color:var(--am);   border:1px solid var(--am-m); }
-.alert-danger  { background:var(--co-l); color:var(--co);   border:1px solid var(--co-m); }
+  // ── Render tabla ──────────────────────────────────────────
+  function renderTabla() {
+    const tbody = document.getElementById('plan-tbody')
+    const cardTabla = document.getElementById('card-tabla')
+    const emptyPlan = document.getElementById('empty-plan')
 
-/* ─── Loading / empty ─── */
-.loading { display:flex; align-items:center; justify-content:center; padding:60px; color:var(--text-3); font-size:13px; }
-.empty-state { text-align:center; padding:50px 20px; color:var(--text-3); }
-.empty-state p { font-size:13px; margin-top:8px; }
+    if (!filasActuales.length) {
+      cardTabla.style.display = 'block'
+      emptyPlan.style.display = 'none'
+      tbody.innerHTML = ''
+      return
+    }
 
-/* ─── Utilidades ─── */
-.text-muted  { color:var(--text-3); }
-.text-small  { font-size:11px; }
-.text-right  { text-align:right; }
-.divider     { height:1px; background:var(--border); margin:14px 0; }
-.flex        { display:flex; }
-.flex-center { display:flex; align-items:center; }
-.flex-between{ display:flex; align-items:center; justify-content:space-between; }
-.gap-6  { gap:6px; }
-.gap-8  { gap:8px; }
-.gap-12 { gap:12px; }
-.mb-0   { margin-bottom:0 !important; }
-.mb-8   { margin-bottom:8px; }
-.mb-12  { margin-bottom:12px; }
-.mt-8   { margin-top:8px; }
-.mt-12  { margin-top:12px; }
-.w-full { width:100%; }
+    cardTabla.style.display = 'block'
+    emptyPlan.style.display = 'none'
 
-::-webkit-scrollbar { width:6px; height:6px; }
-::-webkit-scrollbar-track { background:transparent; }
-::-webkit-scrollbar-thumb { background:var(--border-m); border-radius:99px; }
+    tbody.innerHTML = filasActuales.map((f, i) => {
+      if (f.es_examen) {
+        return `<tr class="examen-row" data-idx="${i}">
+          <td colspan="5">— Periodo de exámenes —</td>
+          <td><button class="btn-fila" onclick="eliminarFila(${i})" title="Eliminar">✕</button></td>
+        </tr>`
+      }
+      return `<tr data-idx="${i}">
+        <td class="col-semana">
+          <textarea class="cell-input" placeholder="Sesión 1"
+            oninput="autoResize(this)" onchange="editarCelda(${i}, 'semana', this.value)">${f.semana || ''}</textarea>
+        </td>
+        <td class="col-eje">
+          <textarea class="cell-input" placeholder="Ej. Digitalización"
+            oninput="autoResize(this)" onchange="editarCelda(${i}, 'eje_articulador', this.value)">${f.eje_articulador || ''}</textarea>
+        </td>
+        <td class="col-contenido">
+          <textarea class="cell-input" placeholder="Objetivo general"
+            oninput="autoResize(this)" onchange="editarCelda(${i}, 'contenido', this.value)">${f.contenido || ''}</textarea>
+        </td>
+        <td class="col-proceso">
+          <textarea class="cell-input" placeholder="Aprendizaje esperado"
+            oninput="autoResize(this)" onchange="editarCelda(${i}, 'aprendizaje_esperado', this.value)">${f.aprendizaje_esperado || ''}</textarea>
+        </td>
+        <td class="col-saber">
+          <textarea class="cell-input" placeholder="Objetivos particulares"
+            oninput="autoResize(this)" onchange="editarCelda(${i}, 'saber_hacer', this.value)">${f.saber_hacer || ''}</textarea>
+        </td>
+        <td>
+          <select class="cell-input" style="min-height:unset;height:36px;padding:4px 6px;"
+            onchange="editarCelda(${i}, 'tipo_actividad', this.value)">
+            <option value="" ${!f.tipo_actividad?'selected':''}>—</option>
+            <option value="Trabajo de clase"  ${f.tipo_actividad==='Trabajo de clase'?'selected':''}>Trabajo de clase</option>
+            <option value="Proyecto"          ${f.tipo_actividad==='Proyecto'?'selected':''}>Proyecto</option>
+            <option value="Autoevaluación"    ${f.tipo_actividad==='Autoevaluación'?'selected':''}>Autoevaluación</option>
+            <option value="Examen"            ${f.tipo_actividad==='Examen'?'selected':''}>Examen</option>
+          </select>
+        </td>
+        <td class="col-acciones">
+          <button class="btn-fila" onclick="eliminarFila(${i})" title="Eliminar fila">✕</button>
+        </td>
+      </tr>`
+    }).join('')
+
+    // Expandir textareas al contenido actual
+    setTimeout(() => aplicarAutoResize(), 30)
+  }
+
+  // Auto-resize de textareas
+  window.autoResize = (el) => {
+    el.style.height = 'auto'
+    el.style.height = el.scrollHeight + 'px'
+  }
+
+  // Aplicar auto-resize a todos los textareas al renderizar
+  function aplicarAutoResize() {
+    document.querySelectorAll('.cell-input').forEach(el => {
+      if (el.tagName === 'TEXTAREA') {
+        el.style.height = 'auto'
+        el.style.height = Math.max(70, el.scrollHeight) + 'px'
+      }
+    })
+  }
+
+  window.editarCelda = (idx, campo, valor) => {
+    filasActuales[idx][campo] = valor
+    haycambios = true
+    document.getElementById('save-status').textContent = '● Cambios sin guardar'
+    document.getElementById('save-status').style.color = 'var(--am)'
+  }
+
+  window.eliminarFila = (idx) => {
+    filasActuales.splice(idx, 1)
+    haycambios = true
+    renderTabla()
+    document.getElementById('save-status').textContent = '● Cambios sin guardar'
+    document.getElementById('save-status').style.color = 'var(--am)'
+  }
+
+  document.getElementById('btn-add-fila').addEventListener('click', () => {
+    filasActuales.push({
+      id: null, grupo_materia_id: grupoMateriaId, periodo_id: periodoId,
+      semana: '', eje_articulador: '', contenido: '',
+      aprendizaje_esperado: '', saber_hacer: '', es_examen: false,
+      tipo_actividad: null,
+      orden: filasActuales.length
+    })
+    haycambios = true
+    renderTabla()
+    // Scroll al final
+    const tbody = document.getElementById('plan-tbody')
+    tbody.lastElementChild?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  })
+
+  document.getElementById('btn-add-examen').addEventListener('click', () => {
+    filasActuales.push({
+      id: null, grupo_materia_id: grupoMateriaId, periodo_id: periodoId,
+      es_examen: true, orden: filasActuales.length
+    })
+    haycambios = true
+    renderTabla()
+  })
+
+  // ── Guardar ───────────────────────────────────────────────
+  document.getElementById('btn-guardar').addEventListener('click', async () => {
+    if (!grupoMateriaId || !periodoId) return
+
+    const btn = document.getElementById('btn-guardar')
+    btn.textContent = 'Guardando...'
+    btn.disabled = true
+
+    try {
+      // Borrar filas existentes del periodo
+      await supabase.from('plan_analitico_filas')
+        .delete()
+        .eq('grupo_materia_id', grupoMateriaId)
+        .eq('periodo_id', periodoId)
+
+      // Insertar todas las filas actuales
+      if (filasActuales.length) {
+        const filas = filasActuales.map((f, i) => ({
+          grupo_materia_id: grupoMateriaId,
+          periodo_id: periodoId,
+          semana: f.semana || null,
+          eje_articulador: f.eje_articulador || null,
+          contenido: f.contenido || null,
+          aprendizaje_esperado: f.aprendizaje_esperado || null,
+          saber_hacer: f.saber_hacer || null,
+          es_examen: f.es_examen || false,
+          tipo_actividad: f.tipo_actividad || null,
+          orden: i
+        }))
+        await supabase.from('plan_analitico_filas').insert(filas)
+      }
+
+      haycambios = false
+      document.getElementById('save-status').textContent = 'Guardado ✓'
+      document.getElementById('save-status').style.color = 'var(--vd)'
+      mostrarToast('Plan analítico guardado ✓')
+      await cargarFilas()
+
+    } catch (err) {
+      mostrarToast('Error al guardar: ' + err.message, 'error')
+    } finally {
+      btn.textContent = 'Guardar plan'
+      btn.disabled = false
+    }
+  })
+
+  // ── Toast ─────────────────────────────────────────────────
+  function mostrarToast(msg, tipo = 'ok') {
+    const t = document.getElementById('toast')
+    t.textContent = msg
+    t.style.background = tipo === 'error' ? 'var(--co)' : 'var(--vd)'
+    t.style.display = 'block'
+    setTimeout(() => { t.style.display = 'none' }, 2500)
+  }
+
+  // Advertir si haycambios al salir
+  window.addEventListener('beforeunload', e => {
+    if (haycambios) {
+      e.preventDefault()
+      e.returnValue = ''
+    }
+  })
+</script>
+</body>
+</html>
