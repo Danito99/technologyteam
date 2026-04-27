@@ -86,35 +86,39 @@ a:hover { text-decoration:underline; }
 .topnav {
   display: flex;
   align-items: center;
-  padding: 0 24px;
-  height: 58px;
+  padding: 0 16px;
+  height: 54px;
   gap: 0;
+  overflow: hidden;
 }
 
 .topnav-brand {
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 800;
   color: var(--az);
-  letter-spacing: -.4px;
-  margin-right: 32px;
+  letter-spacing: -.3px;
+  margin-right: 16px;
   white-space: nowrap;
   text-decoration: none;
+  flex-shrink: 0;
 }
 .topnav-brand span { color: var(--text); }
 
 .topnav-links {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 1px;
   flex: 1;
+  overflow: hidden;
+  min-width: 0;
 }
 
 .nav-item {
   display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 6px 14px;
-  font-size: 13px;
+  gap: 5px;
+  padding: 5px 10px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--text-2);
   cursor: pointer;
@@ -124,37 +128,40 @@ a:hover { text-decoration:underline; }
   white-space: nowrap;
   border: none;
   background: transparent;
+  flex-shrink: 0;
 }
+.nav-item svg { display:none; } /* ocultar iconos para ahorrar espacio */
 .nav-item:hover { background: var(--az-l); color: var(--az); text-decoration: none; }
-.nav-item.active { background: var(--az-l); color: var(--az); font-weight: 600; }
-.nav-item svg { flex-shrink:0; }
+.nav-item.active { background: var(--az-l); color: var(--az); font-weight: 700; }
 
 .nav-section {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
   color: var(--text-3);
   text-transform: uppercase;
   letter-spacing: .08em;
-  padding: 0 10px;
+  padding: 0 6px;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .topnav-divider {
   width: 1px;
-  height: 20px;
+  height: 16px;
   background: var(--border);
-  margin: 0 8px;
+  margin: 0 6px;
+  flex-shrink: 0;
 }
 
 .topnav-user {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-left: auto;
-  padding-left: 16px;
+  margin-left: 12px;
+  flex-shrink: 0;
 }
-.topnav-user .name { font-size:12px; font-weight:600; color:var(--text); }
-.topnav-user a { font-size:11px; color:var(--text-3); }
+.topnav-user .name { font-size:12px; font-weight:600; color:var(--text); white-space:nowrap; }
+.topnav-user a { font-size:11px; color:var(--text-3); white-space:nowrap; }
 
 .sidebar-user { display:none; }
 
