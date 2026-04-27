@@ -1,585 +1,248 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TechAcademia — Plan analítico</title>
-  <link rel="stylesheet" href="../css/global.css">
-  <style>
-    .selector-bar {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-    .selector-bar select { width: auto; margin: 0; }
+/* ─── Variables ─── */
+:root {
+  --az:      #185FA5;
+  --az-l:    #E6F1FB;
+  --az-d:    #0C447C;
+  --vd:      #3B6D11;
+  --vd-l:    #EAF3DE;
+  --am:      #BA7517;
+  --am-l:    #FAEEDA;
+  --co:      #993C1D;
+  --co-l:    #FAECE7;
+  --bg:      #f8f8f6;
+  --bg-card: #ffffff;
+  --border:  #e8e8e4;
+  --border-m:#d0d0ca;
+  --text:    #1a1a1a;
+  --text-2:  #555550;
+  --text-3:  #888880;
+  --radius:  10px;
+  --radius-s: 6px;
+  --shadow:  0 1px 3px rgba(0,0,0,.06);
+  --gold-bg: #FFF8DC; --gold-tx: #B8860B;
+  --g2-bg:   #d4edda; --g2-tx:   #1a6b1a;
+  --g1-bg:   #e8f5e9; --g1-tx:   #2d7a2d;
+  --yel-bg:  #FFF9C4; --yel-tx:  #8a6d00;
+  --r2-bg:   #FAECE7; --r2-tx:   #993C1D;
+  --r1-bg:   #ffebee; --r1-tx:   #7f0000;
+}
 
-    .tab-periodos {
-      display: flex;
-      gap: 4px;
-      flex-wrap: wrap;
-      margin-bottom: 14px;
-    }
-    .tab-periodo {
-      font-size: 11px;
-      padding: 5px 12px;
-      border-radius: 99px;
-      border: 1px solid var(--border-m);
-      cursor: pointer;
-      color: var(--text-2);
-      background: transparent;
-      transition: all .15s;
-    }
-    .tab-periodo:hover { background: var(--bg); }
-    .tab-periodo.active { background: var(--az); color: white; border-color: var(--az); }
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
 
-    /* Tabla plan analítico */
-    .plan-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    .plan-table th {
-      text-align: left;
-      font-size: 10px;
-      font-weight: 600;
-      color: var(--text-3);
-      padding: 6px 8px;
-      border-bottom: 1px solid var(--border);
-      text-transform: uppercase;
-      letter-spacing: .05em;
-      background: var(--bg);
-    }
-    .plan-table td {
-      padding: 4px 4px;
-      border-bottom: 1px solid var(--border);
-      vertical-align: top;
-    }
-    .plan-table tr:last-child td { border-bottom: none; }
-    .plan-table tr.examen-row td {
-      background: var(--bg);
-      color: var(--text-3);
-      font-style: italic;
-      font-size: 11px;
-      text-align: center;
-      padding: 6px;
-    }
-    .plan-table tr:hover:not(.examen-row) td { background: #fafaf8; }
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
 
-    .cell-input {
-      width: 100%;
-      font-size: 11px;
-      padding: 5px 6px;
-      border: 1px solid transparent;
-      border-radius: 4px;
-      background: transparent;
-      color: var(--text);
-      font-family: inherit;
-      resize: none;
-      min-height: 70px;
-      height: auto;
-      overflow: hidden;
-      transition: border-color .15s, background .15s;
-      line-height: 1.6;
-      box-sizing: border-box;
-    }
-    .cell-input:focus {
-      outline: none;
-      border-color: var(--az);
-      background: white;
-    }
-    .cell-input:hover { border-color: var(--border-m); }
-    .plan-table td { vertical-align: top; padding: 6px 4px; }
-    .plan-table tr { vertical-align: top; }
+a { color:var(--az); text-decoration:none; }
+a:hover { text-decoration:underline; }
 
-    .col-semana   { width: 90px; }
-    .col-eje      { width: 100px; }
-    .col-contenido{ width: 140px; }
-    .col-proceso  { width: 180px; }
-    .col-saber    { width: 200px; }
-    .col-acciones { width: 50px; text-align: center; }
+/* ─── Layout ─── */
+.app-layout { display:flex; height:100vh; overflow:hidden; }
 
-    .btn-fila {
-      background: none;
-      border: none;
-      cursor: pointer;
-      color: var(--text-3);
-      padding: 4px;
-      border-radius: 4px;
-      font-size: 14px;
-      transition: color .15s;
-    }
-    .btn-fila:hover { color: var(--co); }
-    .btn-add-fila {
-      font-size: 11px;
-      color: var(--az);
-      background: none;
-      border: none;
-      cursor: pointer;
-      padding: 8px 0;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .btn-add-fila:hover { text-decoration: underline; }
+/* ─── Sidebar ─── */
+.sidebar {
+  width: 210px;
+  min-width: 210px;
+  background: #ffffff;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+.sidebar-logo { padding:16px 18px 14px; border-bottom:1px solid var(--border); }
+.sidebar-logo .brand { font-size:15px; font-weight:600; color:var(--text); }
+.sidebar-logo .role  { font-size:11px; color:var(--text-3); margin-top:2px; }
 
-    .save-bar {
-      position: sticky;
-      bottom: 0;
-      background: var(--bg-card);
-      border-top: 1px solid var(--border);
-      padding: 10px 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin: 0 -20px -20px;
-      z-index: 10;
-    }
-    .save-status { font-size: 11px; color: var(--text-3); }
+.nav-section {
+  font-size:10px; font-weight:600; color:var(--text-3);
+  text-transform:uppercase; letter-spacing:.07em;
+  padding:10px 18px 3px;
+}
+.nav-item {
+  display:flex; align-items:center; gap:9px;
+  padding:8px 18px; font-size:13px; color:var(--text-2);
+  cursor:pointer; border-left:2px solid transparent;
+  text-decoration:none; transition:background .1s;
+}
+.nav-item:hover { background:var(--bg); color:var(--text); text-decoration:none; }
+.nav-item.active { color:var(--az); background:var(--az-l); border-left-color:var(--az); font-weight:500; }
+.nav-item svg { flex-shrink:0; }
 
-    .empty-plan {
-      text-align: center;
-      padding: 40px 20px;
-      color: var(--text-3);
-    }
+.sidebar-user {
+  margin-top:auto; padding:12px 18px;
+  border-top:1px solid var(--border);
+  display:flex; align-items:center; gap:10px;
+}
 
-    .toast {
-      position: fixed;
-      bottom: 70px;
-      right: 20px;
-      background: var(--vd);
-      color: white;
-      padding: 10px 16px;
-      border-radius: var(--radius-s);
-      font-size: 12px;
-      z-index: 200;
-      display: none;
-    }
+/* ─── Main ─── */
+.main-area { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
 
-    .info-plan {
-      font-size: 11px;
-      color: var(--az-d);
-      background: var(--az-l);
-      border: 1px solid #B5D4F4;
-      border-radius: var(--radius-s);
-      padding: 8px 12px;
-      margin-bottom: 12px;
-    }
-  </style>
-</head>
-<body>
-<div class="app-layout">
-  <div id="sidebar-container"></div>
+.topbar {
+  padding:13px 20px; border-bottom:1px solid var(--border);
+  background:var(--bg-card); display:flex; align-items:center;
+  justify-content:space-between; gap:12px; flex-shrink:0;
+}
+.topbar-title { font-size:15px; font-weight:600; color:var(--text); }
+.topbar-sub   { font-size:11px; color:var(--text-3); margin-top:1px; }
+.page-content { padding:20px; overflow-y:auto; flex:1; }
 
-  <div class="main-area">
-    <div class="topbar">
-      <div>
-        <div class="topbar-title">Plan analítico</div>
-        <div class="topbar-sub" id="topbar-sub">Selecciona un grupo</div>
-      </div>
-      <div class="selector-bar">
-        <select id="sel-grupo" onchange="onGrupoChange()">
-          <option value="">Selecciona grupo...</option>
-        </select>
-        <select id="sel-materia" onchange="onMateriaChange()" style="display:none;">
-          <option value="">Materia...</option>
-        </select>
-      </div>
-    </div>
+/* ─── Cards ─── */
+.card {
+  background:var(--bg-card); border:1px solid var(--border);
+  border-radius:var(--radius); padding:14px 16px; margin-bottom:12px;
+  box-shadow:var(--shadow);
+}
+.card:last-child { margin-bottom:0; }
+.card-title { font-size:13px; font-weight:600; color:var(--text); margin-bottom:12px; }
 
-    <div class="page-content">
-      <div id="loading" class="loading">Cargando...</div>
-      <div id="content" style="display:none;">
+/* ─── Métricas ─── */
+.metrics-grid {
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
+  gap:10px; margin-bottom:14px;
+}
+.metric { background:var(--bg); border-radius:var(--radius-s); padding:10px 12px; }
+.metric-label { font-size:11px; color:var(--text-3); margin-bottom:4px; }
+.metric-value { font-size:22px; font-weight:600; color:var(--text); }
+.metric-value.blue  { color:var(--az); }
+.metric-value.green { color:var(--vd); }
+.metric-value.amber { color:var(--am); }
+.metric-value.red   { color:var(--co); }
 
-        <div class="info-plan" id="info-plan" style="display:none;">
-          💡 Los campos <strong>Aprendizaje esperado</strong> y <strong>Saber y saber hacer</strong> se copian automáticamente como objetivos en el plan de clase.
-        </div>
+/* ─── Grids ─── */
+.grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; }
+.grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:12px; }
+.grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:12px; }
 
-        <!-- Tabs de periodos -->
-        <div class="tab-periodos" id="tab-periodos"></div>
+/* ─── Tablas ─── */
+.table-wrap { overflow-x:auto; }
+table.data-table { width:100%; border-collapse:collapse; font-size:12px; }
+.data-table th {
+  text-align:left; color:var(--text-3); font-weight:600; font-size:11px;
+  padding:6px 8px; border-bottom:1px solid var(--border);
+}
+.data-table td { padding:7px 8px; border-bottom:1px solid var(--border); color:var(--text); vertical-align:middle; }
+.data-table tr:last-child td { border-bottom:none; }
+.data-table tr:hover td { background:var(--bg); }
 
-        <!-- Tabla -->
-        <div class="card mb-0" id="card-tabla" style="display:none;">
-          <div style="overflow-x:auto;">
-            <table class="plan-table" id="plan-table">
-              <thead>
-                <tr>
-                  <th class="col-semana">Periodo / Semana</th>
-                  <th class="col-eje">Eje articulador</th>
-                  <th class="col-contenido">Contenido <span style="font-weight:400;">(obj. general)</span></th>
-                  <th class="col-proceso">Proceso de desarrollo <span style="font-weight:400;">(aprendizaje esperado)</span></th>
-                  <th class="col-saber">Saber y saber hacer <span style="font-weight:400;">(obj. particulares)</span></th>
-                  <th style="width:120px;">Tipo actividad</th>
-                  <th class="col-acciones"></th>
-                </tr>
-              </thead>
-              <tbody id="plan-tbody"></tbody>
-            </table>
-          </div>
-          <div style="padding: 4px 0;">
-            <button class="btn-add-fila" id="btn-add-fila">
-              <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                <path d="M8 2v12M2 8h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-              </svg>
-              Agregar fila
-            </button>
-            <button class="btn-add-fila" id="btn-add-examen" style="margin-left:12px;color:var(--text-3);">
-              + Agregar fila de examen
-            </button>
-          </div>
-        </div>
+/* ─── Chips ─── */
+.chip { display:inline-block; font-size:11px; font-weight:500; padding:2px 8px; border-radius:99px; white-space:nowrap; }
+.chip-green { background:var(--vd-l); color:var(--vd); }
+.chip-amber { background:var(--am-l); color:var(--am); }
+.chip-red   { background:var(--co-l); color:var(--co); }
+.chip-blue  { background:var(--az-l); color:var(--az-d); }
 
-        <div class="empty-plan" id="empty-plan" style="display:none;">
-          <div style="font-size:28px;margin-bottom:8px;">📋</div>
-          <div style="font-weight:500;margin-bottom:4px;">Sin filas en este periodo</div>
-          <div class="text-small">Agrega filas con el botón de abajo.</div>
-        </div>
+.badge-nivel { font-size:9px; font-weight:600; padding:2px 6px; border-radius:99px; }
+.badge-pri  { background:var(--vd-l); color:var(--vd); }
+.badge-sec  { background:var(--az-l); color:var(--az-d); }
+.badge-prep { background:var(--am-l); color:var(--am); }
 
-      </div>
+/* ─── Bandas ─── */
+.banda { display:inline-block; font-size:11px; font-weight:500; padding:2px 8px; border-radius:99px; }
+.banda-gold   { background:var(--gold-bg); color:var(--gold-tx); }
+.banda-green2 { background:var(--g2-bg);   color:var(--g2-tx); }
+.banda-green1 { background:var(--g1-bg);   color:var(--g1-tx); }
+.banda-yellow { background:var(--yel-bg);  color:var(--yel-tx); }
+.banda-red2   { background:var(--r2-bg);   color:var(--r2-tx); }
+.banda-red1   { background:var(--r1-bg);   color:var(--r1-tx); }
 
-      <!-- Barra de guardado -->
-      <div class="save-bar" id="save-bar" style="display:none;">
-        <span class="save-status" id="save-status">Sin cambios pendientes</span>
-        <button class="btn btn-primary" id="btn-guardar">Guardar plan</button>
-      </div>
-    </div>
-  </div>
-</div>
+/* ─── Botones ─── */
+.btn {
+  display:inline-flex; align-items:center; gap:6px;
+  font-size:12px; font-weight:500; padding:6px 12px;
+  border:1px solid var(--border-m); border-radius:var(--radius-s);
+  background:transparent; color:var(--text); cursor:pointer;
+  transition:background .1s; white-space:nowrap;
+}
+.btn:hover { background:var(--bg); }
+.btn:active { transform:scale(.98); }
+.btn-primary { background:var(--az); color:white; border-color:var(--az); }
+.btn-primary:hover { background:var(--az-d); }
+.btn-danger  { background:var(--co); color:white; border-color:var(--co); }
+.btn-sm { font-size:11px; padding:4px 9px; }
 
-<div class="toast" id="toast"></div>
+/* ─── Formularios ─── */
+.form-group { margin-bottom:12px; }
+.form-label { display:block; font-size:11px; font-weight:500; color:var(--text-2); margin-bottom:4px; }
+input, select, textarea {
+  width:100%; font-size:12px; padding:7px 10px;
+  border:1px solid var(--border-m); border-radius:var(--radius-s);
+  background:var(--bg); color:var(--text); font-family:inherit;
+}
+input:focus, select:focus, textarea:focus {
+  outline:none; border-color:var(--az); background:white;
+}
+textarea { resize:vertical; min-height:60px; }
 
-<script type="module">
-  import { requireAuth }   from '../js/auth.js'
-  import { renderSidebar } from '../js/sidebar-docente.js'
-  import { supabase }      from '../js/supabase.js'
+/* ─── Tabs ─── */
+.tabs { display:flex; border-bottom:1px solid var(--border); margin-bottom:14px; }
+.tab {
+  font-size:12px; padding:7px 14px; cursor:pointer;
+  color:var(--text-3); border-bottom:2px solid transparent;
+  margin-bottom:-1px; white-space:nowrap;
+}
+.tab:hover { color:var(--az); }
+.tab.active { color:var(--az); border-bottom-color:var(--az); font-weight:500; }
 
-  const profile = await requireAuth('docente')
-  if (!profile) throw new Error('No autenticado')
-  await renderSidebar('plan-analitico')
+/* ─── Progress bar ─── */
+.progress-bar { height:6px; border-radius:99px; background:var(--border); overflow:hidden; margin-top:5px; }
+.progress-fill { height:100%; border-radius:99px; background:#639922; }
 
-  let cicloId       = null
-  let grupoMateriaId = null
-  let periodoId     = null
-  let filasActuales = []
-  let haycambios    = false
+/* ─── Sessions ─── */
+.session-row { display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid var(--border); font-size:12px; }
+.session-row:last-child { border-bottom:none; }
+.session-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+.dot-done    { background:#639922; }
+.dot-pending { background:#EF9F27; }
+.dot-future  { background:var(--border-m); }
+.session-title { flex:1; }
+.session-title.done { color:var(--text-3); text-decoration:line-through; text-decoration-color:#97C459; }
 
-  // ── Ciclo activo ──────────────────────────────────────────
-  const { data: ciclo } = await supabase
-    .from('ciclos_escolares').select('id').eq('activo', true).single()
-  cicloId = ciclo?.id
+/* ─── Avatar ─── */
+.avatar { width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:500; flex-shrink:0; }
+.avatar-admin   { background:var(--am-l); color:var(--am); }
+.avatar-rosalba { background:var(--vd-l); color:var(--vd); }
+.avatar-yerim   { background:var(--az-l); color:var(--az-d); }
 
-  // ── Cargar grupos del docente ─────────────────────────────
-  const { data: grupos } = await supabase
-    .from('grupos')
-    .select('id, nombre, nivel, grado, sistema_periodos, grupo_materias(id, materias(id, nombre))')
-    .eq('docente_id', profile.id)
-    .eq('ciclo_id', cicloId)
-    .order('grado')
+/* ─── IA box ─── */
+.ia-box { background:var(--az-l); border:1px solid #B5D4F4; border-radius:var(--radius-s); padding:10px 14px; margin-top:10px; }
+.ia-label { font-size:9px; font-weight:600; color:var(--az); text-transform:uppercase; letter-spacing:.08em; margin-bottom:4px; }
+.ia-box p { font-size:12px; color:var(--az-d); line-height:1.6; }
 
-  const selGrupo = document.getElementById('sel-grupo')
-  grupos?.forEach(g => {
-    const opt = document.createElement('option')
-    opt.value = g.id
-    opt.textContent = `${g.nombre} (${g.nivel})`
-    opt.dataset.sistema = g.sistema_periodos
-    opt.dataset.materias = JSON.stringify(g.grupo_materias || [])
-    selGrupo.appendChild(opt)
-  })
+/* ─── Alerts ─── */
+.alert { padding:10px 14px; border-radius:var(--radius-s); font-size:12px; margin-bottom:12px; }
+.alert-info    { background:var(--az-l); color:var(--az-d); border:1px solid #B5D4F4; }
+.alert-success { background:var(--vd-l); color:var(--vd);   border:1px solid #97C459; }
+.alert-warning { background:var(--am-l); color:var(--am);   border:1px solid #FAC775; }
+.alert-danger  { background:var(--co-l); color:var(--co);   border:1px solid #F0997B; }
 
-  document.getElementById('loading').style.display = 'none'
-  document.getElementById('content').style.display = 'block'
+/* ─── Loading / empty ─── */
+.loading { display:flex; align-items:center; justify-content:center; padding:40px; color:var(--text-3); font-size:13px; }
+.empty-state { text-align:center; padding:40px 20px; color:var(--text-3); }
+.empty-state p { font-size:13px; margin-top:8px; }
 
-  // ── Cambio de grupo ───────────────────────────────────────
-  window.onGrupoChange = async () => {
-    const opt = selGrupo.options[selGrupo.selectedIndex]
-    const grupoId = selGrupo.value
-    if (!grupoId) return
+/* ─── Utilidades ─── */
+.text-muted   { color:var(--text-3); }
+.text-small   { font-size:11px; }
+.text-right   { text-align:right; }
+.divider      { height:1px; background:var(--border); margin:12px 0; }
+.flex         { display:flex; }
+.flex-center  { display:flex; align-items:center; }
+.flex-between { display:flex; align-items:center; justify-content:space-between; }
+.gap-6  { gap:6px; }
+.gap-8  { gap:8px; }
+.gap-12 { gap:12px; }
+.mb-0   { margin-bottom:0 !important; }
+.mb-8   { margin-bottom:8px; }
+.mb-12  { margin-bottom:12px; }
+.mt-8   { margin-top:8px; }
+.mt-12  { margin-top:12px; }
+.w-full { width:100%; }
 
-    const materias = JSON.parse(opt.dataset.materias || '[]')
-    const sistema  = opt.dataset.sistema
-    const selMat   = document.getElementById('sel-materia')
-
-    // Si hay más de una materia, mostrar selector
-    selMat.innerHTML = '<option value="">Materia...</option>'
-    materias.forEach(gm => {
-      const o = document.createElement('option')
-      o.value = gm.id
-      o.textContent = gm.materias?.nombre || '—'
-      selMat.appendChild(o)
-    })
-
-    if (materias.length > 1) {
-      selMat.style.display = 'block'
-      grupoMateriaId = null
-    } else if (materias.length === 1) {
-      selMat.style.display = 'none'
-      grupoMateriaId = materias[0].id
-      await cargarPeriodos(sistema)
-    } else {
-      selMat.style.display = 'none'
-      mostrarToast('Este grupo no tiene materias asignadas. Ve a Mis materias y grupos.', 'error')
-    }
-  }
-
-  window.onMateriaChange = async () => {
-    const selMat = document.getElementById('sel-materia')
-    grupoMateriaId = selMat.value
-    if (!grupoMateriaId) return
-    const opt = selGrupo.options[selGrupo.selectedIndex]
-    await cargarPeriodos(opt.dataset.sistema)
-  }
-
-  // ── Cargar periodos ───────────────────────────────────────
-  // En el plan analítico mostramos solo T1, T2, T3 (no parciales)
-  // Para preparatoria: Sem A, Sem B
-  async function cargarPeriodos(sistema) {
-    const tipo = sistema === 'semestral' ? 'semestre' : 'trimestre'
-    const { data: periodos } = await supabase
-      .from('periodos')
-      .select('id, etiqueta, numero, parcial, tipo')
-      .eq('ciclo_id', cicloId)
-      .eq('tipo', tipo)
-      .order('numero').order('parcial')
-
-    // Agrupar: para el plan analítico usamos el primer parcial de cada número
-    // T1·P1 representa el Trimestre 1 completo en el plan analítico
-    const grupos = {}
-    periodos?.forEach(p => {
-      if (!grupos[p.numero]) grupos[p.numero] = p
-    })
-    const periodosAgrupados = Object.values(grupos)
-
-    // Etiquetas amigables
-    const etiquetas = {
-      trimestre: { 1: 'Trimestre 1', 2: 'Trimestre 2', 3: 'Trimestre 3' },
-      semestre:  { 1: 'Semestre A',  2: 'Semestre B' }
-    }
-
-    const tabsEl = document.getElementById('tab-periodos')
-    tabsEl.innerHTML = ''
-    periodosAgrupados.forEach((p, i) => {
-      const btn = document.createElement('button')
-      btn.className = 'tab-periodo' + (i === 0 ? ' active' : '')
-      btn.textContent = etiquetas[tipo]?.[p.numero] || p.etiqueta
-      btn.dataset.periodoId = p.id
-      btn.onclick = () => seleccionarPeriodo(p.id, btn)
-      tabsEl.appendChild(btn)
-    })
-
-    if (periodosAgrupados.length) {
-      periodoId = periodosAgrupados[0].id
-      await cargarFilas()
-    }
-
-    document.getElementById('info-plan').style.display = 'block'
-    document.getElementById('save-bar').style.display = 'flex'
-    document.getElementById('topbar-sub').textContent =
-      selGrupo.options[selGrupo.selectedIndex].textContent
-  }
-
-  async function seleccionarPeriodo(pId, btnEl) {
-    if (haycambios) {
-      if (!confirm('Tienes cambios sin guardar. ¿Cambiar de periodo y perderlos?')) return
-    }
-    document.querySelectorAll('.tab-periodo').forEach(b => b.classList.remove('active'))
-    btnEl.classList.add('active')
-    periodoId = pId
-    haycambios = false
-    await cargarFilas()
-  }
-
-  // ── Cargar filas ──────────────────────────────────────────
-  async function cargarFilas() {
-    if (!grupoMateriaId || !periodoId) return
-
-    const { data: filas } = await supabase
-      .from('plan_analitico_filas')
-      .select('id, semana, eje_articulador, contenido, aprendizaje_esperado, saber_hacer, es_examen, orden, tipo_actividad')
-      .eq('grupo_materia_id', grupoMateriaId)
-      .eq('periodo_id', periodoId)
-      .order('orden')
-
-    filasActuales = filas || []
-    renderTabla()
-  }
-
-  // ── Render tabla ──────────────────────────────────────────
-  function renderTabla() {
-    const tbody = document.getElementById('plan-tbody')
-    const cardTabla = document.getElementById('card-tabla')
-    const emptyPlan = document.getElementById('empty-plan')
-
-    if (!filasActuales.length) {
-      cardTabla.style.display = 'block'
-      emptyPlan.style.display = 'none'
-      tbody.innerHTML = ''
-      return
-    }
-
-    cardTabla.style.display = 'block'
-    emptyPlan.style.display = 'none'
-
-    tbody.innerHTML = filasActuales.map((f, i) => {
-      if (f.es_examen) {
-        return `<tr class="examen-row" data-idx="${i}">
-          <td colspan="5">— Periodo de exámenes —</td>
-          <td><button class="btn-fila" onclick="eliminarFila(${i})" title="Eliminar">✕</button></td>
-        </tr>`
-      }
-      return `<tr data-idx="${i}">
-        <td class="col-semana">
-          <textarea class="cell-input" placeholder="Sesión 1"
-            oninput="autoResize(this)" onchange="editarCelda(${i}, 'semana', this.value)">${f.semana || ''}</textarea>
-        </td>
-        <td class="col-eje">
-          <textarea class="cell-input" placeholder="Ej. Digitalización"
-            oninput="autoResize(this)" onchange="editarCelda(${i}, 'eje_articulador', this.value)">${f.eje_articulador || ''}</textarea>
-        </td>
-        <td class="col-contenido">
-          <textarea class="cell-input" placeholder="Objetivo general"
-            oninput="autoResize(this)" onchange="editarCelda(${i}, 'contenido', this.value)">${f.contenido || ''}</textarea>
-        </td>
-        <td class="col-proceso">
-          <textarea class="cell-input" placeholder="Aprendizaje esperado"
-            oninput="autoResize(this)" onchange="editarCelda(${i}, 'aprendizaje_esperado', this.value)">${f.aprendizaje_esperado || ''}</textarea>
-        </td>
-        <td class="col-saber">
-          <textarea class="cell-input" placeholder="Objetivos particulares"
-            oninput="autoResize(this)" onchange="editarCelda(${i}, 'saber_hacer', this.value)">${f.saber_hacer || ''}</textarea>
-        </td>
-        <td>
-          <select class="cell-input" style="min-height:unset;height:36px;padding:4px 6px;"
-            onchange="editarCelda(${i}, 'tipo_actividad', this.value)">
-            <option value="" ${!f.tipo_actividad?'selected':''}>—</option>
-            <option value="Trabajo de clase"  ${f.tipo_actividad==='Trabajo de clase'?'selected':''}>Trabajo de clase</option>
-            <option value="Proyecto"          ${f.tipo_actividad==='Proyecto'?'selected':''}>Proyecto</option>
-            <option value="Autoevaluación"    ${f.tipo_actividad==='Autoevaluación'?'selected':''}>Autoevaluación</option>
-            <option value="Examen"            ${f.tipo_actividad==='Examen'?'selected':''}>Examen</option>
-          </select>
-        </td>
-        <td class="col-acciones">
-          <button class="btn-fila" onclick="eliminarFila(${i})" title="Eliminar fila">✕</button>
-        </td>
-      </tr>`
-    }).join('')
-
-    // Expandir textareas al contenido actual
-    setTimeout(() => aplicarAutoResize(), 30)
-  }
-
-  // Auto-resize de textareas
-  window.autoResize = (el) => {
-    el.style.height = 'auto'
-    el.style.height = el.scrollHeight + 'px'
-  }
-
-  // Aplicar auto-resize a todos los textareas al renderizar
-  function aplicarAutoResize() {
-    document.querySelectorAll('.cell-input').forEach(el => {
-      if (el.tagName === 'TEXTAREA') {
-        el.style.height = 'auto'
-        el.style.height = Math.max(70, el.scrollHeight) + 'px'
-      }
-    })
-  }
-
-  window.editarCelda = (idx, campo, valor) => {
-    filasActuales[idx][campo] = valor
-    haycambios = true
-    document.getElementById('save-status').textContent = '● Cambios sin guardar'
-    document.getElementById('save-status').style.color = 'var(--am)'
-  }
-
-  window.eliminarFila = (idx) => {
-    filasActuales.splice(idx, 1)
-    haycambios = true
-    renderTabla()
-    document.getElementById('save-status').textContent = '● Cambios sin guardar'
-    document.getElementById('save-status').style.color = 'var(--am)'
-  }
-
-  document.getElementById('btn-add-fila').addEventListener('click', () => {
-    filasActuales.push({
-      id: null, grupo_materia_id: grupoMateriaId, periodo_id: periodoId,
-      semana: '', eje_articulador: '', contenido: '',
-      aprendizaje_esperado: '', saber_hacer: '', es_examen: false,
-      tipo_actividad: null,
-      orden: filasActuales.length
-    })
-    haycambios = true
-    renderTabla()
-    // Scroll al final
-    const tbody = document.getElementById('plan-tbody')
-    tbody.lastElementChild?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-  })
-
-  document.getElementById('btn-add-examen').addEventListener('click', () => {
-    filasActuales.push({
-      id: null, grupo_materia_id: grupoMateriaId, periodo_id: periodoId,
-      es_examen: true, orden: filasActuales.length
-    })
-    haycambios = true
-    renderTabla()
-  })
-
-  // ── Guardar ───────────────────────────────────────────────
-  document.getElementById('btn-guardar').addEventListener('click', async () => {
-    if (!grupoMateriaId || !periodoId) return
-
-    const btn = document.getElementById('btn-guardar')
-    btn.textContent = 'Guardando...'
-    btn.disabled = true
-
-    try {
-      // Borrar filas existentes del periodo
-      await supabase.from('plan_analitico_filas')
-        .delete()
-        .eq('grupo_materia_id', grupoMateriaId)
-        .eq('periodo_id', periodoId)
-
-      // Insertar todas las filas actuales
-      if (filasActuales.length) {
-        const filas = filasActuales.map((f, i) => ({
-          grupo_materia_id: grupoMateriaId,
-          periodo_id: periodoId,
-          semana: f.semana || null,
-          eje_articulador: f.eje_articulador || null,
-          contenido: f.contenido || null,
-          aprendizaje_esperado: f.aprendizaje_esperado || null,
-          saber_hacer: f.saber_hacer || null,
-          es_examen: f.es_examen || false,
-          tipo_actividad: f.tipo_actividad || null,
-          orden: i
-        }))
-        await supabase.from('plan_analitico_filas').insert(filas)
-      }
-
-      haycambios = false
-      document.getElementById('save-status').textContent = 'Guardado ✓'
-      document.getElementById('save-status').style.color = 'var(--vd)'
-      mostrarToast('Plan analítico guardado ✓')
-      await cargarFilas()
-
-    } catch (err) {
-      mostrarToast('Error al guardar: ' + err.message, 'error')
-    } finally {
-      btn.textContent = 'Guardar plan'
-      btn.disabled = false
-    }
-  })
-
-  // ── Toast ─────────────────────────────────────────────────
-  function mostrarToast(msg, tipo = 'ok') {
-    const t = document.getElementById('toast')
-    t.textContent = msg
-    t.style.background = tipo === 'error' ? 'var(--co)' : 'var(--vd)'
-    t.style.display = 'block'
-    setTimeout(() => { t.style.display = 'none' }, 2500)
-  }
-
-  // Advertir si haycambios al salir
-  window.addEventListener('beforeunload', e => {
-    if (haycambios) {
-      e.preventDefault()
-      e.returnValue = ''
-    }
-  })
-</script>
-</body>
-</html>
+::-webkit-scrollbar { width:6px; height:6px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border-m); border-radius:99px; }
