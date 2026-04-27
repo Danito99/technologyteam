@@ -71,9 +71,11 @@
       background: transparent;
       color: var(--text);
       font-family: inherit;
-      resize: none;
-      min-height: 32px;
+      resize: vertical;
+      min-height: 60px;
       transition: border-color .15s, background .15s;
+      white-space: pre-wrap;
+      overflow: visible;
     }
     .cell-input:focus {
       outline: none;
@@ -81,6 +83,7 @@
       background: white;
     }
     .cell-input:hover { border-color: var(--border-m); }
+    .plan-table td { vertical-align: top; padding: 6px 4px; }
 
     .col-semana   { width: 90px; }
     .col-eje      { width: 100px; }
