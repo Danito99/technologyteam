@@ -366,17 +366,20 @@
       // PDA limpio
       const pda = limpiarPDA(f.aprendizaje_esperado || '')
 
-      // Opciones Bloom — select simple
+      // Opciones Bloom — texto completo de cada nivel como opción
       const bloomNivel = f.bloom_nivel || ''
-      const optsBloom = BLOOM_KEYS.map((k, ki) =>
-        '<option value="' + k + '"' + (bloomNivel === k ? ' selected' : '') + '>' + (ki+1) + '. ' + BLOOM_LABELS[k] + '</option>'
-      ).join('')
+      const catalogoItemBloom = f.eje_articulador && f.contenido
+        ? ((CATS[f.eje_articulador] || []).find(c => c.concepto === f.contenido) || null)
+        : null
+      const optsBloom = BLOOM_KEYS.map((k, ki) => {
+        const textoNivel = catalogoItemBloom ? (catalogoItemBloom.saber[k] || BLOOM_LABELS[k]) : BLOOM_LABELS[k]
+        return '<option value="' + k + '"' + (bloomNivel === k ? ' selected' : '') + '>' + textoNivel + '</option>'
+      }).join('')
 
-      // Saber y saber hacer: texto del nivel seleccionado
+      // Saber y saber hacer: texto del nivel seleccionado (para mostrar bajo el select)
       let saberTexto = ''
-      if (bloomNivel && f.contenido && f.eje_articulador) {
-        const item = (CATS[f.eje_articulador] || []).find(c => c.concepto === f.contenido)
-        saberTexto = item ? (item.saber[bloomNivel] || '') : ''
+      if (bloomNivel && catalogoItemBloom) {
+        saberTexto = catalogoItemBloom.saber[bloomNivel] || ''
       }
 
       return (
@@ -461,6 +464,8 @@
     setPDA(idx, pda)
     filasActuales[idx].aprendizaje_esperado = pda
     setSaberTexto(idx, '')
+    // Actualizar opciones del select Bloom con los textos de este concepto
+    actualizarOptsBloom(idx, item)
   }
 
   window.onBloomChange = (idx, nivel) => {
@@ -472,6 +477,20 @@
     const texto = (item && nivel) ? (item.saber[nivel] || '') : ''
     filasActuales[idx].saber_hacer = texto
     setSaberTexto(idx, texto)
+  }
+
+  function actualizarOptsBloom(idx, catalogoItem) {
+    // Buscar el select de bloom de esta fila
+    const row = document.querySelector('tr[data-idx="' + idx + '"]')
+    if (!row) return
+    const selBloom = row.querySelectorAll('select.cell-select')[2] // 3er select: eje, contenido, bloom
+    if (!selBloom) return
+    const bloomNivel = filasActuales[idx].bloom_nivel || ''
+    selBloom.innerHTML = '<option value="">— Nivel Bloom —</option>' +
+      BLOOM_KEYS.map((k, ki) => {
+        const texto = catalogoItem ? (catalogoItem.saber[k] || BLOOM_LABELS[k]) : BLOOM_LABELS[k]
+        return '<option value="' + k + '"' + (bloomNivel === k ? ' selected' : '') + '>' + texto + '</option>'
+      }).join('')
   }
 
   function setPDA(idx, texto) {
