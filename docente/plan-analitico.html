@@ -675,7 +675,7 @@
                 <span class="bloom-nivel-badge">${bn}</span>
                 ${BLOOM_LABELS[key]}
               </div>
-              <div class="bloom-desc" id="bdesc-${i}-${key}" style="${activo ? '' : 'color:var(--text-3);'}">${texto ? esc(texto) : '<span style=\'color:var(--text-3);font-style:italic;\'>Sin texto del catálogo</span>'}</div>
+              <div class="bloom-desc" id="bdesc-${i}-${key}" style="${activo ? '' : 'color:var(--text-3);'}">${texto ? esc(texto) : `<span style="color:var(--text-3);font-style:italic;">Sin texto</span>`}</div>
               <textarea class="bloom-desc-edit" id="bedit-${i}-${key}"
                 oninput="autoResize(this); editarBloomTexto(${i}, '${key}', this.value)"
                 >${esc(texto)}</textarea>
@@ -825,7 +825,7 @@
               <span class="bloom-nivel-badge">${bn}</span>
               ${BLOOM_LABELS[key]}
             </div>
-            <div class="bloom-desc" id="bdesc-${idx}-${key}" style="${activo ? '' : 'color:var(--text-3);'}">${texto ? esc(texto) : '<span style=\'color:var(--text-3);font-style:italic;\'>Sin texto del catálogo</span>'}</div>
+            <div class="bloom-desc" id="bdesc-${idx}-${key}" style="${activo ? '' : 'color:var(--text-3);'}">${texto ? esc(texto) : `<span style="color:var(--text-3);font-style:italic;">Sin texto</span>`}</div>
             <textarea class="bloom-desc-edit" id="bedit-${idx}-${key}"
               oninput="autoResize(this); editarBloomTexto(${idx}, '${key}', this.value)"
               >${esc(texto)}</textarea>
