@@ -51,6 +51,7 @@
       border-bottom: 1px solid var(--border);
       vertical-align: top;
       word-wrap: break-word;
+      background: white;
     }
     .plan-table tr:last-child td { border-bottom: none; }
     .plan-table tr.examen-row td {
@@ -165,19 +166,21 @@
       padding: 4px 2px;
       width: 100%;
       box-sizing: border-box;
+      background: white;
     }
     .bloom-item {
       display: flex;
       align-items: flex-start;
       gap: 5px;
-      margin-bottom: 6px;
-      padding: 5px 6px;
+      margin-bottom: 4px;
+      padding: 4px 6px;
       border-radius: 5px;
       border: 1px solid transparent;
       transition: background .12s;
       min-width: 0;
       width: 100%;
       box-sizing: border-box;
+      background: white;
     }
     .bloom-item:hover { background: var(--bg); }
     .bloom-item.checked { background: var(--az-l); border-color: #B5D4F4; }
@@ -620,8 +623,9 @@
 
   // ── Construye los bloom items con DOM puro (evita bugs de template literals anidados) ──
   function buildBloomForRow(idx, f, CATS) {
-    const wrap = document.querySelector('.bloom-placeholder[data-idx="' + idx + '"]')
+    const wrap = document.getElementById('bloom-wrap-' + idx)
     if (!wrap) return
+    wrap.innerHTML = '' // limpiar antes de llenar
 
     // Obtener textos del catálogo para este concepto
     const catItems = (f.eje_articulador && CATS[f.eje_articulador]) || []
