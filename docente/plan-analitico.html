@@ -163,6 +163,8 @@
     /* Bloom checkboxes */
     .bloom-wrap {
       padding: 4px 2px;
+      width: 100%;
+      box-sizing: border-box;
     }
     .bloom-item {
       display: flex;
@@ -174,7 +176,8 @@
       border: 1px solid transparent;
       transition: background .12s;
       min-width: 0;
-      overflow: hidden;
+      width: 100%;
+      box-sizing: border-box;
     }
     .bloom-item:hover { background: var(--bg); }
     .bloom-item.checked { background: var(--az-l); border-color: #B5D4F4; }
@@ -603,6 +606,19 @@
     renderTabla()
   }
 
+  // Limpia el prefijo "★ NO NEGOCIABLE..." del texto del PDA
+  function limpiarPDA(texto) {
+    if (!texto) return ''
+    // Quita líneas que empiecen con ★ y el párrafo introductorio que les sigue
+    return texto
+      .replace(/★[^
+]*
+(\s*
+)?/g, '')  // línea con ★
+      .replace(/^\s+/, '')                  // espacios iniciales
+      .trim()
+  }
+
   // ── Render tabla ──────────────────────────────────────────
   function renderTabla() {
     const tbody     = document.getElementById('plan-tbody')
@@ -633,7 +649,7 @@
       ).join('')
 
       // ── PDA ──
-      const pdaTexto = f.aprendizaje_esperado || ''
+      const pdaTexto = limpiarPDA(f.aprendizaje_esperado || '')
 
       // ── Bloom checkboxes ──
       const bloomHTML = BLOOM_KEYS.map((key, ki) => {
@@ -661,7 +677,7 @@
                 <span class="bloom-nivel-badge">${bn}</span>
                 ${BLOOM_LABELS[key]}
               </div>
-              <div class="bloom-desc" id="bdesc-${i}-${key}" style="${activo ? '' : 'color:var(--text-3);'}">${esc(texto) || '<span style="color:var(--text-3);font-style:italic;">Sin texto del catálogo</span>'}</div>
+              <div class="bloom-desc" id="bdesc-${i}-${key}" style="${activo ? '' : 'color:var(--text-3);'}">${texto ? esc(texto) : '<span style=\'color:var(--text-3);font-style:italic;\'>Sin texto del catálogo</span>'}</div>
               <textarea class="bloom-desc-edit" id="bedit-${i}-${key}"
                 oninput="autoResize(this); editarBloomTexto(${i}, '${key}', this.value)"
                 >${esc(texto)}</textarea>
@@ -765,8 +781,9 @@
     const item = cat.find(c => c.concepto === concepto)
 
     // Auto-rellenar PDA
-    setPDA(idx, item?.pda || '')
-    filasActuales[idx].aprendizaje_esperado = item?.pda || ''
+    const pdaLimpio = limpiarPDA(item?.pda || '')
+    setPDA(idx, pdaLimpio)
+    filasActuales[idx].aprendizaje_esperado = pdaLimpio
 
     // Re-renderizar Bloom con los textos del nuevo concepto
     renderBloom(idx)
@@ -810,7 +827,7 @@
               <span class="bloom-nivel-badge">${bn}</span>
               ${BLOOM_LABELS[key]}
             </div>
-            <div class="bloom-desc" id="bdesc-${idx}-${key}" style="${activo ? '' : 'color:var(--text-3);'}">${texto ? esc(texto) : '<span style="color:var(--text-3);font-style:italic;">Sin texto del catálogo</span>'}</div>
+            <div class="bloom-desc" id="bdesc-${idx}-${key}" style="${activo ? '' : 'color:var(--text-3);'}">${texto ? esc(texto) : '<span style=\'color:var(--text-3);font-style:italic;\'>Sin texto del catálogo</span>'}</div>
             <textarea class="bloom-desc-edit" id="bedit-${idx}-${key}"
               oninput="autoResize(this); editarBloomTexto(${idx}, '${key}', this.value)"
               >${esc(texto)}</textarea>
