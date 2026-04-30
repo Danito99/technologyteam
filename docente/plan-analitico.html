@@ -34,7 +34,7 @@
     .tab-periodo.active { background: var(--az); color: white; border-color: var(--az); }
 
     /* Tabla plan analítico */
-    .plan-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .plan-table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; }
     .plan-table th {
       text-align: left;
       font-size: 10px;
@@ -50,6 +50,7 @@
       padding: 4px 4px;
       border-bottom: 1px solid var(--border);
       vertical-align: top;
+      word-wrap: break-word;
     }
     .plan-table tr:last-child td { border-bottom: none; }
     .plan-table tr.examen-row td {
@@ -62,6 +63,16 @@
     }
     .plan-table tr:hover:not(.examen-row) td { background: #fafaf8; }
 
+    /* Anchos de columna */
+    .col-semana   { width: 7%; }
+    .col-eje      { width: 13%; }
+    .col-contenido{ width: 14%; }
+    .col-proceso  { width: 19%; }
+    .col-saber    { width: 30%; }
+    .col-tipo     { width: 11%; }
+    .col-acciones { width: 4%; text-align: center; }
+
+    /* Inputs genéricos */
     .cell-input {
       width: 100%;
       font-size: 11px;
@@ -77,7 +88,6 @@
       line-height: 1.6;
       box-sizing: border-box;
       display: block;
-      height: auto;
       min-height: 80px;
     }
     .cell-input:focus {
@@ -86,18 +96,166 @@
       background: white;
     }
     .cell-input:hover { border-color: var(--border-m); }
-    .plan-table { table-layout: fixed; }
-    .plan-table td { vertical-align: top; padding: 6px 4px; word-wrap: break-word; }
-    .plan-table tr { vertical-align: top; }
 
-    .col-semana   { width: 8%; }
-    .col-eje      { width: 10%; }
-    .col-contenido{ width: 18%; }
-    .col-proceso  { width: 22%; }
-    .col-saber    { width: 22%; }
-    .col-tipo     { width: 12%; }
-    .col-acciones { width: 4%; text-align: center; }
+    /* Selectores encadenados */
+    .cell-select {
+      width: 100%;
+      font-size: 11px;
+      padding: 5px 6px;
+      border: 1px solid var(--border-m);
+      border-radius: 4px;
+      background: white;
+      color: var(--text);
+      font-family: inherit;
+      box-sizing: border-box;
+      cursor: pointer;
+      margin-bottom: 4px;
+    }
+    .cell-select:focus { outline: none; border-color: var(--az); }
+    .cell-select:disabled { background: var(--bg); color: var(--text-3); cursor: not-allowed; }
 
+    /* PDA — solo lectura con candado */
+    .pda-wrap { position: relative; }
+    .pda-text {
+      font-size: 11px;
+      line-height: 1.5;
+      color: var(--text-2);
+      padding: 6px 28px 6px 8px;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      background: transparent;
+      min-height: 60px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    .pda-textarea {
+      width: 100%;
+      font-size: 11px;
+      padding: 6px 28px 6px 8px;
+      border: 1px solid var(--az);
+      border-radius: 4px;
+      background: white;
+      color: var(--text);
+      font-family: inherit;
+      resize: none;
+      overflow: hidden;
+      line-height: 1.5;
+      box-sizing: border-box;
+      display: none;
+      min-height: 60px;
+    }
+    .btn-lock {
+      position: absolute;
+      top: 5px;
+      right: 4px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--text-3);
+      padding: 2px;
+      border-radius: 3px;
+      line-height: 1;
+      transition: color .15s;
+    }
+    .btn-lock:hover { color: var(--az); }
+
+    /* Bloom checkboxes */
+    .bloom-wrap {
+      padding: 4px 2px;
+    }
+    .bloom-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 5px;
+      margin-bottom: 6px;
+      padding: 5px 6px;
+      border-radius: 5px;
+      border: 1px solid transparent;
+      transition: background .12s;
+    }
+    .bloom-item:hover { background: var(--bg); }
+    .bloom-item.checked { background: var(--az-l); border-color: #B5D4F4; }
+    .bloom-item input[type="checkbox"] {
+      margin-top: 2px;
+      flex-shrink: 0;
+      cursor: pointer;
+      accent-color: var(--az);
+    }
+    .bloom-label-wrap { flex: 1; min-width: 0; }
+    .bloom-nivel {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--az);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 2px;
+    }
+    .bloom-nivel-badge {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      font-size: 9px;
+      font-weight: 700;
+      color: white;
+      text-align: center;
+      line-height: 16px;
+      flex-shrink: 0;
+    }
+    /* Colores por nivel Bloom */
+    .b1 .bloom-nivel-badge { background: #6BAF6B; }  /* Conocimiento - verde */
+    .b2 .bloom-nivel-badge { background: #5B9BD8; }  /* Comprensión - azul */
+    .b3 .bloom-nivel-badge { background: #E08A2E; }  /* Aplicación - naranja */
+    .b4 .bloom-nivel-badge { background: #C05C8A; }  /* Análisis - rosa */
+    .b5 .bloom-nivel-badge { background: #7B5EA7; }  /* Síntesis - morado */
+    .b6 .bloom-nivel-badge { background: #C0392B; }  /* Evaluación - rojo */
+    .b1 .bloom-nivel { color: #4a8a4a; }
+    .b2 .bloom-nivel { color: #3d7ab8; }
+    .b3 .bloom-nivel { color: #b86e1a; }
+    .b4 .bloom-nivel { color: #a03a6a; }
+    .b5 .bloom-nivel { color: #5a3e87; }
+    .b6 .bloom-nivel { color: #992d22; }
+    .bloom-desc {
+      font-size: 10.5px;
+      color: var(--text-2);
+      line-height: 1.45;
+    }
+    /* Edición de texto Bloom */
+    .bloom-desc-edit {
+      display: none;
+      width: 100%;
+      font-size: 10.5px;
+      color: var(--text);
+      font-family: inherit;
+      border: 1px solid var(--az);
+      border-radius: 3px;
+      padding: 3px 5px;
+      resize: none;
+      overflow: hidden;
+      line-height: 1.45;
+      box-sizing: border-box;
+      background: white;
+    }
+    .bloom-desc-edit:focus { outline: none; }
+    .btn-lock-bloom {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 11px;
+      color: var(--text-3);
+      padding: 0 0 0 4px;
+      flex-shrink: 0;
+      transition: color .15s;
+      line-height: 1;
+      margin-top: 2px;
+    }
+    .btn-lock-bloom:hover { color: var(--az); }
+
+    /* Botones */
     .btn-fila {
       background: none;
       border: none;
@@ -191,7 +349,7 @@
       <div id="content" style="display:none;">
 
         <div class="info-plan" id="info-plan" style="display:none;">
-          💡 Los campos <strong>Aprendizaje esperado</strong> y <strong>Saber y saber hacer</strong> se copian automáticamente como objetivos en el plan de clase.
+          💡 Selecciona Eje → Contenido para auto-rellenar PDA y metas de Bloom. Puedes marcar varias metas por sesión. El 🔒 desbloquea edición manual de textos.
         </div>
 
         <!-- Tabs de periodos -->
@@ -203,11 +361,11 @@
             <table class="plan-table" id="plan-table">
               <thead>
                 <tr>
-                  <th class="col-semana">Periodo / Semana</th>
-                  <th class="col-eje">Eje articulador</th>
-                  <th class="col-contenido">Contenido <span style="font-weight:400;">(obj. general)</span></th>
-                  <th class="col-proceso">Proceso de desarrollo <span style="font-weight:400;">(aprendizaje esperado)</span></th>
-                  <th class="col-saber">Saber y saber hacer <span style="font-weight:400;">(obj. particulares)</span></th>
+                  <th class="col-semana">Periodo /<br>Semana</th>
+                  <th class="col-eje">Eje articulador<br><span style="font-weight:400;">(categoría)</span></th>
+                  <th class="col-contenido">Contenido<br><span style="font-weight:400;">(concepto específico)</span></th>
+                  <th class="col-proceso">PDA — Proceso de desarrollo<br><span style="font-weight:400;">(aprendizaje esperado)</span></th>
+                  <th class="col-saber">Saber y saber hacer<br><span style="font-weight:400;">(metas Bloom)</span></th>
                   <th style="width:120px;">Tipo actividad</th>
                   <th class="col-acciones"></th>
                 </tr>
@@ -252,6 +410,49 @@
   import { renderSidebar } from '../js/sidebar-docente.js'
   import { supabase }      from '../js/supabase.js'
 
+  // ── Catálogo ──────────────────────────────────────────────
+  // Carga el JSON generado desde el Excel. Ajusta la ruta si es necesario.
+  let CATALOGO = {}
+  try {
+    const res = await fetch('../js/catalogo_techacademia_v2.json')
+    CATALOGO = await res.json()
+  } catch(e) {
+    console.warn('No se pudo cargar el catálogo:', e)
+  }
+
+  // Nivel del catálogo activo — se actualiza al seleccionar grupo
+  let nivelCatalogo = null
+
+  // Mapeo nivel+grado (Supabase) → clave de nivel en el catálogo
+  function getNivelCatalogo(nivel, grado) {
+    grado = parseInt(grado)
+    if (nivel === 'primaria') return grado <= 3 ? 'Primaria 1°-3°' : 'Primaria 4°-6°'
+    if (nivel === 'secundaria') return grado <= 8 ? 'Secundaria 7°-8°' : 'Secundaria 9°'
+    return 'Preparatoria'
+  }
+
+  // Devuelve el catálogo filtrado por el nivel activo del grupo
+  function catalogoFiltrado() {
+    const resultado = {}
+    for (const [cat, items] of Object.entries(CATALOGO)) {
+      const filtrados = nivelCatalogo ? items.filter(i => i.nivel === nivelCatalogo) : items
+      if (filtrados.length) resultado[cat] = filtrados
+    }
+    return resultado
+  }
+
+  const BLOOM_KEYS = ['conocimiento','comprension','aplicacion','analisis','sintesis','evaluacion']
+  const BLOOM_LABELS = {
+    conocimiento: 'Conocimiento',
+    comprension:  'Comprensión',
+    aplicacion:   'Aplicación',
+    analisis:     'Análisis',
+    sintesis:     'Síntesis',
+    evaluacion:   'Evaluación'
+  }
+  const BLOOM_NUM = { conocimiento:1, comprension:2, aplicacion:3, analisis:4, sintesis:5, evaluacion:6 }
+
+  // ── Auth ──────────────────────────────────────────────────
   const profile = await requireAuth('docente')
   if (!profile) throw new Error('No autenticado')
   await renderSidebar('plan-analitico')
@@ -259,8 +460,8 @@
   let cicloId        = null
   let grupoMateriaId = null
   let periodoId      = null
-  let periodoNumero  = null   // número del trimestre/semestre (1,2,3)
-  let periodoTipo    = null   // 'trimestre' o 'semestre'
+  let periodoNumero  = null
+  let periodoTipo    = null
   let filasActuales  = []
   let haycambios     = false
 
@@ -284,6 +485,8 @@
     opt.textContent = `${g.nombre} (${g.nivel})`
     opt.dataset.sistema = g.sistema_periodos
     opt.dataset.materias = JSON.stringify(g.grupo_materias || [])
+    opt.dataset.nivel = g.nivel
+    opt.dataset.grado = g.grado
     selGrupo.appendChild(opt)
   })
 
@@ -295,12 +498,11 @@
     const opt = selGrupo.options[selGrupo.selectedIndex]
     const grupoId = selGrupo.value
     if (!grupoId) return
-
     const materias = JSON.parse(opt.dataset.materias || '[]')
     const sistema  = opt.dataset.sistema
+    // Determinar nivel del catálogo según nivel+grado del grupo
+    nivelCatalogo = getNivelCatalogo(opt.dataset.nivel, opt.dataset.grado)
     const selMat   = document.getElementById('sel-materia')
-
-    // Si hay más de una materia, mostrar selector
     selMat.innerHTML = '<option value="">Materia...</option>'
     materias.forEach(gm => {
       const o = document.createElement('option')
@@ -308,7 +510,6 @@
       o.textContent = gm.materias?.nombre || '—'
       selMat.appendChild(o)
     })
-
     if (materias.length > 1) {
       selMat.style.display = 'block'
       grupoMateriaId = null
@@ -318,7 +519,7 @@
       await cargarPeriodos(sistema)
     } else {
       selMat.style.display = 'none'
-      mostrarToast('Este grupo no tiene materias asignadas. Ve a Mis materias y grupos.', 'error')
+      mostrarToast('Este grupo no tiene materias asignadas.', 'error')
     }
   }
 
@@ -331,8 +532,6 @@
   }
 
   // ── Cargar periodos ───────────────────────────────────────
-  // En el plan analítico mostramos solo T1, T2, T3 (no parciales)
-  // Para preparatoria: Sem A, Sem B
   async function cargarPeriodos(sistema) {
     const tipo = sistema === 'semestral' ? 'semestre' : 'trimestre'
     const { data: periodos } = await supabase
@@ -342,15 +541,10 @@
       .eq('tipo', tipo)
       .order('numero').order('parcial')
 
-    // Agrupar: para el plan analítico usamos el primer parcial de cada número
-    // T1·P1 representa el Trimestre 1 completo en el plan analítico
     const grupos = {}
-    periodos?.forEach(p => {
-      if (!grupos[p.numero]) grupos[p.numero] = p
-    })
+    periodos?.forEach(p => { if (!grupos[p.numero]) grupos[p.numero] = p })
     const periodosAgrupados = Object.values(grupos)
 
-    // Etiquetas amigables
     const etiquetas = {
       trimestre: { 1: 'Trimestre 1', 2: 'Trimestre 2', 3: 'Trimestre 3' },
       semestre:  { 1: 'Semestre A',  2: 'Semestre B' }
@@ -382,9 +576,7 @@
   }
 
   async function seleccionarPeriodo(pId, pNumero, btnEl) {
-    if (haycambios) {
-      if (!confirm('Tienes cambios sin guardar. ¿Cambiar de periodo y perderlos?')) return
-    }
+    if (haycambios && !confirm('Tienes cambios sin guardar. ¿Cambiar de periodo y perderlos?')) return
     document.querySelectorAll('.tab-periodo').forEach(b => b.classList.remove('active'))
     btnEl.classList.add('active')
     periodoId     = pId
@@ -396,64 +588,134 @@
   // ── Cargar filas ──────────────────────────────────────────
   async function cargarFilas() {
     if (!grupoMateriaId || !periodoNumero) return
-
     const { data: filas } = await supabase
       .from('plan_analitico_filas')
-      .select('id, semana, eje_articulador, contenido, aprendizaje_esperado, saber_hacer, es_examen, orden, tipo_actividad, periodo_numero')
+      .select('id, semana, eje_articulador, contenido, aprendizaje_esperado, saber_hacer, es_examen, orden, tipo_actividad, periodo_numero, bloom_seleccionado')
       .eq('grupo_materia_id', grupoMateriaId)
       .eq('periodo_numero', periodoNumero)
       .order('orden')
 
-    filasActuales = filas || []
+    filasActuales = (filas || []).map(f => ({
+      ...f,
+      // bloom_seleccionado: objeto { conocimiento: {activo, texto}, ... }
+      // Si viene null de BD, inicializar vacío
+      bloom_seleccionado: f.bloom_seleccionado || {}
+    }))
     renderTabla()
   }
 
   // ── Render tabla ──────────────────────────────────────────
   function renderTabla() {
-    const tbody = document.getElementById('plan-tbody')
+    const tbody     = document.getElementById('plan-tbody')
     const cardTabla = document.getElementById('card-tabla')
-    const emptyPlan = document.getElementById('empty-plan')
-
-    if (!filasActuales.length) {
-      cardTabla.style.display = 'block'
-      emptyPlan.style.display = 'none'
-      tbody.innerHTML = ''
-      return
-    }
 
     cardTabla.style.display = 'block'
-    emptyPlan.style.display = 'none'
+    document.getElementById('empty-plan').style.display = 'none'
 
     tbody.innerHTML = filasActuales.map((f, i) => {
       if (f.es_examen) {
         return `<tr class="examen-row" data-idx="${i}">
-          <td colspan="5">— Periodo de exámenes —</td>
+          <td colspan="6">— Periodo de exámenes —</td>
           <td><button class="btn-fila" onclick="eliminarFila(${i})" title="Eliminar">✕</button></td>
         </tr>`
       }
+
+      // ── Opciones de Eje articulador (categorías) ──
+      const CATS = catalogoFiltrado()
+      const cats = Object.keys(CATS)
+      const optsEje = cats.map(c =>
+        `<option value="${esc(c)}" ${f.eje_articulador === c ? 'selected' : ''}>${esc(c)}</option>`
+      ).join('')
+
+      // ── Opciones de Contenido filtradas por eje ──
+      const conceptosDeCat = f.eje_articulador ? (CATS[f.eje_articulador] || []) : []
+      const optsContenido = conceptosDeCat.map(c =>
+        `<option value="${esc(c.concepto)}" ${f.contenido === c.concepto ? 'selected' : ''}>${esc(c.concepto)}</option>`
+      ).join('')
+
+      // ── PDA ──
+      const pdaTexto = f.aprendizaje_esperado || ''
+
+      // ── Bloom checkboxes ──
+      const bloomHTML = BLOOM_KEYS.map((key, ki) => {
+        const bn = ki + 1
+        const entry = f.bloom_seleccionado?.[key] || {}
+        const activo = !!entry.activo
+
+        // texto: usa el guardado, si no el del catálogo, si no vacío
+        let textoDefault = ''
+        if (f.contenido && f.eje_articulador) {
+          const cat = CATS[f.eje_articulador] || []
+          const item = cat.find(c => c.concepto === f.contenido)
+          textoDefault = item?.saber?.[key] || ''
+        }
+        const texto = entry.texto !== undefined ? entry.texto : textoDefault
+
+        return `
+          <div class="bloom-item b${bn} ${activo ? 'checked' : ''}" id="bitem-${i}-${key}">
+            <input type="checkbox" 
+              id="bchk-${i}-${key}"
+              ${activo ? 'checked' : ''}
+              onchange="toggleBloom(${i}, '${key}', this.checked)">
+            <div class="bloom-label-wrap">
+              <div class="bloom-nivel">
+                <span class="bloom-nivel-badge">${bn}</span>
+                ${BLOOM_LABELS[key]}
+              </div>
+              <div class="bloom-desc" id="bdesc-${i}-${key}" style="${activo ? '' : 'color:var(--text-3);'}">${esc(texto) || '<span style="color:var(--text-3);font-style:italic;">Sin texto del catálogo</span>'}</div>
+              <textarea class="bloom-desc-edit" id="bedit-${i}-${key}"
+                oninput="autoResize(this); editarBloomTexto(${i}, '${key}', this.value)"
+                >${esc(texto)}</textarea>
+            </div>
+            <button class="btn-lock-bloom" 
+              title="Desbloquear edición"
+              onclick="toggleBloomEdit(${i}, '${key}', this)"
+              style="${activo ? '' : 'visibility:hidden;'}"
+            >🔒</button>
+          </div>`
+      }).join('')
+
       return `<tr data-idx="${i}">
         <td class="col-semana">
-          <textarea class="cell-input" placeholder="Sesión 1"
-            oninput="autoResize(this)" onchange="editarCelda(${i}, 'semana', this.value)">${f.semana || ''}</textarea>
+          <textarea class="cell-input" placeholder="Sesión 1" style="min-height:50px;"
+            oninput="autoResize(this)" onchange="editarCelda(${i}, 'semana', this.value)">${esc(f.semana || '')}</textarea>
         </td>
+
         <td class="col-eje">
-          <textarea class="cell-input" placeholder="Ej. Digitalización"
-            oninput="autoResize(this)" onchange="editarCelda(${i}, 'eje_articulador', this.value)">${f.eje_articulador || ''}</textarea>
+          <select class="cell-select" onchange="onEjeChange(${i}, this.value)">
+            <option value="">— Eje —</option>
+            ${optsEje}
+          </select>
         </td>
+
         <td class="col-contenido">
-          <textarea class="cell-input" placeholder="Objetivo general"
-            oninput="autoResize(this)" onchange="editarCelda(${i}, 'contenido', this.value)">${f.contenido || ''}</textarea>
+          <select class="cell-select" id="sel-contenido-${i}" 
+            onchange="onContenidoChange(${i}, this.value)"
+            ${!f.eje_articulador ? 'disabled' : ''}>
+            <option value="">— Contenido —</option>
+            ${optsContenido}
+          </select>
         </td>
+
         <td class="col-proceso">
-          <textarea class="cell-input" placeholder="Aprendizaje esperado"
-            oninput="autoResize(this)" onchange="editarCelda(${i}, 'aprendizaje_esperado', this.value)">${f.aprendizaje_esperado || ''}</textarea>
+          <div class="pda-wrap">
+            <div class="pda-text" id="pda-text-${i}">${esc(pdaTexto) || '<span style="color:var(--text-3);font-style:italic;">Se llenará al elegir contenido</span>'}</div>
+            <textarea class="pda-textarea" id="pda-edit-${i}"
+              oninput="autoResize(this); editarCelda(${i}, 'aprendizaje_esperado', this.value)"
+              >${esc(pdaTexto)}</textarea>
+            <button class="btn-lock" title="Desbloquear edición del PDA"
+              onclick="togglePdaEdit(${i}, this)">🔒</button>
+          </div>
         </td>
+
         <td class="col-saber">
-          <textarea class="cell-input" placeholder="Objetivos particulares"
-            oninput="autoResize(this)" onchange="editarCelda(${i}, 'saber_hacer', this.value)">${f.saber_hacer || ''}</textarea>
+          <div class="bloom-wrap" id="bloom-wrap-${i}">
+            ${bloomHTML}
+          </div>
         </td>
+
         <td>
-          <select class="cell-input" style="min-height:unset;height:36px;padding:4px 6px;"
+          <select class="cell-select" style="margin:0;"
             onchange="editarCelda(${i}, 'tipo_actividad', this.value)">
             <option value="" ${!f.tipo_actividad?'selected':''}>—</option>
             <option value="Trabajo de clase"  ${f.tipo_actividad==='Trabajo de clase'?'selected':''}>Trabajo de clase</option>
@@ -462,34 +724,213 @@
             <option value="Examen"            ${f.tipo_actividad==='Examen'?'selected':''}>Examen</option>
           </select>
         </td>
+
         <td class="col-acciones">
           <button class="btn-fila" onclick="eliminarFila(${i})" title="Eliminar fila">✕</button>
         </td>
       </tr>`
     }).join('')
 
-    // Expandir textareas al contenido actual
-    setTimeout(() => aplicarAutoResize(), 30)
+    setTimeout(aplicarAutoResize, 30)
   }
 
-  // Auto-resize de textareas
+  // ── Lógica de selectores encadenados ─────────────────────
+
+  window.onEjeChange = (idx, eje) => {
+    filasActuales[idx].eje_articulador = eje
+    filasActuales[idx].contenido = ''
+    filasActuales[idx].aprendizaje_esperado = ''
+    filasActuales[idx].bloom_seleccionado = {}
+    marcarCambios()
+
+    // Actualizar selector de contenido
+    const selCont = document.getElementById(`sel-contenido-${idx}`)
+    const items = eje ? (catalogoFiltrado()[eje] || []) : []
+    selCont.innerHTML = '<option value="">— Contenido —</option>' +
+      items.map(c => `<option value="${esc(c.concepto)}">${esc(c.concepto)}</option>`).join('')
+    selCont.disabled = !eje
+
+    // Limpiar PDA
+    setPDA(idx, '')
+    // Resetear Bloom
+    renderBloom(idx)
+  }
+
+  window.onContenidoChange = (idx, concepto) => {
+    filasActuales[idx].contenido = concepto
+    filasActuales[idx].bloom_seleccionado = {}
+    marcarCambios()
+
+    const eje  = filasActuales[idx].eje_articulador
+    const cat  = catalogoFiltrado()[eje] || []
+    const item = cat.find(c => c.concepto === concepto)
+
+    // Auto-rellenar PDA
+    setPDA(idx, item?.pda || '')
+    filasActuales[idx].aprendizaje_esperado = item?.pda || ''
+
+    // Re-renderizar Bloom con los textos del nuevo concepto
+    renderBloom(idx)
+  }
+
+  function setPDA(idx, texto) {
+    const textEl = document.getElementById(`pda-text-${idx}`)
+    const editEl = document.getElementById(`pda-edit-${idx}`)
+    if (textEl) textEl.innerHTML = texto
+      ? esc(texto)
+      : '<span style="color:var(--text-3);font-style:italic;">Se llenará al elegir contenido</span>'
+    if (editEl) {
+      editEl.value = texto
+      autoResize(editEl)
+    }
+  }
+
+  // Re-renderiza solo la celda de Bloom de una fila
+  function renderBloom(idx) {
+    const wrap = document.getElementById(`bloom-wrap-${idx}`)
+    if (!wrap) return
+    const f = filasActuales[idx]
+    const cat  = catalogoFiltrado()[f.eje_articulador] || []
+    const item = cat.find(c => c.concepto === f.contenido)
+
+    wrap.innerHTML = BLOOM_KEYS.map((key, ki) => {
+      const bn    = ki + 1
+      const entry = f.bloom_seleccionado?.[key] || {}
+      const activo = !!entry.activo
+      const textoDefault = item?.saber?.[key] || ''
+      const texto = entry.texto !== undefined ? entry.texto : textoDefault
+
+      return `
+        <div class="bloom-item b${bn} ${activo ? 'checked' : ''}" id="bitem-${idx}-${key}">
+          <input type="checkbox"
+            id="bchk-${idx}-${key}"
+            ${activo ? 'checked' : ''}
+            onchange="toggleBloom(${idx}, '${key}', this.checked)">
+          <div class="bloom-label-wrap">
+            <div class="bloom-nivel">
+              <span class="bloom-nivel-badge">${bn}</span>
+              ${BLOOM_LABELS[key]}
+            </div>
+            <div class="bloom-desc" id="bdesc-${idx}-${key}" style="${activo ? '' : 'color:var(--text-3);'}">${texto ? esc(texto) : '<span style="color:var(--text-3);font-style:italic;">Sin texto del catálogo</span>'}</div>
+            <textarea class="bloom-desc-edit" id="bedit-${idx}-${key}"
+              oninput="autoResize(this); editarBloomTexto(${idx}, '${key}', this.value)"
+              >${esc(texto)}</textarea>
+          </div>
+          <button class="btn-lock-bloom"
+            title="Desbloquear edición"
+            onclick="toggleBloomEdit(${idx}, '${key}', this)"
+            style="${activo ? '' : 'visibility:hidden;'}"
+          >🔒</button>
+        </div>`
+    }).join('')
+  }
+
+  // ── Toggle checkbox Bloom ─────────────────────────────────
+  window.toggleBloom = (idx, key, activo) => {
+    if (!filasActuales[idx].bloom_seleccionado) filasActuales[idx].bloom_seleccionado = {}
+
+    // Obtener texto actual (del catálogo si aún no hay guardado)
+    const f = filasActuales[idx]
+    const cat  = catalogoFiltrado()[f.eje_articulador] || []
+    const item = cat.find(c => c.concepto === f.contenido)
+    const textoDefault = item?.saber?.[key] || ''
+    const textoActual = f.bloom_seleccionado[key]?.texto ?? textoDefault
+
+    filasActuales[idx].bloom_seleccionado[key] = { activo, texto: textoActual }
+    marcarCambios()
+
+    // Actualizar clases visuales sin re-renderizar toda la tabla
+    const bitem  = document.getElementById(`bitem-${idx}-${key}`)
+    const bdesc  = document.getElementById(`bdesc-${idx}-${key}`)
+    const btnLck = bitem?.querySelector('.btn-lock-bloom')
+
+    if (bitem)  bitem.classList.toggle('checked', activo)
+    if (bdesc)  bdesc.style.color = activo ? '' : 'var(--text-3)'
+    if (btnLck) btnLck.style.visibility = activo ? 'visible' : 'hidden'
+
+    // Si se desmarca, ocultar textarea de edición
+    if (!activo) {
+      const bedit = document.getElementById(`bedit-${idx}-${key}`)
+      const bdesc2 = document.getElementById(`bdesc-${idx}-${key}`)
+      if (bedit) { bedit.style.display = 'none'; if(btnLck) btnLck.textContent = '🔒' }
+      if (bdesc2) bdesc2.style.display = ''
+    }
+  }
+
+  // ── Toggle edición de texto Bloom ─────────────────────────
+  window.toggleBloomEdit = (idx, key, btn) => {
+    const bedit = document.getElementById(`bedit-${idx}-${key}`)
+    const bdesc = document.getElementById(`bdesc-${idx}-${key}`)
+    const unlocked = bedit.style.display === 'block'
+
+    if (unlocked) {
+      // Cerrar edición
+      bedit.style.display = 'none'
+      bdesc.style.display = ''
+      btn.textContent = '🔒'
+      // Sincronizar texto visible
+      const f    = filasActuales[idx]
+      const text = f.bloom_seleccionado?.[key]?.texto || bedit.value
+      bdesc.textContent = text || ''
+    } else {
+      // Abrir edición
+      bedit.style.display = 'block'
+      bdesc.style.display = 'none'
+      btn.textContent = '🔓'
+      autoResize(bedit)
+      bedit.focus()
+    }
+  }
+
+  window.editarBloomTexto = (idx, key, texto) => {
+    if (!filasActuales[idx].bloom_seleccionado) filasActuales[idx].bloom_seleccionado = {}
+    const activo = filasActuales[idx].bloom_seleccionado[key]?.activo ?? false
+    filasActuales[idx].bloom_seleccionado[key] = { activo, texto }
+    marcarCambios()
+  }
+
+  // ── Toggle edición PDA ────────────────────────────────────
+  window.togglePdaEdit = (idx, btn) => {
+    const textEl = document.getElementById(`pda-text-${idx}`)
+    const editEl = document.getElementById(`pda-edit-${idx}`)
+    const unlocked = editEl.style.display === 'block'
+    if (unlocked) {
+      editEl.style.display = 'none'
+      textEl.style.display = ''
+      btn.textContent = '🔒'
+      textEl.textContent = editEl.value
+    } else {
+      editEl.style.display = 'block'
+      textEl.style.display = 'none'
+      btn.textContent = '🔓'
+      autoResize(editEl)
+      editEl.focus()
+    }
+  }
+
+  // ── Helpers generales ─────────────────────────────────────
   window.autoResize = (el) => {
     el.style.height = 'auto'
     el.style.height = el.scrollHeight + 'px'
   }
 
-  // Aplicar auto-resize a todos los textareas al renderizar
   function aplicarAutoResize() {
-    document.querySelectorAll('.cell-input').forEach(el => {
-      if (el.tagName === 'TEXTAREA') {
-        el.style.height = 'auto'
-        el.style.height = Math.max(70, el.scrollHeight) + 'px'
-      }
+    document.querySelectorAll('.cell-input, .pda-textarea, .bloom-desc-edit').forEach(el => {
+      el.style.height = 'auto'
+      el.style.height = Math.max(40, el.scrollHeight) + 'px'
     })
+  }
+
+  function esc(str) {
+    return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
   }
 
   window.editarCelda = (idx, campo, valor) => {
     filasActuales[idx][campo] = valor
+    marcarCambios()
+  }
+
+  function marcarCambios() {
     haycambios = true
     document.getElementById('save-status').textContent = '● Cambios sin guardar'
     document.getElementById('save-status').style.color = 'var(--am)'
@@ -497,10 +938,8 @@
 
   window.eliminarFila = (idx) => {
     filasActuales.splice(idx, 1)
-    haycambios = true
+    marcarCambios()
     renderTabla()
-    document.getElementById('save-status').textContent = '● Cambios sin guardar'
-    document.getElementById('save-status').style.color = 'var(--am)'
   }
 
   document.getElementById('btn-add-fila').addEventListener('click', () => {
@@ -509,14 +948,13 @@
       periodo_numero: periodoNumero,
       semana: '', eje_articulador: '', contenido: '',
       aprendizaje_esperado: '', saber_hacer: '', es_examen: false,
-      tipo_actividad: null,
+      tipo_actividad: null, bloom_seleccionado: {},
       orden: filasActuales.length
     })
-    haycambios = true
+    marcarCambios()
     renderTabla()
-    // Scroll al final
-    const tbody = document.getElementById('plan-tbody')
-    tbody.lastElementChild?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    document.getElementById('plan-tbody').lastElementChild
+      ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   })
 
   document.getElementById('btn-add-examen').addEventListener('click', () => {
@@ -524,39 +962,38 @@
       id: null, grupo_materia_id: grupoMateriaId, periodo_id: periodoId,
       es_examen: true, orden: filasActuales.length
     })
-    haycambios = true
+    marcarCambios()
     renderTabla()
   })
 
   // ── Guardar ───────────────────────────────────────────────
   document.getElementById('btn-guardar').addEventListener('click', async () => {
     if (!grupoMateriaId || !periodoId) return
-
     const btn = document.getElementById('btn-guardar')
     btn.textContent = 'Guardando...'
     btn.disabled = true
 
     try {
-      // Borrar filas existentes del trimestre/semestre
       await supabase.from('plan_analitico_filas')
         .delete()
         .eq('grupo_materia_id', grupoMateriaId)
         .eq('periodo_numero', periodoNumero)
 
-      // Insertar todas las filas actuales
       if (filasActuales.length) {
         const filas = filasActuales.map((f, i) => ({
-          grupo_materia_id: grupoMateriaId,
-          periodo_id: periodoId,
-          periodo_numero: periodoNumero,
-          semana: f.semana || null,
-          eje_articulador: f.eje_articulador || null,
-          contenido: f.contenido || null,
+          grupo_materia_id:    grupoMateriaId,
+          periodo_id:          periodoId,
+          periodo_numero:      periodoNumero,
+          semana:              f.semana || null,
+          eje_articulador:     f.eje_articulador || null,
+          contenido:           f.contenido || null,
           aprendizaje_esperado: f.aprendizaje_esperado || null,
-          saber_hacer: f.saber_hacer || null,
-          es_examen: f.es_examen || false,
-          tipo_actividad: f.tipo_actividad || null,
-          orden: i
+          // saber_hacer: concatena los textos de Bloom activos para compatibilidad
+          saber_hacer:         buildSaberHacer(f.bloom_seleccionado),
+          bloom_seleccionado:  f.bloom_seleccionado || {},
+          es_examen:           f.es_examen || false,
+          tipo_actividad:      f.tipo_actividad || null,
+          orden:               i
         }))
         await supabase.from('plan_analitico_filas').insert(filas)
       }
@@ -575,6 +1012,15 @@
     }
   })
 
+  // Construye texto plano de Bloom para campo saber_hacer (compatibilidad)
+  function buildSaberHacer(bloom) {
+    if (!bloom) return null
+    return BLOOM_KEYS
+      .filter(k => bloom[k]?.activo && bloom[k]?.texto)
+      .map(k => `${BLOOM_LABELS[k]}: ${bloom[k].texto}`)
+      .join('\n\n') || null
+  }
+
   // ── Toast ─────────────────────────────────────────────────
   function mostrarToast(msg, tipo = 'ok') {
     const t = document.getElementById('toast')
@@ -584,12 +1030,8 @@
     setTimeout(() => { t.style.display = 'none' }, 2500)
   }
 
-  // Advertir si haycambios al salir
   window.addEventListener('beforeunload', e => {
-    if (haycambios) {
-      e.preventDefault()
-      e.returnValue = ''
-    }
+    if (haycambios) { e.preventDefault(); e.returnValue = '' }
   })
 </script>
 </body>
