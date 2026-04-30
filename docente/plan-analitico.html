@@ -384,7 +384,7 @@
         // Semana
         '<td class="col-semana">' +
         '<textarea class="cell-input" placeholder="Sesión 1"' +
-        ' oninput="autoResize(this)" onchange="editarCelda(' + i + ','semana',this.value)">' +
+        ' oninput="autoResize(this)" onchange="editarCelda(" + i + ",\"semana\",this.value)">' +
         esc(f.semana || '') + '</textarea></td>' +
         // Eje
         '<td class="col-eje">' +
@@ -403,7 +403,7 @@
         '<div class="pda-wrap">' +
         '<div class="pda-text" id="pda-text-' + i + '">' + (pda || '<span style="color:var(--text-3);font-style:italic;">Se llenará al elegir contenido</span>') + '</div>' +
         '<textarea class="pda-textarea" id="pda-edit-' + i + '"' +
-        ' oninput="autoResize(this);editarCelda(' + i + ','aprendizaje_esperado',this.value)">' +
+        ' oninput="autoResize(this);editarCelda(" + i + ",\"aprendizaje_esperado\",this.value)">' +
         esc(pda) + '</textarea>' +
         '<button class="btn-lock" onclick="togglePdaEdit(' + i + ',this)">🔒</button>' +
         '</div></td>' +
@@ -415,7 +415,7 @@
         '<div class="saber-texto" id="saber-texto-' + i + '">' + esc(saberTexto) + '</div>' +
         '</td>' +
         // Tipo actividad
-        '<td><select class="cell-select" style="margin:0;" onchange="editarCelda(' + i + ','tipo_actividad',this.value)">' +
+        '<td><select class="cell-select" style="margin:0;" onchange="editarCelda(" + i + ",\"tipo_actividad\",this.value)">' +
         '<option value=""' + (!f.tipo_actividad ? ' selected' : '') + '>—</option>' +
         '<option value="Trabajo de clase"' + (f.tipo_actividad === 'Trabajo de clase' ? ' selected' : '') + '>Trabajo de clase</option>' +
         '<option value="Proyecto"' + (f.tipo_actividad === 'Proyecto' ? ' selected' : '') + '>Proyecto</option>' +
