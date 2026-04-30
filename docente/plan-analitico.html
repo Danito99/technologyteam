@@ -609,13 +609,11 @@
   // Limpia el prefijo "★ NO NEGOCIABLE..." del texto del PDA
   function limpiarPDA(texto) {
     if (!texto) return ''
-    // Quita líneas que empiecen con ★ y el párrafo introductorio que les sigue
+    // Filtra líneas que empiecen con ★
     return texto
-      .replace(/★[^
-]*
-(\s*
-)?/g, '')  // línea con ★
-      .replace(/^\s+/, '')                  // espacios iniciales
+      .split('\n')
+      .filter(linea => !linea.trim().startsWith('★'))
+      .join('\n')
       .trim()
   }
 
