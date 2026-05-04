@@ -147,10 +147,10 @@
               <thead>
                 <tr>
                   <th class="col-semana">Periodo /<br>Semana</th>
-                  <th class="col-eje">Eje articulador<br><span style="font-weight:400;">(categoría)</span></th>
-                  <th class="col-contenido">Contenido<br><span style="font-weight:400;">(concepto específico)</span></th>
-                  <th class="col-proceso">PDA<br><span style="font-weight:400;">(aprendizaje esperado)</span></th>
-                  <th class="col-saber">Saber y saber hacer<br><span style="font-weight:400;">(nivel Bloom)</span></th>
+                  <th class="col-eje">Eje articulador</th>
+                  <th class="col-contenido">Contenido</th>
+                  <th class="col-proceso">PDA</th>
+                  <th class="col-saber">Saber y saber hacer</th>
                   <th style="width:130px;">Tipo actividad</th>
                   <th class="col-acciones"></th>
                 </tr>
@@ -187,102 +187,21 @@
 
   const CATALOGO = {
     "Fundamentos digitales": [
-      {"concepto": "Encendido y apagado del equipo", "nivel": "Primaria 1°-3°", "pda": "★ NO NEGOCIABLE\n \n El alumno desarrolla autonomía en el uso básico del equipo: encendido, apagado, cierre de sesión y gestión de ventanas, sentando las bases del cuidado responsable del hardware y del espacio de trabajo digital.", "saber": {"conocimiento": "Identifica el botón de encendido. Sabe que existe una forma correcta de apagar.", "comprension": "Explica por qué no se debe cerrar la tapa sin apagar: riesgo de perder trabajo.", "aplicacion": "Enciende, inicia sesión y apaga el equipo de forma autónoma.", "analisis": "Detecta si el equipo no enciende y describe el problema al docente.", "sintesis": "Explica a un compañero nuevo los pasos con un cartel ilustrado.", "evaluacion": "Propone reglas de uso del equipo para cuidar la batería y el hardware."}},
-      {"concepto": "Cierre de sesión", "nivel": "Primaria 1°-3°", "pda": "★ NO NEGOCIABLE\n \n El alumno desarrolla autonomía en el uso básico del equipo: encendido, apagado, cierre de sesión y gestión de ventanas, sentando las bases del cuidado responsable del hardware y del espacio de trabajo digital.", "saber": {"conocimiento": "Sabe que cerrar sesión es diferente a apagar. Encuentra el botón.", "comprension": "Entiende por qué es importante en equipos compartidos.", "aplicacion": "Cierra sesión de forma autónoma al terminar cada clase.", "analisis": "Identifica riesgos de no cerrar sesión: acceso a su correo y archivos.", "sintesis": "Crea cartel con los pasos para terminar bien una sesión.", "evaluacion": "Explica con sus propias palabras por qué cerrar sesión protege sus dibujos y archivos."}},
-      {"concepto": "Mouse y trackpad — clic y doble clic", "nivel": "Primaria 1°-3°", "pda": "★ NO NEGOCIABLE\n\nEl alumno desarrolla destreza con los dispositivos de entrada — trackpad, teclado y navegador — como herramientas para explorar, crear y comunicar en entornos digitales.", "saber": {"conocimiento": "Identifica clic izquierdo, clic derecho y scroll en el trackpad.", "comprension": "Entiende para qué sirve cada acción en diferentes contextos.", "aplicacion": "Abre, mueve y cierra ventanas usando solo el trackpad.", "analisis": "Compara cuándo es más eficiente el trackpad vs. el mouse externo.", "sintesis": "Demuestra 5 acciones distintas usando solo el trackpad sin errores.", "evaluacion": "Evalúa su propia precisión y propone ejercicios para mejorar."}},
-      {"concepto": "Escritorio e iconos", "nivel": "Primaria 1°-3°", "pda": "El alumno reconoce y usa los elementos del sistema operativo (escritorio, iconos, ventanas, carpetas) para organizar su trabajo digital de forma autónoma.", "saber": {"conocimiento": "Identifica: escritorio, barra de tareas, iconos, reloj.", "comprension": "Explica para qué sirve cada elemento del escritorio.", "aplicacion": "Abre aplicaciones desde el escritorio y cambia entre ventanas.", "analisis": "Organiza el escritorio eliminando accesos directos innecesarios.", "sintesis": "Personaliza el escritorio (fondo, iconos frecuentes).", "evaluacion": "Evalúa si su escritorio está configurado para trabajar eficientemente."}},
-      {"concepto": "Ventanas: abrir, minimizar, maximizar, cerrar", "nivel": "Primaria 1°-3°", "pda": "El alumno reconoce y usa los elementos del sistema operativo (escritorio, iconos, ventanas, carpetas) para organizar su trabajo digital de forma autónoma.", "saber": {"conocimiento": "Identifica los botones X, minimizar y maximizar.", "comprension": "Entiende la diferencia entre minimizar (ocultar) y cerrar (terminar).", "aplicacion": "Abre 3 aplicaciones, cambia entre ellas y las organiza.", "analisis": "Detecta cuándo demasiadas ventanas afectan el rendimiento.", "sintesis": "Usa división de pantalla para trabajar con 2 ventanas simultáneas.", "evaluacion": "Diseña flujo de trabajo eficiente usando múltiples ventanas."}},
-      {"concepto": "Carpetas: crear, nombrar y organizar", "nivel": "Primaria 1°-3°", "pda": "El alumno reconoce y usa los elementos del sistema operativo (escritorio, iconos, ventanas, carpetas) para organizar su trabajo digital de forma autónoma.", "saber": {"conocimiento": "Sabe qué es una carpeta. Conoce la diferencia entre archivo y carpeta.", "comprension": "Entiende la jerarquía: carpeta > subcarpeta > archivo.", "aplicacion": "Crea una carpeta, la nombra correctamente y guarda un archivo dentro.", "analisis": "Organiza sus archivos por materia y fecha.", "sintesis": "Diseña una estructura de carpetas para todo el ciclo escolar.", "evaluacion": "Evalúa si su sistema de carpetas le ahorra tiempo."}},
-      {"concepto": "Guardar archivos — Ctrl+S", "nivel": "Primaria 1°-3°", "pda": "El alumno reconoce y usa los elementos del sistema operativo (escritorio, iconos, ventanas, carpetas) para organizar su trabajo digital de forma autónoma.", "saber": {"conocimiento": "Sabe usar Ctrl+S. Conoce el menú Archivo > Guardar como.", "comprension": "Entiende qué pasa si no guarda antes de cerrar.", "aplicacion": "Guarda un documento con nombre descriptivo en su carpeta.", "analisis": "Analiza la diferencia entre Guardar y Guardar como.", "sintesis": "Establece el hábito de guardar cada 5 minutos.", "evaluacion": "Propone rutina de guardado para evitar pérdida de trabajo."}},
-      {"concepto": "Copiar, pegar y mover archivos", "nivel": "Primaria 1°-3°", "pda": "El alumno reconoce y usa los elementos del sistema operativo (escritorio, iconos, ventanas, carpetas) para organizar su trabajo digital de forma autónoma.", "saber": {"conocimiento": "Sabe usar Ctrl+C (copiar), Ctrl+X (cortar), Ctrl+V (pegar).", "comprension": "Entiende la diferencia entre copiar (deja el original) y mover.", "aplicacion": "Copia un archivo a otra carpeta. Mueve archivos con arrastrar.", "analisis": "Identifica cuándo conviene copiar vs. mover.", "sintesis": "Organiza todos sus archivos de la semana en carpetas.", "evaluacion": "Propone rutina de organización semanal de archivos."}},
-      {"concepto": "Teclado: zonas y teclas básicas", "nivel": "Primaria 1°-3°", "pda": "★ NO NEGOCIABLE\n \n El alumno desarrolla destreza con los dispositivos de entrada — trackpad, teclado y navegador — como herramientas para explorar, crear y comunicar en entornos digitales.", "saber": {"conocimiento": "Identifica: zonas alfanumérica, especial. Sabe: Enter, Backspace, Espacio, Shift.", "comprension": "Sabe para qué sirve cada tecla en un contexto de escritura.", "aplicacion": "Escribe su nombre completo y una oración simple sin mirar.", "analisis": "Compara su velocidad al mecanografiar mirando vs. sin mirar.", "sintesis": "Practica técnica dactilar: fila guía ASDF / JKL;.", "evaluacion": "Señala en qué letras se equivocó más durante la práctica y las escribe 3 veces seguidas."}},
-      {"concepto": "Teclado: Shift, Caps Lock y acentos", "nivel": "Primaria 1°-3°", "pda": "★ NO NEGOCIABLE\n \n El alumno desarrolla destreza con los dispositivos de entrada — trackpad, teclado y navegador — como herramientas para explorar, crear y comunicar en entornos digitales.", "saber": {"conocimiento": "Sabe Shift+letra = mayúscula. Caps Lock activa mayúsculas continuas.", "comprension": "Entiende cuándo usar Caps Lock vs. Shift.", "aplicacion": "Escribe su nombre con mayúsculas, usa tildes y ñ correctamente.", "analisis": "Identifica todos los caracteres especiales del teclado.", "sintesis": "Redacta texto formal con mayúsculas, tildes y puntuación.", "evaluacion": "Evalúa su precisión y propone ejercicios de práctica."}},
-      {"concepto": "Teclado: atajos básicos (Ctrl+C, V, Z, S)", "nivel": "Primaria 4°-6°", "pda": "★ NO NEGOCIABLE\n \n El alumno amplía su eficiencia digital mediante el uso de atajos de teclado y la gestión avanzada del navegador, acelerando flujos de trabajo escolares.", "saber": {"conocimiento": "Conoce: Ctrl+C, Ctrl+V, Ctrl+Z, Ctrl+S.", "comprension": "Entiende que los atajos evitan el mouse y aceleran el trabajo.", "aplicacion": "Ses. 1: Ctrl+C y Ctrl+V con texto dado. Ses. 2: Ctrl+Z y Ctrl+S en contexto de redacción. Ses. 3: Flujo combinado de los 4 atajos sin usar el menú.", "analisis": "Compara el tiempo con y sin atajos en 10 operaciones.", "sintesis": "Aprende 5 atajos adicionales: Ctrl+A, Ctrl+X, Ctrl+F, Ctrl+P, Ctrl+B.", "evaluacion": "Crea hoja de referencia personal con los atajos más útiles."}},
-      {"concepto": "Teclado: atajos avanzados y sistema", "nivel": "Primaria 4°-6°", "pda": "★ NO NEGOCIABLE\n \n El alumno amplía su eficiencia digital mediante el uso de atajos de teclado y la gestión avanzada del navegador, acelerando flujos de trabajo escolares.", "saber": {"conocimiento": "Conoce F1-F12 y su función básica. Sabe qué hace la tecla Búsqueda.", "comprension": "Entiende Alt+Tab (cambiar ventana).", "aplicacion": "Usa Alt+Tab para cambiar entre 3 aplicaciones sin tocar el mouse.", "analisis": "Identifica qué atajos son universales vs. específicos del SO.", "sintesis": "Realiza flujo de trabajo de 5 min usando solo teclado.", "evaluacion": "Intercambia guía de atajos con compañero de mesa y le da retroalimentación escrita sobre qué falta o qué está bien."}},
-      {"concepto": "Navegador: abrir Chrome y escribir URLs", "nivel": "Primaria 1°-3°", "pda": "★ NO NEGOCIABLE\n \n El alumno navega la web con propósito: escribe URLs, gestiona pestañas, usa el historial y evalúa la seguridad básica de sitios visitados.", "saber": {"conocimiento": "Sabe abrir Chrome. Identifica la barra de direcciones.", "comprension": "Entiende la diferencia entre buscar en Google y escribir URL.", "aplicacion": "Navega a 5 páginas escribiendo la URL exacta.", "analisis": "Identifica partes de una URL: protocolo, dominio, ruta.", "sintesis": "Navega a recursos educativos usando URLs correctas.", "evaluacion": "Evalúa si un sitio es seguro (https) antes de ingresar datos."}},
-      {"concepto": "Navegador: pestañas y marcadores", "nivel": "Primaria 4°-6°", "pda": "★ NO NEGOCIABLE\n \n El alumno navega la web con propósito: escribe URLs, gestiona pestañas, usa el historial y evalúa la seguridad básica de sitios visitados.", "saber": {"conocimiento": "Sabe abrir pestaña nueva (Ctrl+T) y cerrarla (Ctrl+W).", "comprension": "Entiende cuándo usar varias pestañas vs. varias ventanas.", "aplicacion": "Trabaja con 4 pestañas. Guarda marcadores en carpetas.", "analisis": "Detecta cuándo demasiadas pestañas degradan el rendimiento.", "sintesis": "Organiza biblioteca de 20 recursos educativos en marcadores.", "evaluacion": "Propone estrategia personal de gestión de pestañas."}},
-      {"concepto": "Navegador: historial y caché", "nivel": "Primaria 4°-6°", "pda": "★ NO NEGOCIABLE\n \n El alumno navega la web con propósito: escribe URLs, gestiona pestañas, usa el historial y evalúa la seguridad básica de sitios visitados.", "saber": {"conocimiento": "Sabe qué es el historial (Ctrl+H) y para qué sirve.", "comprension": "Entiende qué es la caché y por qué a veces conviene borrarla.", "aplicacion": "Busca sitio en historial. Borra historial y caché.", "analisis": "Analiza su historial e identifica patrones de uso.", "sintesis": "Configura el navegador para borrar datos al cerrar.", "evaluacion": "Argumenta cuándo y por qué borrar el historial es importante."}},
-      {"concepto": "Correo: partes de un email", "nivel": "Primaria 4°-6°", "pda": "★ NO NEGOCIABLE\n \n El alumno domina la comunicación digital formal a través del correo electrónico: estructura, redacción, envío, respuesta y organización de la bandeja.", "saber": {"conocimiento": "Identifica: dirección, asunto, cuerpo, remitente, destinatario, CC, CCO.", "comprension": "Entiende la diferencia entre Para, CC y CCO.", "aplicacion": "Lee un correo e identifica todas sus partes.", "analisis": "Analiza 3 correos e identifica su propósito: formal, informal, spam.", "sintesis": "Redacta correo con todas sus partes correctamente.", "evaluacion": "Evalúa si un correo recibido es legítimo o spam."}},
-      {"concepto": "Correo: redactar y enviar", "nivel": "Primaria 4°-6°", "pda": "★ NO NEGOCIABLE\n \n El alumno domina la comunicación digital formal a través del correo electrónico: estructura, redacción, envío, respuesta y organización de la bandeja.", "saber": {"conocimiento": "Sabe abrir Gmail y usar el botón Redactar.", "comprension": "Entiende la importancia de un asunto claro y saludo apropiado.", "aplicacion": "Envía correo a su docente con asunto, saludo, cuerpo y despedida.", "analisis": "Compara correo bien redactado con uno mal redactado.", "sintesis": "Redacta 3 correos para contextos distintos.", "evaluacion": "Crea plantilla de correo formal reutilizable."}},
-      {"concepto": "Correo: responder, reenviar y adjuntar", "nivel": "Primaria 4°-6°", "pda": "★ NO NEGOCIABLE\n \n El alumno domina la comunicación digital formal a través del correo electrónico: estructura, redacción, envío, respuesta y organización de la bandeja.", "saber": {"conocimiento": "Sabe usar Responder, Responder a todos, Reenviar y adjuntar.", "comprension": "Entiende cuándo usar cada opción y los límites de tamaño.", "aplicacion": "Responde un correo y envía uno con imagen adjunta.", "analisis": "Identifica cuándo adjuntar vs. compartir enlace de Drive.", "sintesis": "Envía correo con 3 adjuntos distintos.", "evaluacion": "Propone cuándo usar cada método según el tamaño del archivo."}},
-      {"concepto": "Correo: etiquetas, filtros y organización avanzada", "nivel": "Secundaria 7°-8°", "pda": "El alumno gestiona su correo de forma avanzada mediante etiquetas, filtros y automatizaciones, desarrollando hábitos de productividad digital.", "saber": {"conocimiento": "Sabe qué son las etiquetas de Gmail y cómo crearlas.", "comprension": "Entiende cómo los filtros automatizan la organización.", "aplicacion": "Crea 3 etiquetas y configura 2 filtros automáticos.", "analisis": "Analiza qué sistema de etiquetas necesita para sus actividades.", "sintesis": "Diseña sistema completo de organización de correo para el ciclo.", "evaluacion": "Evalúa si su sistema de correo le ahorra tiempo y reduce el estrés."}}
+      {"concepto": "Encendido y apagado del equipo", "nivel": "Primaria 1°-3°", "pda": "★ NO NEGOCIABLE\n\nEl alumno desarrolla autonomía en el uso básico del equipo.", "saber": {"conocimiento": "Identifica botón.", "comprension": "Entiende riesgos.", "aplicacion": "Opera solo.", "analisis": "Detecta fallos.", "sintesis": "Explica a otros.", "evaluacion": "Propone reglas."}},
+      {"concepto": "Cierre de sesión", "nivel": "Primaria 1°-3°", "pda": "Uso básico y seguridad de cuentas.", "saber": {"conocimiento": "Encuentra botón.", "comprension": "Importancia de privacidad.", "aplicacion": "Cierra sesión.", "analisis": "Identifica riesgos.", "sintesis": "Crea cartel.", "evaluacion": "Argumenta seguridad."}},
+      {"concepto": "Teclado: atajos básicos (Ctrl+C, V, Z, S)", "nivel": "Primaria 4°-6°", "pda": "Eficiencia mediante atajos.", "saber": {"conocimiento": "Conoce combinaciones.", "comprension": "Ahorro de tiempo.", "aplicacion": "Usa en edición.", "analisis": "Compara velocidad.", "sintesis": "Memoriza 5 nuevos.", "evaluacion": "Crea guía personal."}}
     ],
     "Ciberseguridad": [
-      {"concepto": "Información personal: qué no compartir", "nivel": "Primaria 1°-3°", "pda": "★ NO NEGOCIABLE\n\nEl alumno identifica qué información personal es sensible y adopta hábitos de protección básica en entornos digitales compartidos.", "saber": {"conocimiento": "Conoce qué es información personal: nombre, dirección, teléfono, contraseña.", "comprension": "Entiende por qué es peligroso compartir información personal en línea.", "aplicacion": "Identifica qué información es segura vs. peligrosa compartir.", "analisis": "Analiza situaciones hipotéticas: '¿En este caso compartes tu dirección?'", "sintesis": "Crea cartel de reglas de seguridad personal para el aula.", "evaluacion": "Argumenta por qué las reglas de seguridad aplican también fuera de la escuela."}},
-      {"concepto": "Contraseñas: qué las hace seguras", "nivel": "Primaria 4°-6°", "pda": "★ NO NEGOCIABLE\n\nEl alumno comprende los fundamentos de la seguridad en línea: contraseñas seguras, detección de phishing y primeros conceptos de cifrado como herramientas de protección personal.", "saber": {"conocimiento": "Sabe que una contraseña segura: mínimo 8 caracteres, mayúsculas, números y símbolos.", "comprension": "Explica por qué 'password123' es débil y '!MiGato#2024' es fuerte.", "aplicacion": "Evalúa 5 contraseñas y las clasifica como fuertes o débiles.", "analisis": "Analiza qué vulnera una contraseña: datos personales, palabras del diccionario.", "sintesis": "Crea 3 contraseñas seguras y las evalúa con una herramienta online.", "evaluacion": "Propone política de contraseñas para el laboratorio escolar."}},
-      {"concepto": "Contraseñas: gestores de contraseñas", "nivel": "Secundaria 7°-8°", "pda": "★ NO NEGOCIABLE\n \n El alumno adopta herramientas y prácticas avanzadas de seguridad digital: gestores de contraseñas, autenticación en dos pasos, análisis de fraudes por múltiples canales y técnicas de cifrado.", "saber": {"conocimiento": "Sabe qué es un gestor de contraseñas. Conoce Bitwarden y Dashlane.", "comprension": "Entiende por qué es más seguro que guardarlas en papel o en un doc.", "aplicacion": "Crea cuenta en Bitwarden. Guarda 3 contraseñas. Genera una automática.", "analisis": "Analiza qué pasaría si alguien accede al gestor.", "sintesis": "Migra sus contraseñas al gestor y activa autenticación en dos pasos.", "evaluacion": "Compara 3 gestores y recomienda uno con justificación."}},
-      {"concepto": "Contraseñas: verificación en dos pasos (2FA)", "nivel": "Secundaria 7°-8°", "pda": "★ NO NEGOCIABLE\n \n El alumno adopta herramientas y prácticas avanzadas de seguridad digital: gestores de contraseñas, autenticación en dos pasos, análisis de fraudes por múltiples canales y técnicas de cifrado.", "saber": {"conocimiento": "Sabe qué el 2FA y para qué sirve.", "comprension": "Entiende los métodos: SMS, app autenticadora, llave física.", "aplicacion": "Activa la verificación en dos pasos en su cuenta de Google.", "analisis": "Compara seguridad de SMS vs. app autenticadora vs. llave física.", "sintesis": "Activa 2FA en 3 servicios y genera códigos de respaldo.", "evaluacion": "Argumenta por qué el 2FA es fundamental en cuentas sensibles."}},
-      {"concepto": "Phishing: reconocer correos fraudulentos", "nivel": "Primaria 4°-6°", "pda": "★ NO NEGOCIABLE\n \n El alumno comprende los fundamentos de la seguridad en línea: contraseñas seguras, detección de phishing y primeros conceptos de cifrado como herramientas de protección personal.", "saber": {"conocimiento": "Sabe qué es el phishing. Conoce señales: remitente falso, urgencia, errores.", "comprension": "Entiende qué busca el atacante: contraseñas y datos personales.", "aplicacion": "Analiza 5 correos y clasifica cuáles son phishing con evidencia.", "analisis": "Identifica técnicas de phishing dirigido (spear phishing).", "sintesis": "Crea guía visual de detección de phishing para publicar en el aula o pasillos de la escuela.", "evaluacion": "Diseña cartel para el aula que explique 3 señales de fraude en correos electrónicos."}},
-      {"concepto": "Phishing: smishing y vishing", "nivel": "Secundaria 7°-8°", "pda": "", "saber": {"conocimiento": "Conoce smishing (SMS fraudulentos) y vishing (llamadas fraudulentas).", "comprension": "Entiende las tácticas: urgencia, miedo, premios falsos.", "aplicacion": "Analiza ejemplos de SMS fraudulentos e identifica señales.", "analisis": "Compara phishing, smishing y vishing en técnica y vulnerabilidad.", "sintesis": "Crea decálogo de seguridad digital para compartir con familiares de sus compañeros en el evento escolar.", "evaluacion": "Presenta roleplay de 2 minutos al grupo simulando un intento de smishing y propone la respuesta correcta."}},
-      {"concepto": "Cifrado César", "nivel": "Primaria 4°-6°", "pda": "", "saber": {"conocimiento": "Sabe que el cifrado César desplaza letras un número fijo de posiciones.", "comprension": "Entiende la historia del cifrado y su uso en comunicaciones históricas.", "aplicacion": "Cifra y descifra mensajes con desplazamiento de 3 y de 7.", "analisis": "Analiza las debilidades del César: solo 25 variantes posibles.", "sintesis": "Diseña mensaje secreto para un compañero usando César.", "evaluacion": "Compara el cifrado César con el cifrado moderno."}},
-      {"concepto": "Cifrado de sustitución", "nivel": "Secundaria 7°-8°", "pda": "", "saber": {"conocimiento": "Sabe que un cifrado de sustitución reemplaza cada letra según una clave.", "comprension": "Entiende la diferencia entre sustitución simple (una clave fija, más fácil de romper) y sustitución con varias claves (más difícil de romper).", "aplicacion": "Crea su tabla de sustitución y cifra un mensaje de 10 palabras.", "analisis": "Analiza cómo el análisis de frecuencia puede romper este cifrado.", "sintesis": "Diseña cifrado basado en su nombre y lo prueba con compañeros.", "evaluacion": "Argumenta por qué estos cifrados fueron superados por la criptografía moderna."}},
-      {"concepto": "HTTPS y seguridad web", "nivel": "Secundaria 9°", "pda": "★ NO NEGOCIABLE\n\nEl alumno comprende los protocolos de seguridad web (HTTPS, SSL) y los aplica como criterio para la navegación responsable.", "saber": {"conocimiento": "Sabe qué significa HTTPS y qué es el candado verde.", "comprension": "Entiende que HTTP no cifra datos y HTTPS sí. Sabe qué es SSL.", "aplicacion": "Verifica si 10 sitios usan HTTPS. Identifica uno sin HTTPS y explica el riesgo.", "analisis": "Analiza qué información nunca debe ingresarse en sitios sin HTTPS.", "sintesis": "Navega verificando HTTPS antes de cualquier ingreso de datos.", "evaluacion": "Propone criterios mínimos de seguridad para confiar en un sitio."}},
-      {"concepto": "Ingeniería social: manipulación psicológica", "nivel": "Preparatoria", "pda": "★ NO NEGOCIABLE\n\nEl alumno analiza técnicas de manipulación psicológica (ingeniería social) y propone estrategias de defensa individual y comunitaria.", "saber": {"conocimiento": "Conoce qué es la ingeniería social. Identifica: pretexting, baiting, quid pro quo.", "comprension": "Entiende por qué funciona: confianza, urgencia, autoridad.", "aplicacion": "Analiza casos reales e identifica la técnica de manipulación usada.", "analisis": "Compara ingeniería social digital vs. presencial.", "sintesis": "Simula situación de ingeniería social (roleplay) y propone respuesta.", "evaluacion": "Diseña y presenta roleplay de 3 minutos ante el grupo sobre una situación de ingeniería social, proponiendo cómo responder."}}
-    ],
-    "Sistemas computacionales": [
-      {"concepto": "Hardware: partes externas del equipo", "nivel": "Primaria 1°-3°", "pda": "★ NO NEGOCIABLE\n\nEl alumno reconoce los componentes físicos del equipo de cómputo y su función, estableciendo la base para el uso responsable del hardware escolar.", "saber": {"conocimiento": "Identifica y nombra: monitor, teclado, mouse, bocinas, cámara web, puertos USB.", "comprension": "Describe para qué sirve cada parte en 1 oración.", "aplicacion": "Señala cada parte en el equipo real con nombre correcto.", "analisis": "Clasifica las partes: entrada, salida o ambos.", "sintesis": "Explica a un compañero de grado inferior para qué sirve cada parte.", "evaluacion": "Evalúa qué mejoras de hardware harían el equipo más útil."}},
-      {"concepto": "Hardware: partes internas — CPU, RAM, disco duro", "nivel": "Primaria 4°-6°", "pda": "El alumno comprende la arquitectura interna del equipo (hardware y software) y el sistema de representación de la información (binario, bits, bytes), conectando lo físico con lo lógico.", "saber": {"conocimiento": "Identifica: CPU, RAM, disco duro, placa madre, tarjeta gráfica.", "comprension": "Explica la función de cada componente con analogía cotidiana.", "aplicacion": "Lee especificaciones del Chromebook e identifica sus componentes.", "analisis": "Compara dos equipos con distintas specs y decide cuál sirve para cada tarea.", "sintesis": "Explica el funcionamiento interno de una computadora con analogías.", "evaluacion": "Diseña specs ideales de un equipo escolar con presupuesto dado."}},
-      {"concepto": "Software: sistema operativo, apps y extensiones", "nivel": "Primaria 4°-6°", "pda": "El alumno comprende la arquitectura interna del equipo (hardware y software) y el sistema de representación de la información (binario, bits, bytes), conectando lo físico con lo lógico.", "saber": {"conocimiento": "Sabe qué es software. Distingue SO, aplicación y controlador.", "comprension": "Entiende la diferencia entre software libre, propietario y código abierto.", "aplicacion": "Instala una extensión de Chrome. Identifica software en su equipo.", "analisis": "Compara Chrome OS, Windows y macOS en ventajas y desventajas.", "sintesis": "Selecciona el software apropiado para 5 tareas escolares distintas.", "evaluacion": "Argumenta cuándo usar software en la nube vs. instalado localmente."}},
-      {"concepto": "Sistema binario: bits, bytes y unidades de información", "nivel": "Primaria 4°-6°", "pda": "El alumno comprende la arquitectura interna del equipo (hardware y software) y el sistema de representación de la información (binario, bits, bytes), conectando lo físico con lo lógico.", "saber": {"conocimiento": "Sabe que las computadoras usan 0 y 1. Conoce: bit, byte, KB, MB, GB, TB.", "comprension": "Entiende: 8 bits = 1 byte, 1024 bytes = 1 KB.", "aplicacion": "Convierte tamaños de archivo entre KB, MB y GB.", "analisis": "Analiza el tamaño de distintos tipos de archivo y lo explica.", "sintesis": "Calcula cuántos archivos caben en un USB de 4 GB.", "evaluacion": "Propone cómo optimizar el almacenamiento del equipo escolar."}},
-      {"concepto": "Sistema binario: contar del 0 al 15", "nivel": "Secundaria 7°-8°", "pda": "★ NO NEGOCIABLE\n \n El alumno profundiza en los sistemas de representación digital (binario, ASCII) y en los fundamentos de las redes de comunicación, comprendiendo cómo viaja y se codifica la información.", "saber": {"conocimiento": "Sabe que en binario solo existen 0 y 1. Conoce los primeros 4 números.", "comprension": "Entiende el sistema posicional: cada posición vale el doble.", "aplicacion": "Convierte del 0 al 15 de decimal a binario y viceversa.", "analisis": "Identifica el patrón y predice el siguiente número.", "sintesis": "Codifica del 0 al 255 usando 8 bits.", "evaluacion": "Explica el sistema binario a un compañero usando objetos del salón."}},
-      {"concepto": "Sistema binario: suma en binario", "nivel": "Secundaria 7°-8°", "pda": "★ NO NEGOCIABLE\n \n El alumno profundiza en los sistemas de representación digital (binario, ASCII) y en los fundamentos de las redes de comunicación, comprendiendo cómo viaja y se codifica la información.", "saber": {"conocimiento": "Conoce las reglas: 0+0=0, 0+1=1, 1+1=10 (escribe 0 y 'lleva' 1 a la siguiente columna, como llevar decenas en suma).", "comprension": "Entiende el concepto de acarreo (carry).", "aplicacion": "Suma pares de números binarios de 4 bits.", "analisis": "Analiza cómo el procesador hace operaciones con puertas lógicas.", "sintesis": "Suma números de 8 bits en papel y verifica en decimal.", "evaluacion": "Diseña ejercicio de suma binaria para enseñar a un compañero."}},
-      {"concepto": "ASCII: codificación de texto", "nivel": "Secundaria 7°-8°", "pda": "★ NO NEGOCIABLE\n \n El alumno profundiza en los sistemas de representación digital (binario, ASCII) y en los fundamentos de las redes de comunicación, comprendiendo cómo viaja y se codifica la información.", "saber": {"conocimiento": "Sabe que ASCII asigna un número a cada carácter. Conoce la tabla.", "comprension": "Entiende por qué se necesita un estándar para representar texto.", "aplicacion": "Codifica su nombre completo en ASCII decimal.", "analisis": "Decodifica un mensaje secreto en ASCII dado por el docente.", "sintesis": "Crea mensaje cifrado en ASCII para intercambiar con compañero.", "evaluacion": "Compara ASCII (128 chars) con Unicode (100,000+)."}},
-      {"concepto": "Redes: qué es internet y cómo funciona", "nivel": "Secundaria 7°-8°", "pda": "★ NO NEGOCIABLE\n\nEl alumno profundiza en los sistemas de representación digital (binario, ASCII) y en los fundamentos de las redes de comunicación, comprendiendo cómo viaja y se codifica la información.", "saber": {"conocimiento": "Sabe qué es internet. Conoce su historia básica (ARPANET, 1969).", "comprension": "Entiende qué es un servidor, un cliente y un protocolo.", "aplicacion": "Traza el camino de un dato desde su equipo hasta Google.", "analisis": "Analiza cuántos servidores intervienen en una búsqueda simple.", "sintesis": "Explica internet a un familiar sin conocimientos técnicos.", "evaluacion": "Argumenta por qué el acceso a internet debería ser un derecho."}},
-      {"concepto": "Redes: WiFi, dirección IP y velocidad", "nivel": "Secundaria 7°-8°", "pda": "El alumno profundiza en los sistemas de representación digital (binario, ASCII) y en los fundamentos de las redes de comunicación, comprendiendo cómo viaja y se codifica la información.", "saber": {"conocimiento": "Sabe qué es una dirección IP y la diferencia entre WiFi y Ethernet.", "comprension": "Entiende qué es una red local (LAN) vs. internet.", "aplicacion": "Consulta la IP de su equipo. Hace prueba de velocidad.", "analisis": "Compara WiFi y cable: velocidad, estabilidad, seguridad.", "sintesis": "Conecta y desconecta redes WiFi en el Chromebook.", "evaluacion": "Argumenta cuándo es más seguro WiFi público vs. datos móviles."}}
-    ],
-    "Diseño digital": [
-      {"concepto": "Teoría del color: primarios (RYB — pigmento)", "nivel": "Primaria 1°-3°", "pda": "El alumno explora la teoría del color como herramienta de comunicación visual, progresando desde los primarios hasta las armonías cromáticas y su aplicación en diseños propios.", "saber": {"conocimiento": "Sabe que los colores primarios son: rojo, azul y amarillo.", "comprension": "Entiende que al mezclar primarios se obtienen secundarios.", "aplicacion": "Mezcla colores en herramienta digital para obtener secundarios.", "analisis": "Analiza cuáles colores del círculo son cálidos y cuáles fríos.", "sintesis": "Crea paleta de 6 colores (3 primarios + 3 secundarios) en Google Slides.", "evaluacion": "Argumenta qué color elegir para comunicar alegría, peligro o calma."}},
-      {"concepto": "Teoría del color: RGB (luz) vs. RYB (pigmento)", "nivel": "Primaria 4°-6°", "pda": "El alumno explora la teoría del color como herramienta de comunicación visual, progresando desde los primarios hasta las armonías cromáticas y su aplicación en diseños propios.", "saber": {"conocimiento": "Sabe que primarios de luz son R, G, B y de pigmento R, Y, B.", "comprension": "Entiende por qué las pantallas usan RGB y las impresoras CMYK.", "aplicacion": "Mezcla colores en herramienta digital en ambos modelos.", "analisis": "Analiza por qué RGB es aditivo y CMYK sustractivo.", "sintesis": "Crea paleta con primarios y secundarios de ambos modelos en Canva.", "evaluacion": "Argumenta cuál modelo usar según el medio: pantalla vs. impresión."}},
-      {"concepto": "Teoría del color: círculo cromático completo", "nivel": "Secundaria 7°-8°", "pda": "El alumno explora la teoría del color como herramienta de comunicación visual, progresando desde los primarios hasta las armonías cromáticas y su aplicación en diseños propios.", "saber": {"conocimiento": "Identifica los 12 colores del círculo: primarios, secundarios, terciarios.", "comprension": "Entiende colores cálidos y fríos y su impacto emocional.", "aplicacion": "Ubica colores en el círculo y los clasifica.", "analisis": "Analiza cómo marcas conocidas usan el círculo cromático.", "sintesis": "Selecciona paleta de 4 colores para un proyecto escolar.", "evaluacion": "Evalúa si la paleta elegida comunica la emoción deseada."}},
-      {"concepto": "Teoría del color: armonías — complementarios, análogos, triádicos", "nivel": "Secundaria 9°", "pda": "El alumno explora la teoría del color como herramienta de comunicación visual, progresando desde los primarios hasta las armonías cromáticas y su aplicación en diseños propios.", "saber": {"conocimiento": "Sabe que existen armonías: complementarios, análogos, triádicos.", "comprension": "Entiende qué sensación visual genera cada tipo de armonía.", "aplicacion": "Crea 3 diseños distintos aplicando cada tipo de armonía.", "analisis": "Analiza el diseño de 3 carteles e identifica la armonía cromática usada.", "sintesis": "Diseña afiche escolar con paleta armónica y justifica la elección.", "evaluacion": "Evalúa si la armonía elegida es apropiada para el propósito comunicativo."}},
-      {"concepto": "Píxeles: qué son y pixel art 8x8", "nivel": "Primaria 1°-3°", "pda": "El alumno comprende la naturaleza digital de las imágenes (píxeles, resolución) y crea producciones propias de pixel art con creciente nivel de detalle y animación.", "saber": {"conocimiento": "Sabe que una imagen digital está formada por una cuadrícula de píxeles.", "comprension": "Entiende que cada píxel tiene un color y que más píxeles = más detalle.", "aplicacion": "Amplía una imagen al máximo y observa los píxeles. Crea emoji 8x8 en Piskel.", "analisis": "Analiza cómo la resolución afecta la calidad de la imagen.", "sintesis": "Crea una animación simple de 3 cuadros en Pixel Art.", "evaluacion": "Compara el arte de píxeles con las imágenes de alta resolución modernas."}}
+      {"concepto": "Contraseñas: verificación en dos pasos (2FA)", "nivel": "Secundaria 7°-8°", "pda": "Prácticas avanzadas de seguridad digital.", "saber": {"conocimiento": "Conoce 2FA.", "comprension": "Entiende métodos.", "aplicacion": "Activa en Google.", "analisis": "Compara SMS vs App.", "sintesis": "Genera códigos.", "evaluacion": "Argumenta importancia."}},
+      {"concepto": "HTTPS y seguridad web", "nivel": "Secundaria 9°", "pda": "★ NO NEGOCIABLE\n\nComprensión de protocolos de seguridad web.", "saber": {"conocimiento": "Sabe qué es HTTPS.", "comprension": "Cifrado SSL.", "aplicacion": "Verifica candado.", "analisis": "Identifica sitios inseguros.", "sintesis": "Navega con criterio.", "evaluacion": "Propone políticas."}}
     ],
     "Sistemas y Terminal": [
-      {
-        "concepto": "Interfaz de Línea de Comandos (CLI): PowerShell y Batch",
-        "nivel": "Preparatoria",
-        "pda": "El alumno utiliza la terminal para gestionar el sistema operativo mediante comandos y scripts básicos.",
-        "saber": {
-          "conocimiento": "Identifica la diferencia entre CMD, PowerShell y archivos Batch (.bat).",
-          "comprension": "Entiende cómo la terminal permite interactuar con el SO sin interfaz gráfica.",
-          "aplicacion": "Ejecuta comandos de navegación (cd, ls/dir) y gestión de archivos desde PowerShell.",
-          "analisis": "Compara las ventajas de usar la CLI frente a la interfaz gráfica (GUI) en tareas repetitivas.",
-          "sintesis": "Crea un script de Batch simple que automatice la apertura de aplicaciones de estudio.",
-          "evaluacion": "Evalúa la eficiencia de diferentes comandos para resolver un problema de rutas de archivos."
-        }
-      },
-      {
-        "concepto": "Scripting básico: Variables y Automatización de Tareas",
-        "nivel": "Preparatoria",
-        "pda": "El alumno desarrolla scripts para automatizar procesos rutinarios del sistema.",
-        "saber": {
-          "conocimiento": "Conoce la sintaxis básica para declarar variables en PowerShell y Batch.",
-          "comprension": "Comprende la lógica de flujo: cómo un script ejecuta instrucciones secuenciales.",
-          "aplicacion": "Crea un archivo .bat para realizar respaldos automáticos de una carpeta a otra.",
-          "analisis": "Analiza los posibles errores de permisos al ejecutar scripts de PowerShell (Execution Policy).",
-          "sintesis": "Diseña un script en PowerShell que genere un reporte de los archivos más pesados en un directorio.",
-          "evaluacion": "Juzga la seguridad de ejecutar scripts de terceros y propone medidas de validación."
-        }
-      },
-      {
-        "concepto": "Interoperabilidad y Pipeline (Tuberías)",
-        "nivel": "Preparatoria",
-        "pda": "El alumno integra scripts de Batch con comandos de PowerShell para procesar datos complejos y automatizar flujos de trabajo profesionales.",
-        "saber": {
-          "conocimiento": "Define qué es un 'Alias' y cómo funciona el 'Pipeline' (|) para pasar datos entre comandos.",
-          "comprension": "Explica cómo PowerShell trata la información como 'objetos' y no solo como texto (a diferencia de Batch).",
-          "aplicacion": "Crea un archivo de Batch que invoque un comando de PowerShell para descargar un archivo de internet de forma automática.",
-          "analisis": "Compara el rendimiento y la legibilidad entre un script hecho puramente en Batch vs. uno que usa PowerShell.",
-          "sintesis": "Diseña un sistema de limpieza de sistema: un script que busque archivos temporales antiguos y los elimine, enviando un log por correo o consola.",
-          "evaluacion": "Argumenta por qué las empresas modernas prefieren PowerShell sobre Batch para la administración de servidores y seguridad."
-        }
-      }
+      {"concepto": "Interfaz de Línea de Comandos (CLI)", "nivel": "Preparatoria", "pda": "Gestión del SO mediante comandos.", "saber": {"conocimiento": "Identifica CMD/PS.", "comprension": "Lógica sin GUI.", "aplicacion": "Usa cd, ls.", "analisis": "Compara vs GUI.", "sintesis": "Crea script .bat.", "evaluacion": "Juzga eficiencia."}}
     ]
   };
 
   let user = null;
   let grupos = [];
-  let materias = [];
   let grupoMateriaId = null;
   let periodoId = null;
   let filas = [];
@@ -300,16 +219,26 @@
   async function cargarGrupos() {
     const { data, error } = await supabase
       .from('docente_grupos_materias')
-      .select('id, grupo_id, materia_id, grupos(nombre), materias(nombre)')
+      .select('id, grupos(id, nombre), materias(id, nombre)')
       .eq('docente_id', user.id);
-    if (error) return;
+
+    if (error) { console.error(error); return; }
+    
     grupos = data;
-    const sel = document.getElementById('sel-grupo');
-    const unique = [...new Set(data.map(g => g.grupos.nombre))];
-    unique.forEach(n => {
+    const selGrupo = document.getElementById('sel-grupo');
+    selGrupo.innerHTML = '<option value="">Selecciona grupo...</option>';
+
+    // Extraer nombres únicos de los grupos que realmente vienen de la DB
+    const nombresUnicos = [...new Set(data
+      .filter(item => item.grupos && item.grupos.nombre)
+      .map(item => item.grupos.nombre)
+    )].sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
+
+    nombresUnicos.forEach(nombre => {
       const opt = document.createElement('option');
-      opt.value = n; opt.textContent = n;
-      sel.appendChild(opt);
+      opt.value = nombre;
+      opt.textContent = nombre;
+      selGrupo.appendChild(opt);
     });
   }
 
@@ -318,10 +247,12 @@
     const sm = document.getElementById('sel-materia');
     sm.innerHTML = '<option value="">Materia...</option>';
     if (!gn) { sm.style.display='none'; return; }
-    const filtered = grupos.filter(g => g.grupos.nombre === gn);
-    filtered.forEach(m => {
+    
+    const filtradas = grupos.filter(g => g.grupos.nombre === gn);
+    filtradas.forEach(m => {
       const opt = document.createElement('option');
-      opt.value = m.id; opt.textContent = m.materias.nombre;
+      opt.value = m.id;
+      opt.textContent = m.materias.nombre;
       sm.appendChild(opt);
     });
     sm.style.display = 'inline-block';
@@ -336,24 +267,21 @@
   };
 
   async function cargarPeriodos() {
-    const { data, error } = await supabase.from('periodos').select('*').order('numero');
-    if (error) return;
+    const { data } = await supabase.from('periodos').select('*').order('numero');
     const container = document.getElementById('tab-periodos');
     container.innerHTML = '';
-    data.forEach(p => {
+    data?.forEach(p => {
       const btn = document.createElement('button');
       btn.className = 'tab-periodo';
       btn.textContent = p.nombre;
       btn.onclick = () => seleccionarPeriodo(p.id, btn);
       container.appendChild(btn);
     });
-    if (data.length) container.firstChild.click();
+    if (data?.length) container.firstChild.click();
   }
 
   async function seleccionarPeriodo(id, btn) {
-    if (haycambios) {
-      if (!confirm('Hay cambios sin guardar. ¿Deseas cambiar de periodo?')) return;
-    }
+    if (haycambios && !confirm('¿Cambiar sin guardar?')) return;
     periodoId = id;
     document.querySelectorAll('.tab-periodo').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
@@ -364,12 +292,8 @@
   }
 
   async function cargarFilas() {
-    const { data, error } = await supabase
-      .from('plan_analitico')
-      .select('*')
-      .eq('grupo_materia_id', grupoMateriaId)
-      .eq('periodo_id', periodoId)
-      .order('orden');
+    const { data } = await supabase.from('plan_analitico')
+      .select('*').eq('grupo_materia_id', grupoMateriaId).eq('periodo_id', periodoId).order('orden');
     filas = data || [];
     renderTabla();
     haycambios = false;
@@ -383,177 +307,75 @@
       const tr = document.createElement('tr');
       if (f.es_examen) {
         tr.className = 'examen-row';
-        tr.innerHTML = `
-          <td colspan="6">Semana ${f.semana || ''}: Examen / Evaluación</td>
-          <td class="col-acciones">
-            <button class="btn-fila" onclick="eliminarFila(${i})">✕</button>
-          </td>
-        `;
+        tr.innerHTML = `<td colspan="6">Semana ${f.semana || ''}: Examen</td><td><button class="btn-fila" onclick="eliminarFila(${i})">✕</button></td>`;
       } else {
         tr.innerHTML = `
-          <td class="col-semana">
-            <input type="text" class="cell-input" style="min-height:30px;" value="${f.semana || ''}" oninput="updateFila(${i}, 'semana', this.value)">
-          </td>
-          <td class="col-eje">
-            <select class="cell-select" onchange="onEjeChange(${i}, this.value)">
-              <option value="">Eje...</option>
-              ${Object.keys(CATALOGO).map(k => `<option value="${k}" ${f.eje_articulador===k?'selected':''}>${k}</option>`).join('')}
-            </select>
-          </td>
-          <td class="col-contenido">
-            <select class="cell-select" id="sel-cont-${i}" onchange="onContenidoChange(${i}, this.value)" ${!f.eje_articulador?'disabled':''}>
-              <option value="">Contenido...</option>
-              ${f.eje_articulador ? CATALOGO[f.eje_articulador].map(c => `<option value="${c.concepto}" ${f.contenido===c.concepto?'selected':''}>${c.concepto}</option>`).join('') : ''}
-            </select>
-          </td>
-          <td class="col-proceso">
-            <div class="pda-wrap">
-              <div class="pda-text" id="pda-text-${i}">${f.aprendizaje_esperado || ''}</div>
-              <textarea class="pda-textarea" id="pda-textarea-${i}" oninput="updateFila(${i}, 'aprendizaje_esperado', this.value)">${f.aprendizaje_esperado || ''}</textarea>
-              <button class="btn-lock" onclick="toggleLock(${i})">🔒</button>
-            </div>
-          </td>
-          <td class="col-saber">
-            <select class="cell-select" id="sel-bloom-${i}" onchange="updateBloom(${i}, this.value)" ${!f.contenido?'disabled':''}>
-              <option value="">Nivel Bloom...</option>
-              ${['conocimiento','comprension','aplicacion','analisis','sintesis','evaluacion'].map(k => `<option value="${k}" ${f.bloom_nivel===k?'selected':''}>${k.charAt(0).toUpperCase()+k.slice(1)}</option>`).join('')}
-            </select>
-            <div class="saber-texto" id="saber-text-${i}">${f.saber_hacer || ''}</div>
-          </td>
-          <td>
-            <input type="text" class="cell-input" value="${f.tipo_actividad || ''}" oninput="updateFila(${i}, 'tipo_actividad', this.value)">
-          </td>
-          <td class="col-acciones">
-            <button class="btn-fila" onclick="eliminarFila(${i})">✕</button>
-          </td>
-        `;
+          <td><input class="cell-input" style="min-height:30px;" value="${f.semana||''}" oninput="updateFila(${i},'semana',this.value)"></td>
+          <td><select class="cell-select" onchange="onEjeChange(${i},this.value)">
+            <option value="">Eje...</option>
+            ${Object.keys(CATALOGO).map(k=>`<option value="${k}" ${f.eje_articulador===k?'selected':''}>${k}</option>`).join('')}
+          </select></td>
+          <td><select class="cell-select" onchange="onContenidoChange(${i},this.value)" ${!f.eje_articulador?'disabled':''}>
+            <option value="">Contenido...</option>
+            ${f.eje_articulador?CATALOGO[f.eje_articulador].map(c=>`<option value="${c.concepto}" ${f.contenido===c.concepto?'selected':''}>${c.concepto}</option>`).join(''):''}
+          </select></td>
+          <td><div class="pda-wrap">
+            <div class="pda-text" id="pda-t-${i}">${f.aprendizaje_esperado||''}</div>
+            <textarea class="pda-textarea" id="pda-a-${i}" oninput="updateFila(${i},'aprendizaje_esperado',this.value)">${f.aprendizaje_esperado||''}</textarea>
+            <button class="btn-lock" onclick="toggleLock(${i})">🔒</button>
+          </div></td>
+          <td><select class="cell-select" onchange="updateBloom(${i},this.value)" ${!f.contenido?'disabled':''}>
+            <option value="">Bloom...</option>
+            ${['conocimiento','comprension','aplicacion','analisis','sintesis','evaluacion'].map(k=>`<option value="${k}" ${f.bloom_nivel===k?'selected':''}>${k}</option>`).join('')}
+          </select><div class="saber-texto">${f.saber_hacer||''}</div></td>
+          <td><input class="cell-input" value="${f.tipo_actividad||''}" oninput="updateFila(${i},'tipo_actividad',this.value)"></td>
+          <td><button class="btn-fila" onclick="eliminarFila(${i})">✕</button></td>`;
       }
       tbody.appendChild(tr);
     });
   }
 
-  window.updateFila = (i, field, val) => {
-    filas[i][field] = val;
-    haycambios = true;
-    actualizarEstadoGuardado();
+  window.updateFila = (i, fld, val) => { filas[i][fld]=val; haycambios=true; actualizarEstadoGuardado(); };
+  window.onEjeChange = (i, eje) => { filas[i].eje_articulador=eje; filas[i].contenido=''; renderTabla(); };
+  window.onContenidoChange = (i, con) => { 
+    const item = CATALOGO[filas[i].eje_articulador].find(x=>x.concepto===con);
+    filas[i].contenido=con; filas[i].aprendizaje_esperado=item?item.pda:''; renderTabla(); 
   };
-
-  window.onEjeChange = (i, eje) => {
-    filas[i].eje_articulador = eje;
-    filas[i].contenido = '';
-    filas[i].aprendizaje_esperado = '';
-    filas[i].bloom_nivel = '';
-    filas[i].saber_hacer = '';
-    haycambios = true;
-    renderTabla();
+  window.updateBloom = (i, n) => {
+    const item = CATALOGO[filas[i].eje_articulador].find(x=>x.concepto===filas[i].contenido);
+    filas[i].bloom_nivel=n; filas[i].saber_hacer=item?.saber[n]||''; renderTabla();
   };
-
-  window.onContenidoChange = (i, concepto) => {
-    const eje = filas[i].eje_articulador;
-    const item = CATALOGO[eje].find(x => x.concepto === concepto);
-    filas[i].contenido = concepto;
-    filas[i].aprendizaje_esperado = item ? item.pda : '';
-    haycambios = true;
-    renderTabla();
-  };
-
-  window.updateBloom = (i, nivel) => {
-    const eje = filas[i].eje_articulador;
-    const concepto = filas[i].contenido;
-    const item = CATALOGO[eje].find(x => x.concepto === concepto);
-    filas[i].bloom_nivel = nivel;
-    filas[i].saber_hacer = (item && item.saber[nivel]) ? item.saber[nivel] : '';
-    haycambios = true;
-    renderTabla();
-  };
-
   window.toggleLock = (i) => {
-    const txt = document.getElementById(`pda-text-${i}`);
-    const area = document.getElementById(`pda-textarea-${i}`);
-    if (area.style.display === 'block') {
-      area.style.display = 'none'; txt.style.display = 'block';
-    } else {
-      area.style.display = 'block'; txt.style.display = 'none';
-      area.focus();
-    }
+    const t=document.getElementById(`pda-t-${i}`), a=document.getElementById(`pda-a-${i}`);
+    const isVisible = a.style.display==='block';
+    a.style.display=isVisible?'none':'block'; t.style.display=isVisible?'block':'none';
   };
-
-  window.eliminarFila = (i) => {
-    filas.splice(i, 1);
-    haycambios = true;
-    renderTabla();
-  };
-
-  document.getElementById('btn-add-fila').onclick = () => {
-    filas.push({ semana: '', eje_articulador: '', contenido: '', aprendizaje_esperado: '', saber_hacer: '', bloom_nivel: '', tipo_actividad: '', es_examen: false });
-    haycambios = true;
-    renderTabla();
-  };
-
-  document.getElementById('btn-add-examen').onclick = () => {
-    filas.push({ semana: '', es_examen: true });
-    haycambios = true;
-    renderTabla();
-  };
+  window.eliminarFila = (i) => { filas.splice(i,1); haycambios=true; renderTabla(); };
+  document.getElementById('btn-add-fila').onclick = () => { filas.push({es_examen:false}); renderTabla(); };
+  document.getElementById('btn-add-examen').onclick = () => { filas.push({es_examen:true}); renderTabla(); };
 
   function actualizarEstadoGuardado() {
     const s = document.getElementById('save-status');
-    if (haycambios) {
-      s.textContent = 'Cambios sin guardar'; s.style.color = 'var(--co)';
-    } else {
-      s.textContent = 'Sin cambios pendientes'; s.style.color = 'var(--text-3)';
-    }
+    s.textContent = haycambios ? 'Cambios sin guardar' : 'Guardado ✓';
+    s.style.color = haycambios ? 'var(--co)' : 'var(--vd)';
   }
 
   document.getElementById('btn-guardar').onclick = async () => {
     const btn = document.getElementById('btn-guardar');
-    btn.disabled = true; btn.textContent = 'Guardando...';
+    btn.disabled=true; btn.textContent='Guardando...';
     try {
-      const { data: per } = await supabase.from('periodos').select('numero').eq('id', periodoId).single();
-      const periodoNumero = per ? per.numero : 0;
-
-      const { error: delErr } = await supabase.from('plan_analitico').delete().eq('grupo_materia_id', grupoMateriaId).eq('periodo_id', periodoId);
-      if (delErr) throw delErr;
-
-      if (filas.length > 0) {
-        const { error: insErr } = await supabase.from('plan_analitico').insert(
-          filas.map((f, i) => ({
-            grupo_materia_id:     grupoMateriaId,
-            periodo_id:           periodoId,
-            periodo_numero:       periodoNumero,
-            semana:               f.semana || null,
-            eje_articulador:      f.eje_articulador || null,
-            contenido:            f.contenido || null,
-            aprendizaje_esperado: f.aprendizaje_esperado || null,
-            saber_hacer:          f.saber_hacer || null,
-            bloom_nivel:          f.bloom_nivel || null,
-            es_examen:            f.es_examen || false,
-            tipo_actividad:       f.tipo_actividad || null,
-            orden:                i
-          }))
-        );
-        if (insErr) throw insErr;
+      await supabase.from('plan_analitico').delete().eq('grupo_materia_id', grupoMateriaId).eq('periodo_id', periodoId);
+      if (filas.length) {
+        await supabase.from('plan_analitico').insert(filas.map((f, i) => ({
+          ...f, grupo_materia_id: grupoMateriaId, periodo_id: periodoId, orden: i
+        })));
       }
-      haycambios = false;
-      actualizarEstadoGuardado();
-      document.getElementById('save-status').textContent = 'Guardado ✓';
-      document.getElementById('save-status').style.color = 'var(--vd)';
-      mostrarToast('Plan analítico guardado ✓');
-      await cargarFilas();
-    } catch(err) {
-      mostrarToast('Error: ' + err.message, 'error');
-    } finally {
-      btn.textContent = 'Guardar plan'; btn.disabled = false;
-    }
+      haycambios=false; actualizarEstadoGuardado(); mostrarToast('Guardado');
+    } catch(e) { mostrarToast('Error','error'); }
+    btn.disabled=false; btn.textContent='Guardar plan';
   };
 
-  function mostrarToast(msg, tipo='ok') {
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.style.background = tipo === 'error' ? 'var(--co)' : 'var(--vd)';
-    t.style.display = 'block';
-    setTimeout(() => { t.style.display = 'none'; }, 3000);
-  }
+  function mostrarToast(m,t='ok'){ const el=document.getElementById('toast'); el.textContent=m; el.style.display='block'; setTimeout(()=>el.style.display='none',2000); }
 </script>
 </body>
 </html>
