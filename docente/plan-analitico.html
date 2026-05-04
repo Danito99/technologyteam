@@ -216,13 +216,39 @@
   }
   init();
 
-  async function cargarGrupos() {
+async function cargarGrupos() {
+    // Volvemos a la consulta original que sí te funcionaba en el TXT
     const { data, error } = await supabase
       .from('docente_grupos_materias')
-      .select('id, grupos(id, nombre), materias(id, nombre)')
+      .select('id, grupo_id, materia_id, grupos(nombre), materias(nombre)')
       .eq('docente_id', user.id);
 
-    if (error) { console.error(error); return; }
+    if (error) {
+      console.error("Error en Supabase:", error);
+      return;
+    }
+
+    grupos = data;
+    const sel = document.getElementById('sel-grupo');
+    
+    // Limpiamos y aseguramos que el desplegable se llene
+    sel.innerHTML = '<option value="">Selecciona grupo...</option>';
+    
+    // Obtenemos los nombres de los grupos de forma única
+    const unique = [...new Set(data.map(g => g.grupos?.nombre).filter(n => n))];
+    
+    // Ordenamos para que 9° aparezca en su lugar lógico
+    unique.sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
+
+    unique.forEach(n => {
+      const opt = document.createElement('option');
+      opt.value = n; 
+      opt.textContent = n;
+      sel.appendChild(opt);
+    });
+    
+    console.log("Grupos cargados:", unique);
+  }
     
     grupos = data;
     const selGrupo = document.getElementById('sel-grupo');
