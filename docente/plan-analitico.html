@@ -207,9 +207,13 @@
   let filas = [];
   let haycambios = false;
 
-  async function init() {
+ async function init() {
     user = await requireAuth();
-    renderSidebar('plan-analitico');
+    // ESTA LÍNEA ES LA QUE FALTA PARA QUE CARGUE TU SIDEBAR:
+    if (typeof renderSidebar === 'function') {
+        renderSidebar('plan-analitico');
+    }
+    
     await cargarGrupos();
     document.getElementById('loading').style.display = 'none';
     document.getElementById('content').style.display = 'block';
