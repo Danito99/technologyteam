@@ -185,7 +185,6 @@
   import { renderSidebar } from '../js/sidebar-docente.js'
   import { supabase }      from '../js/supabase.js'
 
-  // ── Catálogo Actualizado ───────────────────────────────────
   const CATALOGO = {
     "Fundamentos digitales": [
       {"concepto": "Encendido y apagado del equipo", "nivel": "Primaria 1°-3°", "pda": "★ NO NEGOCIABLE\n \n El alumno desarrolla autonomía en el uso básico del equipo: encendido, apagado, cierre de sesión y gestión de ventanas, sentando las bases del cuidado responsable del hardware y del espacio de trabajo digital.", "saber": {"conocimiento": "Identifica el botón de encendido. Sabe que existe una forma correcta de apagar.", "comprension": "Explica por qué no se debe cerrar la tapa sin apagar: riesgo de perder trabajo.", "aplicacion": "Enciende, inicia sesión y apaga el equipo de forma autónoma.", "analisis": "Detecta si el equipo no enciende y describe el problema al docente.", "sintesis": "Explica a un compañero nuevo los pasos con un cartel ilustrado.", "evaluacion": "Propone reglas de uso del equipo para cuidar la batería y el hardware."}},
@@ -279,90 +278,89 @@
         }
       }
     ]
-  }
+  };
 
-  // ── Lógica de la aplicación ───────────────────────────────────
-  let user = null
-  let grupos = []
-  let materias = []
-  let grupoMateriaId = null
-  let periodoId = null
-  let filas = []
-  let haycambios = false
+  let user = null;
+  let grupos = [];
+  let materias = [];
+  let grupoMateriaId = null;
+  let periodoId = null;
+  let filas = [];
+  let haycambios = false;
 
   async function init() {
-    user = await requireAuth()
-    renderSidebar('plan-analitico')
-    await cargarGrupos()
-    document.getElementById('loading').style.display = 'none'
-    document.getElementById('content').style.display = 'block'
+    user = await requireAuth();
+    renderSidebar('plan-analitico');
+    await cargarGrupos();
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('content').style.display = 'block';
   }
-  init()
+  init();
 
   async function cargarGrupos() {
     const { data, error } = await supabase
       .from('docente_grupos_materias')
       .select('id, grupo_id, materia_id, grupos(nombre), materias(nombre)')
-      .eq('docente_id', user.id)
-    if (error) return
-    grupos = data
-    const sel = document.getElementById('sel-grupo')
-    const unique = [...new Set(data.map(g => g.grupos.nombre))]
+      .eq('docente_id', user.id);
+    if (error) return;
+    grupos = data;
+    const sel = document.getElementById('sel-grupo');
+    const unique = [...new Set(data.map(g => g.grupos.nombre))];
     unique.forEach(n => {
-      const opt = document.createElement('option')
-      opt.value = n; opt.textContent = n
-      sel.appendChild(opt)
-    })
+      const opt = document.createElement('option');
+      opt.value = n; opt.textContent = n;
+      sel.appendChild(opt);
+    });
   }
 
   window.onGrupoChange = () => {
-    const gn = document.getElementById('sel-grupo').value
-    const sm = document.getElementById('sel-materia')
-    sm.innerHTML = '<option value="">Materia...</option>'
+    const gn = document.getElementById('sel-grupo').value;
+    const sm = document.getElementById('sel-materia');
+    sm.innerHTML = '<option value="">Materia...</option>';
     if (!gn) { sm.style.display='none'; return; }
-    const filtered = grupos.filter(g => g.grupos.nombre === gn)
+    const filtered = grupos.filter(g => g.grupos.nombre === gn);
     filtered.forEach(m => {
-      const opt = document.createElement('option')
-      opt.value = m.id; opt.textContent = m.materias.nombre
-      sm.appendChild(opt)
-    })
-    sm.style.display = 'inline-block'
-  }
+      const opt = document.createElement('option');
+      opt.value = m.id; opt.textContent = m.materias.nombre;
+      sm.appendChild(opt);
+    });
+    sm.style.display = 'inline-block';
+  };
 
   window.onMateriaChange = async () => {
-    grupoMateriaId = document.getElementById('sel-materia').value
-    if (!grupoMateriaId) return
-    const g = grupos.find(x => x.id == grupoMateriaId)
-    document.getElementById('topbar-sub').textContent = `${g.grupos.nombre} — ${g.materias.nombre}`
-    await cargarPeriodos()
-  }
+    grupoMateriaId = document.getElementById('sel-materia').value;
+    if (!grupoMateriaId) return;
+    const g = grupos.find(x => x.id == grupoMateriaId);
+    document.getElementById('topbar-sub').textContent = `${g.grupos.nombre} — ${g.materias.nombre}`;
+    await cargarPeriodos();
+  };
 
   async function cargarPeriodos() {
-    const { data, error } = await supabase.from('periodos').select('*').order('numero')
-    if (error) return
-    const container = document.getElementById('tab-periodos')
-    container.innerHTML = ''
+    const { data, error } = await supabase.from('periodos').select('*').order('numero');
+    if (error) return;
+    const container = document.getElementById('tab-periodos');
+    container.innerHTML = '';
     data.forEach(p => {
-      const btn = document.createElement('button')
-      btn.className = 'tab-periodo'
-      btn.textContent = p.nombre
-      btn.onclick = () => seleccionarPeriodo(p.id, btn)
-      container.appendChild(btn)
-    })
-    if (data.length) container.firstChild.click()
+      const btn = document.createElement('button');
+      btn.className = 'tab-periodo';
+      btn.textContent = p.nombre;
+      btn.onclick = () => seleccionarPeriodo(p.id, btn);
+      container.appendChild(btn);
+    });
+    if (data.length) container.firstChild.click();
   }
 
   async function seleccionarPeriodo(id, btn) {
     if (haycambios) {
-      if (!confirm('Hay cambios sin guardar. ¿Deseas cambiar de periodo?')) return
+      if (!confirm('Hay cambios sin guardar. ¿Deseas cambiar de periodo?')) return;
     }
-    periodoId = id
-    document.querySelectorAll('.tab-periodo').forEach(b => b.classList.remove('active'))
-    btn.classList.add('active')
-    document.getElementById('card-tabla').style.display = 'block'
-    document.getElementById('save-bar').style.display = 'flex'
-    document.getElementById('info-plan').style.display = 'block'
-    await cargarFilas()
+    periodoId = id;
+    document.querySelectorAll('.tab-periodo').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('card-tabla').style.display = 'block';
+    document.getElementById('save-bar').style.display = 'flex';
+    document.getElementById('info-plan').style.display = 'block';
+    await cargarFilas();
   }
 
   async function cargarFilas() {
@@ -371,26 +369,26 @@
       .select('*')
       .eq('grupo_materia_id', grupoMateriaId)
       .eq('periodo_id', periodoId)
-      .order('orden')
-    filas = data || []
-    renderTabla()
-    haycambios = false
-    actualizarEstadoGuardado()
+      .order('orden');
+    filas = data || [];
+    renderTabla();
+    haycambios = false;
+    actualizarEstadoGuardado();
   }
 
   function renderTabla() {
-    const tbody = document.getElementById('plan-tbody')
-    tbody.innerHTML = ''
+    const tbody = document.getElementById('plan-tbody');
+    tbody.innerHTML = '';
     filas.forEach((f, i) => {
-      const tr = document.createElement('tr')
+      const tr = document.createElement('tr');
       if (f.es_examen) {
-        tr.className = 'examen-row'
+        tr.className = 'examen-row';
         tr.innerHTML = `
           <td colspan="6">Semana ${f.semana || ''}: Examen / Evaluación</td>
           <td class="col-acciones">
             <button class="btn-fila" onclick="eliminarFila(${i})">✕</button>
           </td>
-        `
+        `;
       } else {
         tr.innerHTML = `
           <td class="col-semana">
@@ -428,94 +426,94 @@
           <td class="col-acciones">
             <button class="btn-fila" onclick="eliminarFila(${i})">✕</button>
           </td>
-        `
+        `;
       }
-      tbody.appendChild(tr)
-    })
+      tbody.appendChild(tr);
+    });
   }
 
   window.updateFila = (i, field, val) => {
-    filas[i][field] = val
-    haycambios = true
-    actualizarEstadoGuardado()
-  }
+    filas[i][field] = val;
+    haycambios = true;
+    actualizarEstadoGuardado();
+  };
 
   window.onEjeChange = (i, eje) => {
-    filas[i].eje_articulador = eje
-    filas[i].contenido = ''
-    filas[i].aprendizaje_esperado = ''
-    filas[i].bloom_nivel = ''
-    filas[i].saber_hacer = ''
-    haycambios = true
-    renderTabla()
-  }
+    filas[i].eje_articulador = eje;
+    filas[i].contenido = '';
+    filas[i].aprendizaje_esperado = '';
+    filas[i].bloom_nivel = '';
+    filas[i].saber_hacer = '';
+    haycambios = true;
+    renderTabla();
+  };
 
   window.onContenidoChange = (i, concepto) => {
-    const eje = filas[i].eje_articulador
-    const item = CATALOGO[eje].find(x => x.concepto === concepto)
-    filas[i].contenido = concepto
-    filas[i].aprendizaje_esperado = item ? item.pda : ''
-    haycambios = true
-    renderTabla()
-  }
+    const eje = filas[i].eje_articulador;
+    const item = CATALOGO[eje].find(x => x.concepto === concepto);
+    filas[i].contenido = concepto;
+    filas[i].aprendizaje_esperado = item ? item.pda : '';
+    haycambios = true;
+    renderTabla();
+  };
 
   window.updateBloom = (i, nivel) => {
-    const eje = filas[i].eje_articulador
-    const concepto = filas[i].contenido
-    const item = CATALOGO[eje].find(x => x.concepto === concepto)
-    filas[i].bloom_nivel = nivel
-    filas[i].saber_hacer = (item && item.saber[nivel]) ? item.saber[nivel] : ''
-    haycambios = true
-    renderTabla()
-  }
+    const eje = filas[i].eje_articulador;
+    const concepto = filas[i].contenido;
+    const item = CATALOGO[eje].find(x => x.concepto === concepto);
+    filas[i].bloom_nivel = nivel;
+    filas[i].saber_hacer = (item && item.saber[nivel]) ? item.saber[nivel] : '';
+    haycambios = true;
+    renderTabla();
+  };
 
   window.toggleLock = (i) => {
-    const txt = document.getElementById(`pda-text-${i}`)
-    const area = document.getElementById(`pda-textarea-${i}`)
+    const txt = document.getElementById(`pda-text-${i}`);
+    const area = document.getElementById(`pda-textarea-${i}`);
     if (area.style.display === 'block') {
-      area.style.display = 'none'; txt.style.display = 'block'
+      area.style.display = 'none'; txt.style.display = 'block';
     } else {
-      area.style.display = 'block'; txt.style.display = 'none'
-      area.focus()
+      area.style.display = 'block'; txt.style.display = 'none';
+      area.focus();
     }
-  }
+  };
 
   window.eliminarFila = (i) => {
-    filas.splice(i, 1)
-    haycambios = true
-    renderTabla()
-  }
+    filas.splice(i, 1);
+    haycambios = true;
+    renderTabla();
+  };
 
   document.getElementById('btn-add-fila').onclick = () => {
-    filas.push({ semana: '', eje_articulador: '', contenido: '', aprendizaje_esperado: '', saber_hacer: '', bloom_nivel: '', tipo_actividad: '', es_examen: false })
-    haycambios = true
-    renderTabla()
-  }
+    filas.push({ semana: '', eje_articulador: '', contenido: '', aprendizaje_esperado: '', saber_hacer: '', bloom_nivel: '', tipo_actividad: '', es_examen: false });
+    haycambios = true;
+    renderTabla();
+  };
 
   document.getElementById('btn-add-examen').onclick = () => {
-    filas.push({ semana: '', es_examen: true })
-    haycambios = true
-    renderTabla()
-  }
+    filas.push({ semana: '', es_examen: true });
+    haycambios = true;
+    renderTabla();
+  };
 
   function actualizarEstadoGuardado() {
-    const s = document.getElementById('save-status')
+    const s = document.getElementById('save-status');
     if (haycambios) {
-      s.textContent = 'Cambios sin guardar'; s.style.color = 'var(--co)'
+      s.textContent = 'Cambios sin guardar'; s.style.color = 'var(--co)';
     } else {
-      s.textContent = 'Sin cambios pendientes'; s.style.color = 'var(--text-3)'
+      s.textContent = 'Sin cambios pendientes'; s.style.color = 'var(--text-3)';
     }
   }
 
   document.getElementById('btn-guardar').onclick = async () => {
-    const btn = document.getElementById('btn-guardar')
-    btn.disabled = true; btn.textContent = 'Guardando...'
+    const btn = document.getElementById('btn-guardar');
+    btn.disabled = true; btn.textContent = 'Guardando...';
     try {
-      const { data: per } = await supabase.from('periodos').select('numero').eq('id', periodoId).single()
-      const periodoNumero = per ? per.numero : 0
+      const { data: per } = await supabase.from('periodos').select('numero').eq('id', periodoId).single();
+      const periodoNumero = per ? per.numero : 0;
 
-      const { error: delErr } = await supabase.from('plan_analitico').delete().eq('grupo_materia_id', grupoMateriaId).eq('periodo_id', periodoId)
-      if (delErr) throw delErr
+      const { error: delErr } = await supabase.from('plan_analitico').delete().eq('grupo_materia_id', grupoMateriaId).eq('periodo_id', periodoId);
+      if (delErr) throw delErr;
 
       if (filas.length > 0) {
         const { error: insErr } = await supabase.from('plan_analitico').insert(
@@ -533,28 +531,28 @@
             tipo_actividad:       f.tipo_actividad || null,
             orden:                i
           }))
-        )
-        if (insErr) throw insErr
+        );
+        if (insErr) throw insErr;
       }
-      haycambios = false
-      actualizarEstadoGuardado()
-      document.getElementById('save-status').textContent = 'Guardado ✓'
-      document.getElementById('save-status').style.color = 'var(--vd)'
-      mostrarToast('Plan analítico guardado ✓')
-      await cargarFilas()
+      haycambios = false;
+      actualizarEstadoGuardado();
+      document.getElementById('save-status').textContent = 'Guardado ✓';
+      document.getElementById('save-status').style.color = 'var(--vd)';
+      mostrarToast('Plan analítico guardado ✓');
+      await cargarFilas();
     } catch(err) {
-      mostrarToast('Error: ' + err.message, 'error')
+      mostrarToast('Error: ' + err.message, 'error');
     } finally {
-      btn.textContent = 'Guardar plan'; btn.disabled = false
+      btn.textContent = 'Guardar plan'; btn.disabled = false;
     }
-  }
+  };
 
   function mostrarToast(msg, tipo='ok') {
-    const t = document.getElementById('toast')
-    t.textContent = msg
-    t.style.background = tipo === 'error' ? 'var(--co)' : 'var(--vd)'
-    t.style.display = 'block'
-    setTimeout(() => { t.style.display = 'none' }, 3000)
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.background = tipo === 'error' ? 'var(--co)' : 'var(--vd)';
+    t.style.display = 'block';
+    setTimeout(() => { t.style.display = 'none'; }, 3000);
   }
 </script>
 </body>
