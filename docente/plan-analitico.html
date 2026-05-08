@@ -411,7 +411,7 @@
 
       // Filas del parcial
       htmlCompleto += filasDelParcial.map(({ fila: f, indice: i }) => {
-      if (f.es_examen) return (
+        if (f.es_examen) return (
         '<tr class="examen-row" data-idx="' + i + '">' +
         '<td colspan="6">— Periodo de exámenes —</td>' +
         '<td><button class="btn-fila" onclick="eliminarFila(' + i + ')">✕</button></td>' +
@@ -489,6 +489,7 @@
         // Acciones
         '<td class="col-acciones"><button class="btn-fila" onclick="eliminarFila(' + i + ')">✕</button></td>' +
         '</tr>'
+      )
       }).join('')
     })
 
