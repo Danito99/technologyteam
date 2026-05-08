@@ -339,7 +339,7 @@
       const trimestre = getParcialTrimestre(p.parcial)
       btn.setAttribute('data-trimestre', trimestre)
       btn.setAttribute('data-parcial', p.parcial)
-      btn.textContent = `Parcial ${p.parcial}`
+      btn.textContent = `Trimestre ${trimestre}`
       btn.onclick = () => seleccionarParcial(p.id, p.parcial, btn)
       tabsEl.appendChild(btn)
     })
@@ -409,8 +409,7 @@
         ? ((CATS[f.eje_articulador] || []).find(c => c.concepto === f.contenido) || null)
         : null
       const optsBloom = BLOOM_KEYS.map((k, ki) => {
-        const textoNivel = catalogoItemBloom ? (catalogoItemBloom.saber[k] || BLOOM_LABELS[k]) : BLOOM_LABELS[k]
-        return '<option value="' + k + '"' + (bloomNivel === k ? ' selected' : '') + '>' + textoNivel + '</option>'
+        return '<option value="' + k + '"' + (bloomNivel === k ? ' selected' : '') + '>' + BLOOM_LABELS[k] + '</option>'
       }).join('')
 
       // Saber y saber hacer: texto del nivel seleccionado (para mostrar bajo el select)
@@ -511,7 +510,15 @@
     const f    = filasActuales[idx]
     const CATS = catalogoFiltrado()
     const item = f.contenido ? (CATS[f.eje_articulador] || []).find(c => c.concepto === f.contenido) : null
-    const texto = (item && nivel) ? (item.saber[nivel] || '') : ''
+    let texto = (item && nivel) ? (item.saber[nivel] || '') : ''
+
+    // Fix: remover texto duplicado
+    if (texto) {
+      const lines = texto.split('\n').map(line => line.trim()).filter(line => line)
+      const uniqueLines = [...new Set(lines)]
+      texto = uniqueLines.join('\n')
+    }
+
     filasActuales[idx].saber_hacer = texto
     setSaberTexto(idx, texto)
   }
@@ -525,8 +532,7 @@
     const bloomNivel = filasActuales[idx].bloom_nivel || ''
     selBloom.innerHTML = '<option value="">— Nivel Bloom —</option>' +
       BLOOM_KEYS.map((k, ki) => {
-        const texto = catalogoItem ? (catalogoItem.saber[k] || BLOOM_LABELS[k]) : BLOOM_LABELS[k]
-        return '<option value="' + k + '"' + (bloomNivel === k ? ' selected' : '') + '>' + texto + '</option>'
+        return '<option value="' + k + '"' + (bloomNivel === k ? ' selected' : '') + '>' + BLOOM_LABELS[k] + '</option>'
       }).join('')
   }
 

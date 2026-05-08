@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(start docente/plan-analitico.html)"
     ]
-  }
+  },
+  "model": "claude-sonnet-4-20250514"
 }
