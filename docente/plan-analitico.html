@@ -409,7 +409,8 @@
         ? ((CATS[f.eje_articulador] || []).find(c => c.concepto === f.contenido) || null)
         : null
       const optsBloom = BLOOM_KEYS.map((k, ki) => {
-        return '<option value="' + k + '"' + (bloomNivel === k ? ' selected' : '') + '>' + BLOOM_LABELS[k] + '</option>'
+        const textoOpcion = catalogoItemBloom ? (catalogoItemBloom.saber[k] || BLOOM_LABELS[k]) : BLOOM_LABELS[k]
+        return '<option value="' + k + '"' + (bloomNivel === k ? ' selected' : '') + '>' + textoOpcion + '</option>'
       }).join('')
 
       // Saber y saber hacer: texto del nivel seleccionado (para mostrar bajo el select)
@@ -532,7 +533,8 @@
     const bloomNivel = filasActuales[idx].bloom_nivel || ''
     selBloom.innerHTML = '<option value="">— Nivel Bloom —</option>' +
       BLOOM_KEYS.map((k, ki) => {
-        return '<option value="' + k + '"' + (bloomNivel === k ? ' selected' : '') + '>' + BLOOM_LABELS[k] + '</option>'
+        const textoOpcion = catalogoItem ? (catalogoItem.saber[k] || BLOOM_LABELS[k]) : BLOOM_LABELS[k]
+        return '<option value="' + k + '"' + (bloomNivel === k ? ' selected' : '') + '>' + textoOpcion + '</option>'
       }).join('')
   }
 
