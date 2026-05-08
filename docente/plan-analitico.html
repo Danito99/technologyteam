@@ -369,7 +369,7 @@
     if (!grupoMateriaId || !periodoNumero) return
     const { data } = await supabase
       .from('plan_analitico_filas')
-      .select('id,semana,eje_articulador,contenido,aprendizaje_esperado,saber_hacer,es_examen,orden,tipo_actividad,periodo_numero,bloom_nivel')
+      .select('id,semana,eje_articulador,contenido,aprendizaje_esperado,saber_hacer,es_examen,orden,tipo_actividad,periodo_numero,bloom_nivel,sub_parcial')
       .eq('grupo_materia_id', grupoMateriaId).eq('periodo_numero', periodoNumero).order('orden')
     filasActuales = data || []
     renderTabla()
@@ -381,7 +381,36 @@
     document.getElementById('card-tabla').style.display = 'block'
     const CATS = catalogoFiltrado()
 
-    tbody.innerHTML = filasActuales.map((f, i) => {
+    // Agrupar filas por sub_parcial
+    const filasPorParcial = {}
+    filasActuales.forEach((f, i) => {
+      const subParcial = f.sub_parcial || 1
+      if (!filasPorParcial[subParcial]) filasPorParcial[subParcial] = []
+      filasPorParcial[subParcial].push({ fila: f, indice: i })
+    })
+
+    // Generar HTML para cada parcial
+    const parciales = Object.keys(filasPorParcial).sort((a, b) => parseInt(a) - parseInt(b))
+    let htmlCompleto = ''
+
+    parciales.forEach(numParcial => {
+      const filasDelParcial = filasPorParcial[numParcial]
+
+      // Header del parcial
+      htmlCompleto += `
+        <tr class="parcial-header">
+          <td colspan="7" style="background: var(--bg-2); font-weight: bold; padding: 12px; border-bottom: 2px solid var(--border);">
+            📚 Parcial ${numParcial}
+            <div style="float: right;">
+              <button class="btn-add-parcial-fila" onclick="agregarFilaAParcial(${numParcial})" style="font-size: 12px; margin-right: 8px;">+ Agregar sesión</button>
+              <button class="btn-add-parcial-examen" onclick="agregarExamenAParcial(${numParcial})" style="font-size: 12px; color: var(--text-3);">+ Examen</button>
+            </div>
+          </td>
+        </tr>
+      `
+
+      // Filas del parcial
+      htmlCompleto += filasDelParcial.map(({ fila: f, indice: i }) => {
       if (f.es_examen) return (
         '<tr class="examen-row" data-idx="' + i + '">' +
         '<td colspan="6">— Periodo de exámenes —</td>' +
@@ -460,10 +489,58 @@
         // Acciones
         '<td class="col-acciones"><button class="btn-fila" onclick="eliminarFila(' + i + ')">✕</button></td>' +
         '</tr>'
-      )
-    }).join('')
+      }).join('')
+    })
 
+    // Botón para agregar nuevo parcial
+    htmlCompleto += `
+      <tr class="nuevo-parcial-row">
+        <td colspan="7" style="text-align: center; padding: 20px; border-top: 2px dashed var(--border);">
+          <button class="btn-add-nuevo-parcial" onclick="crearNuevoParcial()" style="background: var(--az); color: white; padding: 10px 20px; border: none; border-radius: 6px;">
+            📚 + Agregar nuevo parcial
+          </button>
+        </td>
+      </tr>
+    `
+
+    tbody.innerHTML = htmlCompleto
     setTimeout(aplicarAutoResize, 30)
+  }
+
+  // ── Funciones para manejo de parciales ────────────────────
+  window.agregarFilaAParcial = (numParcial) => {
+    filasActuales.push({
+      id: null, grupo_materia_id: grupoMateriaId, periodo_id: periodoId,
+      periodo_numero: periodoNumero, sub_parcial: parseInt(numParcial),
+      semana: '', eje_articulador: '', contenido: '',
+      aprendizaje_esperado: '', saber_hacer: '', bloom_nivel: '',
+      es_examen: false, tipo_actividad: null, orden: filasActuales.length
+    })
+    marcarCambios()
+    renderTabla()
+    // Scroll al final de la tabla
+    setTimeout(() => {
+      document.getElementById('plan-tbody').lastElementChild?.previousElementSibling?.scrollIntoView({ behavior:'smooth', block:'center' })
+    }, 100)
+  }
+
+  window.crearNuevoParcial = () => {
+    // Encontrar el número del siguiente parcial
+    const parcialesExistentes = [...new Set(filasActuales.map(f => f.sub_parcial || 1))]
+    const siguienteParcial = Math.max(...parcialesExistentes) + 1
+
+    // Crear la primera fila del nuevo parcial
+    agregarFilaAParcial(siguienteParcial)
+  }
+
+  window.agregarExamenAParcial = (numParcial) => {
+    filasActuales.push({
+      id: null, grupo_materia_id: grupoMateriaId, periodo_id: periodoId,
+      periodo_numero: periodoNumero, sub_parcial: parseInt(numParcial),
+      es_examen: true, orden: filasActuales.length
+    })
+    marcarCambios()
+    renderTabla()
   }
 
   // ── Selectores encadenados ────────────────────────────────
@@ -566,18 +643,22 @@
   window.eliminarFila = idx => { filasActuales.splice(idx, 1); marcarCambios(); renderTabla() }
 
   document.getElementById('btn-add-fila').addEventListener('click', () => {
-    filasActuales.push({
-      id:null, grupo_materia_id:grupoMateriaId, periodo_id:periodoId,
-      periodo_numero:periodoNumero, semana:'', eje_articulador:'', contenido:'',
-      aprendizaje_esperado:'', saber_hacer:'', bloom_nivel:'',
-      es_examen:false, tipo_actividad:null, orden:filasActuales.length
-    })
-    marcarCambios(); renderTabla()
-    document.getElementById('plan-tbody').lastElementChild?.scrollIntoView({ behavior:'smooth', block:'center' })
+    // Agregar al primer parcial existente, o crear parcial 1 si no hay ninguno
+    const parcialesExistentes = [...new Set(filasActuales.map(f => f.sub_parcial || 1))]
+    const parcialDestino = parcialesExistentes.length > 0 ? Math.min(...parcialesExistentes) : 1
+    agregarFilaAParcial(parcialDestino)
   })
 
   document.getElementById('btn-add-examen').addEventListener('click', () => {
-    filasActuales.push({ id:null, grupo_materia_id:grupoMateriaId, periodo_id:periodoId, es_examen:true, orden:filasActuales.length })
+    // Agregar examen al primer parcial existente, o crear parcial 1 si no hay ninguno
+    const parcialesExistentes = [...new Set(filasActuales.map(f => f.sub_parcial || 1))]
+    const parcialDestino = parcialesExistentes.length > 0 ? Math.min(...parcialesExistentes) : 1
+
+    filasActuales.push({
+      id: null, grupo_materia_id: grupoMateriaId, periodo_id: periodoId,
+      periodo_numero: periodoNumero, sub_parcial: parcialDestino,
+      es_examen: true, orden: filasActuales.length
+    })
     marcarCambios(); renderTabla()
   })
 
@@ -595,6 +676,7 @@
             grupo_materia_id:     grupoMateriaId,
             periodo_id:           periodoId,
             periodo_numero:       periodoNumero,
+            sub_parcial:          f.sub_parcial || 1,
             semana:               f.semana || null,
             eje_articulador:      f.eje_articulador || null,
             contenido:            f.contenido || null,
