@@ -16,6 +16,7 @@
     }
     .tab-periodo:hover { background:var(--bg); }
     .tab-periodo.active { background:var(--az); color:white; border-color:var(--az); }
+    .tab-periodo[data-trimestre]:not([data-trimestre="1"]) { margin-left:12px; }
 
     .plan-table { width:100%; border-collapse:collapse; font-size:12px; }
     .plan-table th {
@@ -36,8 +37,8 @@
     .col-semana    { width:80px;  min-width:80px; }
     .col-eje       { width:150px; min-width:140px; }
     .col-contenido { width:160px; min-width:150px; }
-    .col-proceso   { width:210px; min-width:180px; }
-    .col-saber     { width:200px; min-width:180px; }
+    .col-proceso   { width:280px; min-width:250px; }
+    .col-saber     { width:280px; min-width:250px; }
     .col-acciones  { width:36px;  min-width:36px; text-align:center; }
 
     .cell-select {
@@ -140,7 +141,7 @@
       <div id="loading" class="loading">Cargando...</div>
       <div id="content" style="display:none;">
         <div class="info-plan" id="info-plan" style="display:none;">
-          💡 Elige Eje → Contenido para auto-rellenar PDA y nivel Bloom. El 🔒 desbloquea edición del PDA.
+          💡 Planifica por parcial individual. Elige Eje → Contenido para auto-rellenar PDA y nivel Bloom. El 🔒 desbloquea edición del PDA.
         </div>
         <div class="tab-periodos" id="tab-periodos"></div>
         <div class="card mb-0" id="card-tabla" style="display:none;">
@@ -294,24 +295,39 @@
       .from('periodos').select('id, etiqueta, numero, parcial, tipo')
       .eq('ciclo_id', cicloId).eq('tipo', tipo).order('numero').order('parcial')
 
+    // Agrupar por trimestre para organizar visualmente
     const grupos = {}
-    periodos?.forEach(p => { if (!grupos[p.numero]) grupos[p.numero] = p })
-    const pAgrupados = Object.values(grupos)
-    const etiquetas = {
-      trimestre: { 1:'Trimestre 1', 2:'Trimestre 2', 3:'Trimestre 3' },
-      semestre:  { 1:'Semestre A',  2:'Semestre B' }
+    periodos?.forEach(p => {
+      if (!grupos[p.numero]) grupos[p.numero] = []
+      grupos[p.numero].push(p)
+    })
+
+    const etiquetasTrimestre = {
+      trimestre: { 1:'T1', 2:'T2', 3:'T3' },
+      semestre:  { 1:'S1', 2:'S2' }
     }
+
     const tabsEl = document.getElementById('tab-periodos')
     tabsEl.innerHTML = ''
-    pAgrupados.forEach((p, i) => {
-      const btn = document.createElement('button')
-      btn.className = 'tab-periodo' + (i === 0 ? ' active' : '')
-      btn.textContent = etiquetas[tipo]?.[p.numero] || p.etiqueta
-      btn.onclick = () => seleccionarPeriodo(p.id, p.numero, btn)
-      tabsEl.appendChild(btn)
+    let primerPeriodo = null
+
+    // Mostrar todos los parciales agrupados por trimestre
+    Object.keys(grupos).sort((a,b) => a-b).forEach(numeroTrim => {
+      const periodosDelTrim = grupos[numeroTrim]
+      periodosDelTrim.forEach((p, i) => {
+        if (!primerPeriodo) primerPeriodo = p
+        const btn = document.createElement('button')
+        btn.className = 'tab-periodo' + (p === primerPeriodo ? ' active' : '')
+        btn.setAttribute('data-trimestre', numeroTrim)
+        const etiquetaTrim = etiquetasTrimestre[tipo]?.[p.numero] || `T${p.numero}`
+        btn.textContent = `Parcial ${p.parcial} - ${etiquetaTrim}`
+        btn.onclick = () => seleccionarPeriodo(p.id, p.parcial, btn)
+        tabsEl.appendChild(btn)
+      })
     })
-    if (pAgrupados.length) {
-      periodoId = pAgrupados[0].id; periodoNumero = pAgrupados[0].numero
+
+    if (primerPeriodo) {
+      periodoId = primerPeriodo.id; periodoNumero = primerPeriodo.parcial
       await cargarFilas()
     }
     document.getElementById('info-plan').style.display = 'block'
