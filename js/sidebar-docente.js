@@ -4,7 +4,7 @@ import { logout }   from './auth.js'
 export async function renderSidebar(paginaActiva) {
   const { data: { user } } = await supabase.auth.getUser()
   const { data: profile }  = await supabase
-    .from('profiles').select('nombre').eq('id', user.id).single()
+    .from('profiles').select('nombre,rol').eq('id', user.id).single()
 
   const iniciales = (profile?.nombre || 'U')
     .split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase()
@@ -27,12 +27,26 @@ export async function renderSidebar(paginaActiva) {
     { label:'Evaluación',  ids:['calificaciones','scoreboard','reactivos'] },
   ]
 
+  const esAdmin = profile?.rol === 'admin'
+
   let html = `
     <aside class="sidebar">
       <div class="sidebar-logo">
         <div class="brand">TechAcademia</div>
         <div class="role">Vista docente</div>
-      </div>`
+      </div>
+      ${esAdmin ? `
+      <a href="/admin/inicio.html" style="
+        display:flex; align-items:center; gap:6px;
+        margin:8px 10px; padding:7px 10px; border-radius:var(--radius-s);
+        background:var(--am-l); color:var(--am); font-size:11px; font-weight:600;
+        border:1px solid #FAC775; text-decoration:none;
+      ">
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+          <path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Volver al admin
+      </a>` : ''}`
 
   for (const section of sections) {
     html += `<div class="nav-section">${section.label}</div>`
