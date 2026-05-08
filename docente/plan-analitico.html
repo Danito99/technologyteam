@@ -22,7 +22,7 @@
     .col-saber .cell-select { margin-bottom:8px; }
     .col-saber { padding:8px 6px; }
 
-    .plan-table { width:100%; border-collapse:collapse; font-size:12px; }
+    .plan-table { width:100%; border-collapse:collapse; font-size:12px; table-layout:fixed; }
     .plan-table th {
       text-align:left; font-size:10px; font-weight:600; color:var(--text-3);
       padding:6px 8px; border-bottom:1px solid var(--border);
@@ -41,9 +41,9 @@
 
     .col-semana    { width:80px;  min-width:80px; }
     .col-eje       { width:150px; min-width:140px; }
-    .col-contenido { width:180px; min-width:160px; }
-    .col-proceso   { width:350px; min-width:300px; }
-    .col-saber     { width:350px; min-width:300px; }
+    .col-contenido { width:200px; min-width:180px; }
+    .col-proceso   { width:400px; min-width:350px; }
+    .col-saber     { width:400px; min-width:350px; }
     .col-acciones  { width:36px;  min-width:36px; text-align:center; }
 
     .cell-select {
@@ -233,6 +233,7 @@
   let periodoId      = null
   let periodoNumero  = null
   let filasActuales  = []
+  let periodosActuales = []
   let haycambios     = false
 
   // ── Auth ──────────────────────────────────────────────────
@@ -322,31 +323,31 @@
     })
 
     const etiquetasTrimestre = {
-      trimestre: { 1:'T1', 2:'T2', 3:'T3' },
-      semestre:  { 1:'S1', 2:'S2' }
+      trimestre: { 1:'Trimestre 1', 2:'Trimestre 2', 3:'Trimestre 3' },
+      semestre:  { 1:'Semestre A', 2:'Semestre B' }
     }
 
     const tabsEl = document.getElementById('tab-periodos')
     tabsEl.innerHTML = ''
-    let primerPeriodo = null
+    let primerTrimestre = null
 
-    // Mostrar todos los parciales agrupados por trimestre
+    // Mostrar botones por trimestre (no por parcial individual)
     Object.keys(grupos).sort((a,b) => a-b).forEach(numeroTrim => {
       const periodosDelTrim = grupos[numeroTrim]
-      periodosDelTrim.forEach((p, i) => {
-        if (!primerPeriodo) primerPeriodo = p
-        const btn = document.createElement('button')
-        btn.className = 'tab-periodo' + (p === primerPeriodo ? ' active' : '')
-        btn.setAttribute('data-trimestre', numeroTrim)
-        const etiquetaTrim = etiquetasTrimestre[tipo]?.[numeroTrim] || `T${numeroTrim}`
-        btn.textContent = `Parcial ${p.parcial} - ${etiquetaTrim}`
-        btn.onclick = () => seleccionarPeriodo(p.id, p.parcial, btn)
-        tabsEl.appendChild(btn)
-      })
+      if (periodosDelTrim.length === 0) return
+
+      if (!primerTrimestre) primerTrimestre = numeroTrim
+      const btn = document.createElement('button')
+      btn.className = 'tab-periodo' + (numeroTrim == primerTrimestre ? ' active' : '')
+      btn.setAttribute('data-trimestre', numeroTrim)
+      btn.textContent = etiquetasTrimestre[tipo]?.[numeroTrim] || `Trimestre ${numeroTrim}`
+      btn.onclick = () => seleccionarTrimestre(numeroTrim, periodosDelTrim, btn)
+      tabsEl.appendChild(btn)
     })
 
-    if (primerPeriodo) {
-      periodoId = primerPeriodo.id; periodoNumero = primerPeriodo.parcial
+    if (primerTrimestre) {
+      const periodosDelPrimer = grupos[primerTrimestre]
+      await cargarFilasDeTrimestre(periodosDelPrimer)
       await cargarFilas()
     }
     document.getElementById('info-plan').style.display = 'block'
@@ -354,15 +355,34 @@
     document.getElementById('topbar-sub').textContent = selGrupo.options[selGrupo.selectedIndex].textContent
   }
 
-  async function seleccionarPeriodo(pId, pNumero, btnEl) {
-    if (haycambios && !confirm('Tienes cambios sin guardar. ¿Cambiar de periodo?')) return
+  async function seleccionarTrimestre(numeroTrimestre, periodosDelTrimestre, btnEl) {
+    if (haycambios && !confirm('Tienes cambios sin guardar. ¿Cambiar de trimestre?')) return
     document.querySelectorAll('.tab-periodo').forEach(b => b.classList.remove('active'))
     btnEl.classList.add('active')
-    periodoId = pId; periodoNumero = pNumero; haycambios = false
-    await cargarFilas()
+    haycambios = false
+    await cargarFilasDeTrimestre(periodosDelTrimestre)
   }
 
   // ── Cargar filas ──────────────────────────────────────────
+  async function cargarFilasDeTrimestre(periodosDelTrimestre) {
+    if (!grupoMateriaId || !periodosDelTrimestre.length) return
+
+    // Cargar filas de todos los parciales del trimestre
+    const parcialesIds = periodosDelTrimestre.map(p => p.parcial)
+    const { data } = await supabase
+      .from('plan_analitico_filas')
+      .select('id,semana,eje_articulador,contenido,aprendizaje_esperado,saber_hacer,es_examen,orden,tipo_actividad,periodo_numero,bloom_nivel,periodo_id')
+      .eq('grupo_materia_id', grupoMateriaId)
+      .in('periodo_numero', parcialesIds)
+      .order('periodo_numero')
+      .order('orden')
+
+    filasActuales = data || []
+    periodosActuales = periodosDelTrimestre  // Guardar referencia a los periodos del trimestre
+    renderTabla()
+  }
+
+  // Función legacy para compatibilidad
   async function cargarFilas() {
     if (!grupoMateriaId || !periodoNumero) return
     const { data } = await supabase
@@ -589,18 +609,22 @@
 
   // ── Guardar ───────────────────────────────────────────────
   document.getElementById('btn-guardar').addEventListener('click', async () => {
-    if (!grupoMateriaId || !periodoId) return
+    if (!grupoMateriaId || !periodosActuales.length) return
     const btn = document.getElementById('btn-guardar')
     btn.textContent = 'Guardando...'; btn.disabled = true
     try {
+      // Eliminar filas existentes de todos los parciales del trimestre
+      const parcialesIds = periodosActuales.map(p => p.parcial)
       await supabase.from('plan_analitico_filas')
-        .delete().eq('grupo_materia_id', grupoMateriaId).eq('periodo_numero', periodoNumero)
+        .delete().eq('grupo_materia_id', grupoMateriaId).in('periodo_numero', parcialesIds)
+
+      // Insertar nuevas filas
       if (filasActuales.length) {
         await supabase.from('plan_analitico_filas').insert(
           filasActuales.map((f, i) => ({
             grupo_materia_id:     grupoMateriaId,
-            periodo_id:           periodoId,
-            periodo_numero:       periodoNumero,
+            periodo_id:           f.periodo_id || periodosActuales.find(p => p.parcial === f.periodo_numero)?.id,
+            periodo_numero:       f.periodo_numero || periodosActuales[0].parcial,
             semana:               f.semana || null,
             eje_articulador:      f.eje_articulador || null,
             contenido:            f.contenido || null,
@@ -617,7 +641,7 @@
       document.getElementById('save-status').textContent = 'Guardado ✓'
       document.getElementById('save-status').style.color = 'var(--vd)'
       mostrarToast('Plan analítico guardado ✓')
-      await cargarFilas()
+      await cargarFilasDeTrimestre(periodosActuales)
     } catch(err) {
       mostrarToast('Error: ' + err.message, 'error')
     } finally {
