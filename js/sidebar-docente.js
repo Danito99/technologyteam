@@ -16,6 +16,7 @@ export async function renderSidebar(paginaActiva) {
     { id:'planes-clase',   label:'Planes de clase',    href:'/docente/planes-clase.html',    icon:iconCalendar() },
     { id:'grupos',         label:'Mis grupos',         href:'/docente/grupos.html',          icon:iconPeople() },
     { id:'calificaciones', label:'Calificaciones',     href:'/docente/calificaciones.html',  icon:iconChart() },
+    { id:'scoreboard',     label:'Scoreboard',         href:'/docente/scoreboard.html',      icon:iconTrophy() },
     { id:'reactivos',      label:'Reactivos IA',       href:'/docente/reactivos.html',       icon:iconQuestion() },
   ]
 
@@ -23,7 +24,7 @@ export async function renderSidebar(paginaActiva) {
     { label:'Mi espacio',  ids:['inicio','materias'] },
     { label:'Planeación',  ids:['plan-analitico','planes-clase'] },
     { label:'Grupos',      ids:['grupos'] },
-    { label:'Evaluación',  ids:['calificaciones','reactivos'] },
+    { label:'Evaluación',  ids:['calificaciones','scoreboard','reactivos'] },
   ]
 
   let html = `
@@ -65,4 +66,5 @@ function iconDoc()      { return `<svg ${sv}><rect x="2" y="2" width="12" height
 function iconCalendar() { return `<svg ${sv}><rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.2" fill="none"/><path d="M5 1v4M11 1v4M2 7h12" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>` }
 function iconPeople()   { return `<svg ${sv}><circle cx="5" cy="5" r="2.5" stroke="currentColor" stroke-width="1.2" fill="none"/><circle cx="11" cy="5" r="2.5" stroke="currentColor" stroke-width="1.2" fill="none"/><path d="M1 14c0-2.2 1.8-4 4-4s4 1.8 4 4" stroke="currentColor" stroke-width="1.2" fill="none"/><path d="M11 10c1.7.3 3 1.8 3 4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" fill="none"/></svg>` }
 function iconChart()    { return `<svg ${sv}><path d="M3 12L6 8l3 3 4-6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>` }
+function iconTrophy()   { return `<svg ${sv}><path d="M5 2h6v6a3 3 0 01-6 0V2z" stroke="currentColor" stroke-width="1.2" fill="none"/><path d="M2 2h3M11 2h3M2 2c0 3 1.5 5 3 5M14 2c0 3-1.5 5-3 5M8 8v4M5 14h6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>` }
 function iconQuestion() { return `<svg ${sv}><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.2" fill="none"/><path d="M6 6.5C6 5.4 6.9 4.5 8 4.5s2 .9 2 2c0 1-1 1.5-2 2v1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" fill="none"/><circle cx="8" cy="12" r=".8" fill="currentColor"/></svg>` }

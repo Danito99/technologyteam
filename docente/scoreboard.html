@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TechAcademia — Scoreboard</title>
+  <link rel="stylesheet" href="../css/global.css">
+  <style>
+    .ctx-bar { display:flex; gap:8px; align-items:flex-end; flex-wrap:wrap; }
+    .ctx-bar > div { display:flex; flex-direction:column; gap:4px; }
+    .ctx-bar select { width:auto; margin:0; min-width:150px; }
+
+    .cortes-bar { display:flex; gap:4px; flex-wrap:wrap; }
+    .corte-btn {
+      font-size:11px; padding:5px 14px; border-radius:99px;
+      border:1px solid var(--border-m); cursor:pointer;
+      color:var(--text-2); background:transparent; transition:all .15s;
+    }
+    .corte-btn:hover { background:var(--bg); }
+    .corte-btn.active { background:var(--az); color:white; border-color:var(--az); }
+
+    /* Bandas resumen */
+    .bandas-strip { display:flex; gap:6px; flex-wrap:wrap; }
+    .banda-pill {
+      flex:1; min-width:72px; border-radius:var(--radius-s);
+      padding:7px 10px; text-align:center; border:1px solid transparent;
+    }
+    .banda-pill .bp-val   { font-size:20px; font-weight:700; line-height:1.1; }
+    .banda-pill .bp-label { font-size:10px; font-weight:600; letter-spacing:.04em; margin-top:1px; }
+    .banda-pill .bp-pct   { font-size:10px; opacity:.7; }
+    .bc-gold   { background:var(--gold-bg); color:var(--gold-tx); }
+    .bc-green2 { background:var(--g2-bg);   color:var(--g2-tx); }
+    .bc-green1 { background:var(--g1-bg);   color:var(--g1-tx); }
+    .bc-yellow { background:var(--yel-bg);  color:var(--yel-tx); }
+    .bc-red2   { background:var(--r2-bg);   color:var(--r2-tx); }
+    .bc-red1   { background:var(--r1-bg);   color:var(--r1-tx); }
+
+    /* Ranking */
+    .rank-table { width:100%; border-collapse:collapse; font-size:12px; }
+    .rank-table th {
+      font-size:10px; font-weight:600; color:var(--text-3);
+      padding:6px 10px; border-bottom:1px solid var(--border);
+      text-transform:uppercase; letter-spacing:.04em; background:var(--bg);
+      text-align:left;
+    }
+    .rank-table th.right { text-align:right; }
+    .rank-table th.center { text-align:center; }
+    .rank-table td { padding:8px 10px; border-bottom:1px solid var(--border); vertical-align:middle; }
+    .rank-table tr:last-child td { border-bottom:none; }
+
+    .pos-badge {
+      width:26px; height:26px; border-radius:50%;
+      display:inline-flex; align-items:center; justify-content:center;
+      font-size:11px; font-weight:700; flex-shrink:0;
+    }
+    .pos-1 { background:#FFD700; color:#7a5c00; }
+    .pos-2 { background:#C0C0C0; color:#444; }
+    .pos-3 { background:#CD7F32; color:#5a2e00; }
+    .pos-n { background:var(--bg); color:var(--text-3); font-weight:500; font-size:10px; }
+
+    .bar-prom { height:7px; border-radius:99px; background:var(--border); overflow:hidden; margin-top:4px; }
+    .bar-fill  { height:100%; border-radius:99px; }
+    .prom-num { font-size:14px; font-weight:700; text-align:right; }
+
+    .comp-row { display:flex; gap:3px; align-items:center; }
+    .comp-item { flex:1; text-align:center; font-size:10px; }
+    .comp-val  { font-size:13px; font-weight:600; }
+    .comp-lbl  { font-size:9px; color:var(--text-3); }
+
+    .sin-cal { color:var(--text-3); font-size:11px; font-style:italic; }
+
+    /* Promedios por componente */
+    .comp-summary { display:flex; gap:6px; flex-wrap:wrap; }
+    .comp-card {
+      flex:1; min-width:100px; border:1px solid var(--border);
+      border-radius:var(--radius-s); padding:8px 12px; text-align:center;
+    }
+    .comp-card .cc-val { font-size:20px; font-weight:700; color:var(--az); }
+    .comp-card .cc-lbl { font-size:10px; color:var(--text-3); margin-top:2px; }
+    .comp-card .cc-sub { font-size:9px; color:var(--text-3); }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <div id="sidebar-container"></div>
+  <div class="main-area">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title">Scoreboard</div>
+        <div class="topbar-sub" id="topbar-sub">Selecciona un grupo</div>
+      </div>
+    </div>
+
+    <div class="page-content">
+
+      <!-- Contexto -->
+      <div class="card" style="margin-bottom:12px;">
+        <div class="ctx-bar">
+          <div>
+            <label class="form-label">Grupo</label>
+            <select id="sel-grupo" onchange="onGrupoChange()">
+              <option value="">Selecciona grupo...</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label">Materia</label>
+            <select id="sel-materia" disabled onchange="onMateriaChange()">
+              <option value="">—</option>
+            </select>
+          </div>
+        </div>
+        <div id="cortes-wrap" style="display:none; margin-top:12px;">
+          <div class="form-label" style="margin-bottom:6px;">Corte</div>
+          <div class="cortes-bar" id="cortes-bar"></div>
+        </div>
+      </div>
+
+      <div id="loading" class="loading" style="display:none;">Cargando...</div>
+
+      <div id="content" style="display:none;">
+
+        <!-- Distribución de bandas -->
+        <div class="card" style="margin-bottom:12px;">
+          <div class="flex-between mb-8">
+            <div class="card-title mb-0">Distribución por banda</div>
+            <span class="text-small text-muted" id="stats-label"></span>
+          </div>
+          <div class="bandas-strip" id="bandas-strip"></div>
+        </div>
+
+        <!-- Promedios por componente -->
+        <div class="card" style="margin-bottom:12px;">
+          <div class="card-title mb-8">Promedios por componente</div>
+          <div class="comp-summary" id="comp-summary"></div>
+        </div>
+
+        <!-- Ranking -->
+        <div class="card">
+          <div class="card-title mb-8">Ranking del grupo</div>
+          <div style="overflow-x:auto;">
+            <table class="rank-table">
+              <thead>
+                <tr>
+                  <th style="width:40px;" class="center">Pos.</th>
+                  <th>Alumno</th>
+                  <th class="center" style="width:64px;">T. clase</th>
+                  <th class="center" style="width:64px;">Proyecto</th>
+                  <th class="center" style="width:64px;">Examen</th>
+                  <th class="center" style="width:64px;">Autoe.</th>
+                  <th class="center" style="width:80px;">Parcial</th>
+                  <th style="width:80px;">Banda</th>
+                </tr>
+              </thead>
+              <tbody id="rank-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <div id="empty-hint" class="empty-state">
+        <p>Selecciona grupo, materia y corte para ver el scoreboard.</p>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { requireAuth }   from '../js/auth.js'
+  import { renderSidebar } from '../js/sidebar-docente.js'
+  import { supabase }      from '../js/supabase.js'
+
+  const profile = await requireAuth('docente')
+  if (!profile) throw new Error('No autenticado')
+  await renderSidebar('scoreboard')
+
+  let ciclo    = null
+  let metas    = []
+  let grupos   = []
+  let periodos = []
+  let gmSelId  = null
+  let periodoId = null
+
+  const bandaDefs = [
+    { key:'gold1',   label:'Gold',    cls:'bc-gold',   bandaCls:'banda-gold',   fill:'#DAA520' },
+    { key:'green2',  label:'Green 2', cls:'bc-green2', bandaCls:'banda-green2', fill:'#1a6b1a' },
+    { key:'green1',  label:'Green 1', cls:'bc-green1', bandaCls:'banda-green1', fill:'#2d7a2d' },
+    { key:'yellow1', label:'Yellow',  cls:'bc-yellow', bandaCls:'banda-yellow', fill:'#EF9F27' },
+    { key:'red2',    label:'Red 2',   cls:'bc-red2',   bandaCls:'banda-red2',   fill:'#D85A30' },
+    { key:'red1',    label:'Red 1',   cls:'bc-red1',   bandaCls:'banda-red1',   fill:'#a32d2d' },
+  ]
+
+  // ── Bootstrap ─────────────────────────────────────────────
+  const { data: cicloData } = await supabase
+    .from('ciclos_escolares').select('id,nombre').eq('activo', true).single()
+  ciclo = cicloData
+
+  const [{ data: metasData }, { data: gruposData }] = await Promise.all([
+    supabase.from('metas_rendimiento').select('banda,rango_min,rango_max').eq('ciclo_id', ciclo.id),
+    supabase.from('grupos')
+      .select('id,nombre,nivel,sistema_periodos, grupo_materias(id, materias(id,nombre))')
+      .eq('docente_id', profile.id).eq('ciclo_id', ciclo.id).order('nombre'),
+  ])
+  metas  = metasData  || []
+  grupos = gruposData || []
+
+  const selGrupo = document.getElementById('sel-grupo')
+  grupos.forEach(g => {
+    const o = document.createElement('option')
+    o.value = g.id; o.textContent = `${g.nombre} · ${g.nivel}`
+    selGrupo.appendChild(o)
+  })
+
+  // ── Handlers ──────────────────────────────────────────────
+  window.onGrupoChange = async () => {
+    const grupoId = selGrupo.value
+    const selMat  = document.getElementById('sel-materia')
+    if (!grupoId) { selMat.innerHTML = '<option value="">—</option>'; selMat.disabled = true; reset(); return }
+
+    const grupo = grupos.find(g => g.id === grupoId)
+    selMat.innerHTML = '<option value="">Selecciona materia...</option>'
+    ;(grupo?.grupo_materias || []).forEach(gm => {
+      const o = document.createElement('option')
+      o.value = gm.id; o.textContent = gm.materias?.nombre || '—'
+      selMat.appendChild(o)
+    })
+    selMat.disabled = false
+
+    if ((grupo?.grupo_materias || []).length === 1) {
+      selMat.value = grupo.grupo_materias[0].id
+      await onMateriaChange()
+    } else {
+      reset()
+    }
+  }
+
+  window.onMateriaChange = async () => {
+    const selMat = document.getElementById('sel-materia')
+    gmSelId = selMat.value
+    if (!gmSelId) { reset(); return }
+
+    const grupo = grupos.find(g => g.id === selGrupo.value)
+    const tipo  = grupo?.sistema_periodos === 'semestral' ? 'semestre' : 'trimestre'
+
+    const { data } = await supabase
+      .from('periodos').select('id,etiqueta,numero,parcial')
+      .eq('ciclo_id', ciclo.id).eq('tipo', tipo)
+      .order('numero').order('parcial')
+    periodos = data || []
+
+    const bar = document.getElementById('cortes-bar')
+    bar.innerHTML = ''
+    periodos.forEach((p, i) => {
+      const btn = document.createElement('button')
+      btn.className   = 'corte-btn' + (i === 0 ? ' active' : '')
+      btn.textContent = p.etiqueta
+      btn.dataset.pid = p.id
+      btn.onclick = () => selCorte(p.id, btn)
+      bar.appendChild(btn)
+    })
+    document.getElementById('cortes-wrap').style.display = 'block'
+
+    if (periodos.length) await selCorte(periodos[0].id, bar.firstChild)
+  }
+
+  async function selCorte(pid, btn) {
+    document.querySelectorAll('.corte-btn').forEach(b => b.classList.remove('active'))
+    btn.classList.add('active')
+    periodoId = pid
+    await cargar()
+  }
+
+  // ── Carga ─────────────────────────────────────────────────
+  async function cargar() {
+    document.getElementById('loading').style.display   = 'flex'
+    document.getElementById('content').style.display   = 'none'
+    document.getElementById('empty-hint').style.display = 'none'
+
+    const grupo   = grupos.find(g => g.id === selGrupo.value)
+    const selMat  = document.getElementById('sel-materia')
+    const matTxt  = selMat.options[selMat.selectedIndex]?.text || ''
+    const p       = periodos.find(p => p.id === periodoId)
+
+    document.getElementById('topbar-sub').textContent =
+      `${grupo?.nombre} · ${matTxt} · ${p?.etiqueta || ''}`
+    document.getElementById('stats-label').textContent =
+      `${matTxt} · ${p?.etiqueta || ''}`
+
+    const [{ data: alumnosData }, { data: calsData }] = await Promise.all([
+      supabase.from('alumnos').select('id,nombre,apellido')
+        .eq('grupo_id', selGrupo.value).eq('activo', true)
+        .order('apellido').order('nombre'),
+      supabase.from('calificaciones').select('*')
+        .eq('grupo_materia_id', gmSelId).eq('periodo_id', periodoId),
+    ])
+
+    const alumnos = alumnosData || []
+    const calsMap = {}
+    calsData?.forEach(c => { calsMap[c.alumno_id] = c })
+
+    document.getElementById('loading').style.display = 'none'
+    document.getElementById('content').style.display = 'block'
+
+    renderBandas(alumnos, calsMap)
+    renderComponentes(alumnos, calsMap)
+    renderRanking(alumnos, calsMap)
+  }
+
+  // ── Bandas ────────────────────────────────────────────────
+  function renderBandas(alumnos, calsMap) {
+    const total  = alumnos.length
+    const counts = { gold1:0, green2:0, green1:0, yellow1:0, red2:0, red1:0 }
+    alumnos.forEach(a => {
+      const b = calsMap[a.id]?.banda
+      if (b && b in counts) counts[b]++
+    })
+    document.getElementById('bandas-strip').innerHTML = bandaDefs.map(d => {
+      const n   = counts[d.key]
+      const pct = total ? Math.round(n / total * 100) : 0
+      return `<div class="banda-pill ${d.cls}">
+        <div class="bp-val">${n}</div>
+        <div class="bp-label">${d.label}</div>
+        <div class="bp-pct">${pct}%</div>
+      </div>`
+    }).join('')
+  }
+
+  // ── Promedios por componente ──────────────────────────────
+  function renderComponentes(alumnos, calsMap) {
+    const cals = alumnos.map(a => calsMap[a.id]).filter(Boolean)
+    const avg  = (campo) => {
+      const vals = cals.map(c => c[campo]).filter(v => v != null)
+      return vals.length ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1) : '—'
+    }
+    const defs = [
+      { campo:'trabajo_clase',  label:'Trabajo de clase', pct:'30%' },
+      { campo:'proyecto',       label:'Proyecto',         pct:'25%' },
+      { campo:'examen',         label:'Examen',           pct:'40%' },
+      { campo:'autoevaluacion', label:'Autoevaluación',   pct:'5%'  },
+    ]
+    document.getElementById('comp-summary').innerHTML = defs.map(d => `
+      <div class="comp-card">
+        <div class="cc-val">${avg(d.campo)}</div>
+        <div class="cc-lbl">${d.label}</div>
+        <div class="cc-sub">${d.pct}</div>
+      </div>`).join('')
+  }
+
+  // ── Ranking ───────────────────────────────────────────────
+  function renderRanking(alumnos, calsMap) {
+    const calcProm = (c) => {
+      if (!c) return null
+      const all = [c.trabajo_clase, c.proyecto, c.examen, c.autoevaluacion]
+      if (all.every(v => v == null)) return null
+      return (c.trabajo_clase  ?? 0) * 0.30
+           + (c.proyecto       ?? 0) * 0.25
+           + (c.examen         ?? 0) * 0.40
+           + (c.autoevaluacion ?? 0) * 0.05
+    }
+
+    const sorted = [...alumnos]
+      .map(a => ({ ...a, cal: calsMap[a.id] || null, prom: calcProm(calsMap[a.id]) }))
+      .sort((a, b) => {
+        if (a.prom === null && b.prom === null) return 0
+        if (a.prom === null) return 1
+        if (b.prom === null) return -1
+        return b.prom - a.prom
+      })
+
+    const maxProm = sorted[0]?.prom || 10
+
+    document.getElementById('rank-tbody').innerHTML = sorted.map((a, i) => {
+      const { cal, prom } = a
+      if (!cal || prom === null) {
+        return `<tr>
+          <td class="center"><span class="pos-badge pos-n">${i + 1}</span></td>
+          <td>${a.apellido}, ${a.nombre}</td>
+          <td colspan="6" class="sin-cal">Sin calificación registrada</td>
+        </tr>`
+      }
+
+      const bd       = bandaDefs.find(d => d.key === (cal.banda || 'red1'))
+      const fillPct  = maxProm ? (prom / maxProm * 100).toFixed(0) : 0
+      const posCls   = i === 0 ? 'pos-1' : i === 1 ? 'pos-2' : i === 2 ? 'pos-3' : 'pos-n'
+      const fmt      = v => v != null ? Number(v).toFixed(1) : <span class="text-muted">—</span>
+
+      return `<tr>
+        <td class="center"><span class="pos-badge ${posCls}">${i + 1}</span></td>
+        <td>
+          <div style="font-weight:500;">${a.apellido}, ${a.nombre}</div>
+          <div class="bar-prom"><div class="bar-fill" style="width:${fillPct}%;background:${bd?.fill || '#aaa'};"></div></div>
+        </td>
+        <td class="center">${fmt(cal.trabajo_clase)}</td>
+        <td class="center">${fmt(cal.proyecto)}</td>
+        <td class="center">${fmt(cal.examen)}</td>
+        <td class="center">${fmt(cal.autoevaluacion)}</td>
+        <td class="center" style="font-size:15px;font-weight:700;">${prom.toFixed(1)}</td>
+        <td>${bd ? `<span class="banda ${bd.bandaCls}">${bd.label}</span>` : '—'}</td>
+      </tr>`
+    }).join('')
+  }
+
+  function calcBanda(prom) {
+    const m = metas.find(m => prom >= m.rango_min && prom <= m.rango_max)
+    return m?.banda || 'red1'
+  }
+
+  function reset() {
+    document.getElementById('cortes-wrap').style.display   = 'none'
+    document.getElementById('content').style.display      = 'none'
+    document.getElementById('empty-hint').style.display   = 'block'
+    document.getElementById('topbar-sub').textContent     = 'Selecciona un grupo'
+    gmSelId = null; periodoId = null
+  }
+</script>
+</body>
+</html>
