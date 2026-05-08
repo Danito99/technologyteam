@@ -6,122 +6,100 @@
   <title>TechAcademia — Mis materias y grupos</title>
   <link rel="stylesheet" href="../css/global.css">
   <style>
-    .nivel-section { margin-bottom: 20px; }
-    .nivel-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 10px;
+    /* ── Secciones por nivel ── */
+    .nivel-section { margin-bottom: 28px; }
+    .nivel-header  { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+    .nivel-count   { font-size:12px; color:var(--text-3); }
+
+    /* ── Tarjetas de grupo (tipo Classroom) ── */
+    .grupos-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 14px;
     }
-    .nivel-title {
+    .grupo-card {
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      box-shadow: var(--shadow-sm);
+      transition: box-shadow .2s, transform .2s;
+      display: flex;
+      flex-direction: column;
+    }
+    .grupo-card:hover { box-shadow: var(--shadow); transform: translateY(-2px); }
+
+    .card-banner {
+      height: 72px;
+      display: flex;
+      align-items: flex-end;
+      padding: 12px 16px;
+      position: relative;
+    }
+    .card-banner-pri  { background: linear-gradient(135deg, #2d7a2d, #4caf50); }
+    .card-banner-sec  { background: linear-gradient(135deg, #185FA5, #2196f3); }
+    .card-banner-prep { background: linear-gradient(135deg, #BA7517, #ff9800); }
+
+    .card-grupo-nombre {
+      font-size: 20px;
+      font-weight: 800;
+      color: white;
+      letter-spacing: -.02em;
+      text-shadow: 0 1px 3px rgba(0,0,0,.2);
+    }
+    .card-grado-badge {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      font-size: 10px;
+      font-weight: 700;
+      color: rgba(255,255,255,.9);
+      background: rgba(0,0,0,.18);
+      padding: 2px 7px;
+      border-radius: 99px;
+    }
+
+    .card-body {
+      padding: 12px 16px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .card-materia {
       font-size: 13px;
       font-weight: 600;
       color: var(--text);
+      line-height: 1.3;
+    }
+    .card-meta {
       display: flex;
       align-items: center;
       gap: 8px;
-    }
-    .grupo-row {
-      display: grid;
-      grid-template-columns: 100px 1fr 100px 120px 90px 80px;
-      gap: 8px;
-      align-items: center;
-      padding: 8px 0;
-      border-bottom: 1px solid var(--border);
-      font-size: 12px;
-    }
-    .grupo-row:last-child { border-bottom: none; }
-    .grupo-row.header {
-      font-size: 10px;
-      font-weight: 600;
-      color: var(--text-3);
-      padding-bottom: 6px;
-      text-transform: uppercase;
-      letter-spacing: .05em;
-    }
-    .grupo-nombre {
-      font-weight: 600;
-      color: var(--text);
-    }
-    .alumnos-count {
       font-size: 11px;
       color: var(--text-3);
-      display: flex;
-      align-items: center;
-      gap: 4px;
     }
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,.4);
-      z-index: 100;
-      align-items: center;
-      justify-content: center;
-    }
-    .modal-overlay.open { display: flex; }
-    .modal {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 24px;
-      width: 100%;
-      max-width: 480px;
-      max-height: 80vh;
-      overflow-y: auto;
-    }
-    .modal-title {
-      font-size: 15px;
-      font-weight: 600;
-      margin-bottom: 16px;
-      color: var(--text);
-    }
-    .modal-footer {
-      display: flex;
-      gap: 8px;
-      justify-content: flex-end;
-      margin-top: 16px;
-      padding-top: 16px;
+    .card-meta svg { flex-shrink: 0; }
+
+    .card-footer {
+      padding: 10px 12px;
       border-top: 1px solid var(--border);
+      display: flex;
+      gap: 6px;
+      justify-content: flex-end;
     }
-    .alumno-item {
+
+    /* ── Modal alumnos tabla ── */
+    .alumno-row {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      padding: 6px 0;
+      gap: 10px;
+      padding: 7px 0;
       border-bottom: 1px solid var(--border);
       font-size: 12px;
     }
-    .alumno-item:last-child { border-bottom: none; }
-    .toast {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: var(--text);
-      color: white;
-      padding: 10px 16px;
-      border-radius: var(--radius-s);
-      font-size: 12px;
-      z-index: 200;
-      display: none;
-      animation: slideIn .2s ease;
-    }
-    @keyframes slideIn { from { transform: translateY(10px); opacity:0; } to { transform: translateY(0); opacity:1; } }
-    .empty-row { 
-      text-align: center; 
-      padding: 20px; 
-      color: var(--text-3); 
-      font-size: 12px;
-      font-style: italic;
-    }
-    .periodos-tag {
-      font-size: 10px;
-      color: var(--text-3);
-      background: var(--bg);
-      padding: 2px 6px;
-      border-radius: 4px;
-      border: 1px solid var(--border);
-    }
+    .alumno-row:last-child { border-bottom: none; }
+    .alumno-num { font-size:10px; color:var(--text-3); min-width:20px; text-align:right; }
   </style>
 </head>
 <body>
@@ -148,49 +126,28 @@
         <!-- Primaria -->
         <div class="nivel-section" id="sec-primaria" style="display:none;">
           <div class="nivel-header">
-            <div class="nivel-title">
-              <span class="badge-nivel badge-pri">Primaria</span>
-              <span id="count-primaria" class="text-muted text-small"></span>
-            </div>
+            <span class="badge-nivel badge-pri">Primaria</span>
+            <span class="nivel-count" id="count-primaria"></span>
           </div>
-          <div class="card mb-0">
-            <div class="grupo-row header">
-              <span>Grupo</span><span>Materia</span><span>Alumnos</span><span>Periodos</span><span>Sistema</span><span></span>
-            </div>
-            <div id="rows-primaria"></div>
-          </div>
+          <div class="grupos-grid" id="rows-primaria"></div>
         </div>
 
         <!-- Secundaria -->
         <div class="nivel-section" id="sec-secundaria" style="display:none;">
           <div class="nivel-header">
-            <div class="nivel-title">
-              <span class="badge-nivel badge-sec">Secundaria</span>
-              <span id="count-secundaria" class="text-muted text-small"></span>
-            </div>
+            <span class="badge-nivel badge-sec">Secundaria</span>
+            <span class="nivel-count" id="count-secundaria"></span>
           </div>
-          <div class="card mb-0">
-            <div class="grupo-row header">
-              <span>Grupo</span><span>Materia</span><span>Alumnos</span><span>Periodos</span><span>Sistema</span><span></span>
-            </div>
-            <div id="rows-secundaria"></div>
-          </div>
+          <div class="grupos-grid" id="rows-secundaria"></div>
         </div>
 
         <!-- Preparatoria -->
         <div class="nivel-section" id="sec-preparatoria" style="display:none;">
           <div class="nivel-header">
-            <div class="nivel-title">
-              <span class="badge-nivel badge-prep">Preparatoria</span>
-              <span id="count-preparatoria" class="text-muted text-small"></span>
-            </div>
+            <span class="badge-nivel badge-prep">Preparatoria</span>
+            <span class="nivel-count" id="count-preparatoria"></span>
           </div>
-          <div class="card mb-0">
-            <div class="grupo-row header">
-              <span>Grupo</span><span>Materia</span><span>Alumnos</span><span>Periodos</span><span>Sistema</span><span></span>
-            </div>
-            <div id="rows-preparatoria"></div>
-          </div>
+          <div class="grupos-grid" id="rows-preparatoria"></div>
         </div>
 
         <!-- Sin grupos -->
@@ -374,29 +331,42 @@
     document.getElementById(`sec-${nivel}`).style.display = 'block'
     document.getElementById(`count-${nivel}`).textContent = `${grupos.length} grupo${grupos.length > 1 ? 's' : ''}`
 
+    const bannerCls = { primaria:'card-banner-pri', secundaria:'card-banner-sec', preparatoria:'card-banner-prep' }
     const container = document.getElementById(`rows-${nivel}`)
     container.innerHTML = grupos.map(g => {
-      const materias = g.grupo_materias?.map(gm => gm.materias?.nombre).filter(Boolean).join(', ') || '—'
+      const materias = g.grupo_materias?.map(gm => gm.materias?.nombre).filter(Boolean).join(' · ') || '—'
       const nAlumnos = g.alumnos?.length || 0
-      const sistema = g.sistema_periodos === 'trimestral' ? 'Trimestral' : 'Semestral'
-      const periodos = g.sistema_periodos === 'trimestral' ? 'T1, T2, T3' : 'Sem A, Sem B'
+      const sistema  = g.sistema_periodos === 'trimestral' ? 'Trimestral' : 'Semestral'
+      const periodos = g.sistema_periodos === 'trimestral' ? 'T1 · T2 · T3' : 'Sem A · Sem B'
       return `
-        <div class="grupo-row">
-          <span class="grupo-nombre">${g.nombre}</span>
-          <span>${materias}</span>
-          <span class="alumnos-count">
-            <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-              <circle cx="8" cy="5" r="3" stroke="currentColor" stroke-width="1.2" fill="none"/>
-              <path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="currentColor" stroke-width="1.2" fill="none"/>
-            </svg>
-            ${nAlumnos}
-          </span>
-          <span class="periodos-tag">${periodos}</span>
-          <span class="text-muted text-small">${sistema}</span>
-          <span style="display:flex;gap:4px;">
-            <button class="btn btn-sm" onclick="abrirAlumnos('${g.id}', '${g.nombre}')">Alumnos</button>
-            <button class="btn btn-sm" onclick="editarGrupo('${g.id}', '${g.nombre}', '${g.nivel}', ${g.grado}, '${g.sistema_periodos}')">✏️</button>
-          </span>
+        <div class="grupo-card">
+          <div class="card-banner ${bannerCls[nivel]}">
+            <span class="card-grupo-nombre">${g.nombre}</span>
+            <span class="card-grado-badge">${g.grado}° grado</span>
+          </div>
+          <div class="card-body">
+            <div class="card-materia">${materias}</div>
+            <div class="card-meta">
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                <circle cx="6" cy="5" r="2.5" stroke="currentColor" stroke-width="1.2" fill="none"/>
+                <path d="M1 14c0-2.8 2.2-5 5-5s5 2.2 5 5" stroke="currentColor" stroke-width="1.2" fill="none"/>
+                <circle cx="12" cy="5" r="2.5" stroke="currentColor" stroke-width="1.2" fill="none"/>
+                <path d="M11 9.2c.3-.1.7-.2 1-.2 2.8 0 5 2.2 5 5" stroke="currentColor" stroke-width="1.2" fill="none"/>
+              </svg>
+              ${nAlumnos} alumno${nAlumnos !== 1 ? 's' : ''}
+              <span style="color:var(--border-m);">·</span>
+              ${periodos}
+            </div>
+          </div>
+          <div class="card-footer">
+            <button class="btn btn-sm btn-ghost" onclick="editarGrupo('${g.id}', '${g.nombre}', '${g.nivel}', ${g.grado}, '${g.sistema_periodos}')">
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2L5 13H3v-2L11.5 2.5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+              Editar
+            </button>
+            <button class="btn btn-sm btn-primary" onclick="abrirAlumnos('${g.id}', '${g.nombre}')">
+              Alumnos
+            </button>
+          </div>
         </div>`
     }).join('')
   }
@@ -552,27 +522,13 @@
       return
     }
 
-    lista.innerHTML = `
-      <table style="width:100%;border-collapse:collapse;font-size:11px;">
-        <thead>
-          <tr style="border-bottom:1px solid var(--border);">
-            <th style="padding:5px 7px;text-align:left;font-size:10px;color:var(--text-3);font-weight:600;">#</th>
-            <th style="padding:5px 7px;text-align:left;font-size:10px;color:var(--text-3);font-weight:600;">Apellidos, Nombre(s)</th>
-            <th style="padding:5px 7px;"></th>
-          </tr>
-        </thead>
-        <tbody>
-          ${alumnos.map((a, i) => `
-            <tr style="border-bottom:1px solid var(--border);">
-              <td style="padding:6px 7px;color:var(--text-3);">${i + 1}</td>
-              <td style="padding:6px 7px;"><strong style="font-weight:500;">${a.apellido}</strong>, ${a.nombre}</td>
-              <td style="padding:6px 7px;text-align:right;">
-                <button class="btn btn-sm" style="color:var(--co);border-color:var(--co);"
-                  onclick="eliminarAlumno('${a.id}', '${grupoId}')">Quitar</button>
-              </td>
-            </tr>`).join('')}
-        </tbody>
-      </table>`
+    lista.innerHTML = alumnos.map((a, i) => `
+      <div class="alumno-row">
+        <span class="alumno-num">${i + 1}</span>
+        <span style="flex:1;"><strong style="font-weight:500;">${a.apellido}</strong>, ${a.nombre}</span>
+        <button class="btn btn-xs btn-ghost" style="color:var(--co);"
+          onclick="eliminarAlumno('${a.id}', '${grupoId}')">Quitar</button>
+      </div>`).join('')
   }
 
   window.cancelarAlumno = () => {
