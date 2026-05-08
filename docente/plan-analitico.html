@@ -413,11 +413,7 @@
         return '<option value="' + k + '"' + (bloomNivel === k ? ' selected' : '') + '>' + textoOpcion + '</option>'
       }).join('')
 
-      // Saber y saber hacer: texto del nivel seleccionado (para mostrar bajo el select)
-      let saberTexto = ''
-      if (bloomNivel && catalogoItemBloom) {
-        saberTexto = catalogoItemBloom.saber[bloomNivel] || ''
-      }
+      // Saber y saber hacer: solo desplegable con texto completo
 
       return (
         '<tr data-idx="' + i + '">' +
@@ -452,7 +448,6 @@
         '<select class="cell-select" onchange="onBloomChange(' + i + ',this.value)">' +
         '<option value="">— Nivel Bloom —</option>' + optsBloom +
         '</select>' +
-        '<div class="saber-texto" id="saber-texto-' + i + '">' + esc(saberTexto) + '</div>' +
         '</td>' +
         // Tipo actividad
         '<td><select class="cell-select" style="margin:0;" onchange="editarCelda(" + i + ",\"tipo_actividad\",this.value)">' +
@@ -486,7 +481,6 @@
       items.map(c => '<option value="' + c.concepto + '">' + c.concepto + '</option>').join('')
     selCont.disabled = !eje
     setPDA(idx, '')
-    setSaberTexto(idx, '')
   }
 
   window.onContenidoChange = (idx, concepto) => {
@@ -500,7 +494,6 @@
     const pda  = limpiarPDA(item?.pda || '')
     setPDA(idx, pda)
     filasActuales[idx].aprendizaje_esperado = pda
-    setSaberTexto(idx, '')
     // Actualizar opciones del select Bloom con los textos de este concepto
     actualizarOptsBloom(idx, item)
   }
@@ -511,17 +504,8 @@
     const f    = filasActuales[idx]
     const CATS = catalogoFiltrado()
     const item = f.contenido ? (CATS[f.eje_articulador] || []).find(c => c.concepto === f.contenido) : null
-    let texto = (item && nivel) ? (item.saber[nivel] || '') : ''
-
-    // Fix: remover texto duplicado
-    if (texto) {
-      const lines = texto.split('\n').map(line => line.trim()).filter(line => line)
-      const uniqueLines = [...new Set(lines)]
-      texto = uniqueLines.join('\n')
-    }
-
+    const texto = (item && nivel) ? (item.saber[nivel] || '') : ''
     filasActuales[idx].saber_hacer = texto
-    setSaberTexto(idx, texto)
   }
 
   function actualizarOptsBloom(idx, catalogoItem) {
