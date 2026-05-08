@@ -39,12 +39,12 @@
       font-size:11px; text-align:center; padding:6px;
     }
 
-    .col-semana    { width:80px;  min-width:80px; }
-    .col-eje       { width:150px; min-width:140px; }
-    .col-contenido { width:200px; min-width:180px; }
-    .col-proceso   { width:400px; min-width:350px; }
-    .col-saber     { width:400px; min-width:350px; }
-    .col-acciones  { width:36px;  min-width:36px; text-align:center; }
+    .col-semana    { width:80px;  min-width:80px !important; }
+    .col-eje       { width:150px; min-width:140px !important; }
+    .col-contenido { width:220px; min-width:200px !important; }
+    .col-proceso   { width:500px !important; min-width:450px !important; }
+    .col-saber     { width:500px !important; min-width:450px !important; }
+    .col-acciones  { width:36px;  min-width:36px !important; text-align:center; }
 
     .cell-select {
       width:100%; font-size:11px; padding:5px 6px;
@@ -52,7 +52,8 @@
       background:white; color:var(--text); font-family:inherit;
       box-sizing:border-box; cursor:pointer; margin-bottom:8px;
       line-height:1.3; height:auto; min-height:32px;
-      word-wrap:break-word; overflow-wrap:break-word;
+      word-wrap:break-word; overflow-wrap:break-word; word-break:break-all;
+      white-space:normal; max-width:100%;
     }
     .cell-select:focus { outline:none; border-color:var(--az); }
     .cell-select:disabled { background:var(--bg); color:var(--text-3); cursor:not-allowed; }
@@ -93,9 +94,10 @@
     .saber-texto {
       font-size:11px; color:var(--text-2); line-height:1.4;
       padding:8px 10px; min-height:40px; white-space:pre-wrap;
-      word-wrap:break-word; overflow-wrap:break-word; margin-top:6px;
-      background:var(--bg-s); border-radius:4px; border:1px solid var(--border-s);
-      max-width:100%; overflow:visible;
+      word-wrap:break-word; overflow-wrap:break-word; word-break:break-all;
+      margin-top:6px; background:var(--bg-s); border-radius:4px;
+      border:1px solid var(--border-s); max-width:100%; overflow:visible;
+      box-sizing:border-box;
     }
 
     .btn-fila {
@@ -314,40 +316,26 @@
       return Math.ceil(parcial / 2) + 1  // Fallback para parciales adicionales
     }
 
-    // Agrupar parciales por trimestre según la distribución correcta
-    const grupos = {}
-    periodos?.forEach(p => {
-      const trimestre = getParcialTrimestre(p.parcial)
-      if (!grupos[trimestre]) grupos[trimestre] = []
-      grupos[trimestre].push(p)
-    })
-
-    const etiquetasTrimestre = {
-      trimestre: { 1:'Trimestre 1', 2:'Trimestre 2', 3:'Trimestre 3' },
-      semestre:  { 1:'Semestre A', 2:'Semestre B' }
-    }
-
     const tabsEl = document.getElementById('tab-periodos')
     tabsEl.innerHTML = ''
-    let primerTrimestre = null
+    let primerPeriodo = null
 
-    // Mostrar botones por trimestre (no por parcial individual)
-    Object.keys(grupos).sort((a,b) => a-b).forEach(numeroTrim => {
-      const periodosDelTrim = grupos[numeroTrim]
-      if (periodosDelTrim.length === 0) return
-
-      if (!primerTrimestre) primerTrimestre = numeroTrim
+    // Mostrar TODOS los parciales individuales como botones separados
+    periodos?.sort((a,b) => a.parcial - b.parcial).forEach(p => {
+      if (!primerPeriodo) primerPeriodo = p
       const btn = document.createElement('button')
-      btn.className = 'tab-periodo' + (numeroTrim == primerTrimestre ? ' active' : '')
-      btn.setAttribute('data-trimestre', numeroTrim)
-      btn.textContent = etiquetasTrimestre[tipo]?.[numeroTrim] || `Trimestre ${numeroTrim}`
-      btn.onclick = () => seleccionarTrimestre(numeroTrim, periodosDelTrim, btn)
+      btn.className = 'tab-periodo' + (p === primerPeriodo ? ' active' : '')
+      const trimestre = getParcialTrimestre(p.parcial)
+      btn.setAttribute('data-trimestre', trimestre)
+      btn.setAttribute('data-parcial', p.parcial)
+      btn.textContent = `Parcial ${p.parcial}`
+      btn.onclick = () => seleccionarParcial(p.id, p.parcial, btn)
       tabsEl.appendChild(btn)
     })
 
-    if (primerTrimestre) {
-      const periodosDelPrimer = grupos[primerTrimestre]
-      await cargarFilasDeTrimestre(periodosDelPrimer)
+    if (primerPeriodo) {
+      periodoId = primerPeriodo.id
+      periodoNumero = primerPeriodo.parcial
       await cargarFilas()
     }
     document.getElementById('info-plan').style.display = 'block'
@@ -355,34 +343,17 @@
     document.getElementById('topbar-sub').textContent = selGrupo.options[selGrupo.selectedIndex].textContent
   }
 
-  async function seleccionarTrimestre(numeroTrimestre, periodosDelTrimestre, btnEl) {
-    if (haycambios && !confirm('Tienes cambios sin guardar. ¿Cambiar de trimestre?')) return
+  async function seleccionarParcial(pId, pParcial, btnEl) {
+    if (haycambios && !confirm('Tienes cambios sin guardar. ¿Cambiar de parcial?')) return
     document.querySelectorAll('.tab-periodo').forEach(b => b.classList.remove('active'))
     btnEl.classList.add('active')
+    periodoId = pId
+    periodoNumero = pParcial
     haycambios = false
-    await cargarFilasDeTrimestre(periodosDelTrimestre)
+    await cargarFilas()
   }
 
   // ── Cargar filas ──────────────────────────────────────────
-  async function cargarFilasDeTrimestre(periodosDelTrimestre) {
-    if (!grupoMateriaId || !periodosDelTrimestre.length) return
-
-    // Cargar filas de todos los parciales del trimestre
-    const parcialesIds = periodosDelTrimestre.map(p => p.parcial)
-    const { data } = await supabase
-      .from('plan_analitico_filas')
-      .select('id,semana,eje_articulador,contenido,aprendizaje_esperado,saber_hacer,es_examen,orden,tipo_actividad,periodo_numero,bloom_nivel,periodo_id')
-      .eq('grupo_materia_id', grupoMateriaId)
-      .in('periodo_numero', parcialesIds)
-      .order('periodo_numero')
-      .order('orden')
-
-    filasActuales = data || []
-    periodosActuales = periodosDelTrimestre  // Guardar referencia a los periodos del trimestre
-    renderTabla()
-  }
-
-  // Función legacy para compatibilidad
   async function cargarFilas() {
     if (!grupoMateriaId || !periodoNumero) return
     const { data } = await supabase
@@ -609,22 +580,18 @@
 
   // ── Guardar ───────────────────────────────────────────────
   document.getElementById('btn-guardar').addEventListener('click', async () => {
-    if (!grupoMateriaId || !periodosActuales.length) return
+    if (!grupoMateriaId || !periodoId) return
     const btn = document.getElementById('btn-guardar')
     btn.textContent = 'Guardando...'; btn.disabled = true
     try {
-      // Eliminar filas existentes de todos los parciales del trimestre
-      const parcialesIds = periodosActuales.map(p => p.parcial)
       await supabase.from('plan_analitico_filas')
-        .delete().eq('grupo_materia_id', grupoMateriaId).in('periodo_numero', parcialesIds)
-
-      // Insertar nuevas filas
+        .delete().eq('grupo_materia_id', grupoMateriaId).eq('periodo_numero', periodoNumero)
       if (filasActuales.length) {
         await supabase.from('plan_analitico_filas').insert(
           filasActuales.map((f, i) => ({
             grupo_materia_id:     grupoMateriaId,
-            periodo_id:           f.periodo_id || periodosActuales.find(p => p.parcial === f.periodo_numero)?.id,
-            periodo_numero:       f.periodo_numero || periodosActuales[0].parcial,
+            periodo_id:           periodoId,
+            periodo_numero:       periodoNumero,
             semana:               f.semana || null,
             eje_articulador:      f.eje_articulador || null,
             contenido:            f.contenido || null,
@@ -641,7 +608,7 @@
       document.getElementById('save-status').textContent = 'Guardado ✓'
       document.getElementById('save-status').style.color = 'var(--vd)'
       mostrarToast('Plan analítico guardado ✓')
-      await cargarFilasDeTrimestre(periodosActuales)
+      await cargarFilas()
     } catch(err) {
       mostrarToast('Error: ' + err.message, 'error')
     } finally {
