@@ -320,8 +320,19 @@
     tabsEl.innerHTML = ''
     let primerPeriodo = null
 
-    // Mostrar TODOS los parciales individuales como botones separados
+    // Filtrar para obtener solo UN periodo por cada número de parcial (eliminar duplicados)
+    const parcialesUnicos = []
+    const parcialVistos = new Set()
+
     periodos?.sort((a,b) => a.parcial - b.parcial).forEach(p => {
+      if (!parcialVistos.has(p.parcial)) {
+        parcialVistos.add(p.parcial)
+        parcialesUnicos.push(p)
+      }
+    })
+
+    // Mostrar botones para parciales únicos
+    parcialesUnicos.forEach(p => {
       if (!primerPeriodo) primerPeriodo = p
       const btn = document.createElement('button')
       btn.className = 'tab-periodo' + (p === primerPeriodo ? ' active' : '')
