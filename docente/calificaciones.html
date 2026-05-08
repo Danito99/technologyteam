@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TechAcademia — Calificaciones</title>
+  <link rel="stylesheet" href="../css/global.css">
+  <style>
+    .selector-bar { display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; }
+    .selector-bar > div { display:flex; flex-direction:column; gap:4px; }
+    .selector-bar select { width:auto; margin:0; min-width:160px; }
+
+    .bandas-grid { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+    .banda-card {
+      flex:1; min-width:80px; border-radius:var(--radius-s);
+      padding:8px 10px; text-align:center; border:1px solid transparent;
+    }
+    .banda-card .bc-val   { font-size:22px; font-weight:700; line-height:1.1; }
+    .banda-card .bc-label { font-size:10px; font-weight:600; letter-spacing:.04em; margin-top:2px; }
+    .banda-card .bc-pct   { font-size:10px; opacity:.75; }
+
+    .bc-gold   { background:var(--gold-bg); color:var(--gold-tx); }
+    .bc-green2 { background:var(--g2-bg);   color:var(--g2-tx); }
+    .bc-green1 { background:var(--g1-bg);   color:var(--g1-tx); }
+    .bc-yellow { background:var(--yel-bg);  color:var(--yel-tx); }
+    .bc-red2   { background:var(--r2-bg);   color:var(--r2-tx); }
+    .bc-red1   { background:var(--r1-bg);   color:var(--r1-tx); }
+
+    .pond-bar { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
+    .pond-item {
+      flex:1; min-width:110px; border:1px solid var(--border);
+      border-radius:var(--radius-s); padding:6px 10px;
+      display:flex; justify-content:space-between; align-items:center; font-size:11px;
+    }
+    .pond-pct { font-weight:600; color:var(--az); }
+
+    .cal-table { width:100%; border-collapse:collapse; font-size:12px; }
+    .cal-table th {
+      text-align:left; font-size:10px; font-weight:600; color:var(--text-3);
+      padding:6px 8px; border-bottom:1px solid var(--border);
+      text-transform:uppercase; letter-spacing:.04em; background:var(--bg);
+      position:sticky; top:0; z-index:1;
+    }
+    .cal-table td { padding:6px 8px; border-bottom:1px solid var(--border); vertical-align:middle; }
+    .cal-table tr:last-child td { border-bottom:none; }
+    .cal-table tr:hover td { background:var(--bg); }
+
+    .cal-input {
+      width:52px; font-size:12px; padding:4px 6px;
+      border:1px solid var(--border-m); border-radius:4px;
+      text-align:center; background:var(--bg); color:var(--text); font-family:inherit;
+    }
+    .cal-input:focus { outline:none; border-color:var(--az); background:white; }
+    .cal-input.dirty { border-color:var(--am); background:var(--am-l); }
+
+    .prom-cell  { font-weight:600; min-width:40px; }
+    .num-alumno { color:var(--text-3); font-size:10px; min-width:22px; }
+
+    .toast {
+      position:fixed; bottom:20px; right:20px; background:var(--vd); color:white;
+      padding:10px 16px; border-radius:var(--radius-s); font-size:12px; z-index:200; display:none;
+    }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <div id="sidebar-container"></div>
+  <div class="main-area">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title">Calificaciones</div>
+        <div class="topbar-sub" id="topbar-sub">Selecciona un grupo para comenzar</div>
+      </div>
+    </div>
+
+    <div class="page-content">
+
+      <!-- Selectores -->
+      <div class="card" style="margin-bottom:14px;">
+        <div class="selector-bar">
+          <div>
+            <label class="form-label">Grupo</label>
+            <select id="sel-grupo" onchange="onGrupoChange()">
+              <option value="">Selecciona grupo...</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label">Materia</label>
+            <select id="sel-materia" disabled onchange="onMateriaChange()">
+              <option value="">—</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label">Periodo</label>
+            <select id="sel-periodo" disabled onchange="onPeriodoChange()">
+              <option value="">—</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div id="loading" class="loading" style="display:none;">Cargando...</div>
+
+      <div id="content" style="display:none;">
+
+        <!-- Distribución de bandas -->
+        <div class="bandas-grid" id="bandas-grid"></div>
+
+        <!-- Tabla de calificaciones -->
+        <div class="card">
+          <div class="flex-between mb-8">
+            <div class="card-title mb-0">Registro de calificaciones</div>
+            <button class="btn btn-primary btn-sm" id="btn-guardar">Guardar cambios</button>
+          </div>
+
+          <div class="pond-bar">
+            <div class="pond-item"><span>Trabajo de clase</span><span class="pond-pct">30%</span></div>
+            <div class="pond-item"><span>Proyecto</span><span class="pond-pct">25%</span></div>
+            <div class="pond-item"><span>Examen</span><span class="pond-pct">40%</span></div>
+            <div class="pond-item"><span>Autoevaluación</span><span class="pond-pct">5%</span></div>
+          </div>
+
+          <div style="overflow-x:auto;">
+            <table class="cal-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Alumno</th>
+                  <th>T. clase (30%)</th>
+                  <th>Proyecto (25%)</th>
+                  <th>Examen (40%)</th>
+                  <th>Autoe. (5%)</th>
+                  <th>Parcial</th>
+                  <th>Banda</th>
+                </tr>
+              </thead>
+              <tbody id="cals-tbody"></tbody>
+            </table>
+          </div>
+
+          <div class="ia-box mt-12" id="ia-box" style="display:none;">
+            <div class="ia-label">Resumen</div>
+            <p id="ia-texto" style="font-size:12px;color:var(--az-d);line-height:1.6;"></p>
+          </div>
+        </div>
+
+      </div>
+
+      <div id="empty-sel" class="empty-state">
+        <p>Selecciona grupo, materia y periodo para ver y editar calificaciones.</p>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+  import { requireAuth }   from '../js/auth.js'
+  import { renderSidebar } from '../js/sidebar-docente.js'
+  import { supabase }      from '../js/supabase.js'
+
+  const profile = await requireAuth('docente')
+  if (!profile) throw new Error('No autenticado')
+  await renderSidebar('calificaciones')
+
+  let ciclo    = null
+  let grupos   = []
+  let alumnos  = []
+  let calsMap  = {}
+  let dirty    = {}
+  let gmSelId  = null
+  let periodoId = null
+
+  // ── Ciclo activo ──────────────────────────────────────────
+  const { data: cicloData } = await supabase
+    .from('ciclos_escolares').select('id,nombre').eq('activo', true).single()
+  ciclo = cicloData
+
+  // ── Grupos del docente ────────────────────────────────────
+  const { data: gruposData } = await supabase
+    .from('grupos')
+    .select('id,nombre,nivel,sistema_periodos, grupo_materias(id, materias(id,nombre))')
+    .eq('docente_id', profile.id)
+    .eq('ciclo_id', ciclo.id)
+    .order('nombre')
+  grupos = gruposData || []
+
+  const selGrupo = document.getElementById('sel-grupo')
+  grupos.forEach(g => {
+    const o = document.createElement('option')
+    o.value = g.id
+    o.textContent = `${g.nombre} · ${g.nivel}`
+    selGrupo.appendChild(o)
+  })
+
+  // ── Handlers de selección ─────────────────────────────────
+  window.onGrupoChange = () => {
+    const grupoId = selGrupo.value
+    if (!grupoId) { resetUI(); return }
+
+    const grupo  = grupos.find(g => g.id === grupoId)
+    const selMat = document.getElementById('sel-materia')
+    selMat.innerHTML = '<option value="">Selecciona materia...</option>'
+    selMat.disabled  = false
+
+    ;(grupo?.grupo_materias || []).forEach(gm => {
+      const o = document.createElement('option')
+      o.value = gm.id
+      o.textContent = gm.materias?.nombre || '—'
+      selMat.appendChild(o)
+    })
+
+    document.getElementById('sel-periodo').innerHTML = '<option value="">—</option>'
+    document.getElementById('sel-periodo').disabled  = true
+    resetContent()
+  }
+
+  window.onMateriaChange = async () => {
+    const selMat = document.getElementById('sel-materia')
+    const selPer = document.getElementById('sel-periodo')
+    gmSelId = selMat.value
+    if (!gmSelId) { selPer.disabled = true; resetContent(); return }
+
+    const grupo = grupos.find(g => g.id === selGrupo.value)
+    const tipo  = grupo?.sistema_periodos === 'semestral' ? 'semestre' : 'trimestre'
+
+    const { data: periodos } = await supabase
+      .from('periodos').select('id,etiqueta')
+      .eq('ciclo_id', ciclo.id).eq('tipo', tipo)
+      .order('numero').order('parcial')
+
+    selPer.innerHTML = '<option value="">Selecciona periodo...</option>'
+    periodos?.forEach(p => {
+      const o = document.createElement('option')
+      o.value = p.id; o.textContent = p.etiqueta
+      selPer.appendChild(o)
+    })
+    selPer.disabled = false
+    resetContent()
+  }
+
+  window.onPeriodoChange = async () => {
+    periodoId = document.getElementById('sel-periodo').value
+    if (!periodoId || !gmSelId) { resetContent(); return }
+    await cargarCalificaciones()
+  }
+
+  // ── Carga principal ───────────────────────────────────────
+  async function cargarCalificaciones() {
+    document.getElementById('loading').style.display  = 'flex'
+    document.getElementById('content').style.display  = 'none'
+    document.getElementById('empty-sel').style.display = 'none'
+
+    const grupo   = grupos.find(g => g.id === selGrupo.value)
+    const selMat  = document.getElementById('sel-materia')
+    const selPer  = document.getElementById('sel-periodo')
+    const matText = selMat.options[selMat.selectedIndex]?.text || ''
+    const perText = selPer.options[selPer.selectedIndex]?.text || ''
+    document.getElementById('topbar-sub').textContent =
+      `${grupo?.nombre} · ${matText} · ${perText}`
+
+    const [{ data: alumnosData }, { data: cals }] = await Promise.all([
+      supabase.from('alumnos').select('id,nombre,apellido')
+        .eq('grupo_id', selGrupo.value).eq('activo', true)
+        .order('apellido').order('nombre'),
+      supabase.from('calificaciones').select('*')
+        .eq('grupo_materia_id', gmSelId).eq('periodo_id', periodoId),
+    ])
+
+    alumnos = alumnosData || []
+    calsMap = {}
+    cals?.forEach(c => { calsMap[c.alumno_id] = c })
+    dirty = {}
+
+    document.getElementById('loading').style.display = 'none'
+    document.getElementById('content').style.display = 'block'
+
+    renderBandas()
+    renderTabla()
+  }
+
+  // ── Distribución de bandas ────────────────────────────────
+  function renderBandas() {
+    const total  = alumnos.length
+    const counts = { gold1:0, green2:0, green1:0, yellow1:0, red2:0, red1:0 }
+    alumnos.forEach(a => {
+      const b = calsMap[a.id]?.banda
+      if (b && b in counts) counts[b]++
+    })
+
+    const defs = [
+      { key:'gold1',   label:'Gold',    cls:'bc-gold'   },
+      { key:'green2',  label:'Green 2', cls:'bc-green2' },
+      { key:'green1',  label:'Green 1', cls:'bc-green1' },
+      { key:'yellow1', label:'Yellow',  cls:'bc-yellow' },
+      { key:'red2',    label:'Red 2',   cls:'bc-red2'   },
+      { key:'red1',    label:'Red 1',   cls:'bc-red1'   },
+    ]
+
+    document.getElementById('bandas-grid').innerHTML = defs.map(d => {
+      const n   = counts[d.key]
+      const pct = total ? Math.round(n / total * 100) : 0
+      return `<div class="banda-card ${d.cls}">
+        <div class="bc-val">${n}</div>
+        <div class="bc-label">${d.label}</div>
+        <div class="bc-pct">${pct}%</div>
+      </div>`
+    }).join('')
+  }
+
+  // ── Tabla de calificaciones ───────────────────────────────
+  function renderTabla() {
+    const bandaMap = {
+      gold1:   { cls:'banda-gold',   label:'Gold'    },
+      green2:  { cls:'banda-green2', label:'Green 2' },
+      green1:  { cls:'banda-green1', label:'Green 1' },
+      yellow1: { cls:'banda-yellow', label:'Yellow'  },
+      red2:    { cls:'banda-red2',   label:'Red 2'   },
+      red1:    { cls:'banda-red1',   label:'Red 1'   },
+    }
+
+    document.getElementById('cals-tbody').innerHTML = alumnos.map((a, i) => {
+      const c    = calsMap[a.id] || {}
+      const prom = c.promedio_parcial != null ? Number(c.promedio_parcial).toFixed(1) : '—'
+      const b    = bandaMap[c.banda]
+
+      return `<tr>
+        <td class="num-alumno">${String(i + 1).padStart(2, '0')}</td>
+        <td><strong style="font-weight:500;">${a.apellido}</strong>, ${a.nombre}</td>
+        <td><input class="cal-input" type="number" min="0" max="10" step="0.1"
+          value="${c.trabajo_clase ?? ''}" placeholder="—"
+          oninput="editCal('${a.id}','trabajo_clase',this)"></td>
+        <td><input class="cal-input" type="number" min="0" max="10" step="0.1"
+          value="${c.proyecto ?? ''}" placeholder="—"
+          oninput="editCal('${a.id}','proyecto',this)"></td>
+        <td><input class="cal-input" type="number" min="0" max="10" step="0.1"
+          value="${c.examen ?? ''}" placeholder="—"
+          oninput="editCal('${a.id}','examen',this)"></td>
+        <td><input class="cal-input" type="number" min="0" max="10" step="0.1"
+          value="${c.autoevaluacion ?? ''}" placeholder="—"
+          oninput="editCal('${a.id}','autoevaluacion',this)"></td>
+        <td class="prom-cell" id="prom-${a.id}">${prom}</td>
+        <td id="banda-${a.id}">${b ? `<span class="banda ${b.cls}">${b.label}</span>` : '—'}</td>
+      </tr>`
+    }).join('')
+
+    generarResumen()
+  }
+
+  // ── Edición inline con promedio en tiempo real ────────────
+  window.editCal = (alumnoId, campo, input) => {
+    const val = input.value === '' ? null : parseFloat(input.value)
+    if (!calsMap[alumnoId]) calsMap[alumnoId] = { alumno_id: alumnoId }
+    calsMap[alumnoId][campo] = val
+    dirty[alumnoId] = true
+    input.classList.add('dirty')
+
+    const c = calsMap[alumnoId]
+    const allNull = [c.trabajo_clase, c.proyecto, c.examen, c.autoevaluacion].every(v => v == null)
+    if (!allNull) {
+      const prom =
+        (c.trabajo_clase  ?? 0) * 0.30 +
+        (c.proyecto       ?? 0) * 0.25 +
+        (c.examen         ?? 0) * 0.40 +
+        (c.autoevaluacion ?? 0) * 0.05
+      document.getElementById(`prom-${alumnoId}`).textContent = prom.toFixed(1)
+    }
+  }
+
+  // ── Guardar ───────────────────────────────────────────────
+  document.getElementById('btn-guardar').addEventListener('click', async () => {
+    const btn = document.getElementById('btn-guardar')
+    const pendientes = alumnos.filter(a => dirty[a.id])
+
+    if (!pendientes.length) { mostrarToast('Sin cambios pendientes'); return }
+
+    btn.disabled = true; btn.textContent = 'Guardando...'
+    try {
+      for (const alumno of pendientes) {
+        const c = calsMap[alumno.id] || {}
+        await supabase.from('calificaciones').upsert({
+          alumno_id:        alumno.id,
+          grupo_materia_id: gmSelId,
+          periodo_id:       periodoId,
+          trabajo_clase:    c.trabajo_clase    ?? null,
+          proyecto:         c.proyecto         ?? null,
+          examen:           c.examen           ?? null,
+          autoevaluacion:   c.autoevaluacion   ?? null,
+        }, { onConflict: 'alumno_id,grupo_materia_id,periodo_id' })
+      }
+      const n = pendientes.length
+      mostrarToast(`${n} alumno${n > 1 ? 's' : ''} guardado${n > 1 ? 's' : ''} ✓`)
+      await cargarCalificaciones()
+    } catch(e) {
+      mostrarToast(e.message, 'error')
+    } finally {
+      btn.disabled = false; btn.textContent = 'Guardar cambios'
+    }
+  })
+
+  // ── Resumen ───────────────────────────────────────────────
+  function generarResumen() {
+    const cals = alumnos.map(a => calsMap[a.id]).filter(c => c?.promedio_parcial != null)
+    if (!cals.length) { document.getElementById('ia-box').style.display = 'none'; return }
+
+    const proms   = cals.map(c => parseFloat(c.promedio_parcial))
+    const prom    = (proms.reduce((a, b) => a + b, 0) / proms.length).toFixed(1)
+    const riesgo  = cals.filter(c => c.promedio_parcial < 6).length
+    const aten    = cals.filter(c => c.promedio_parcial >= 6 && c.promedio_parcial < 7).length
+    const brecha  = cals.filter(c => c.autoevaluacion && c.examen && (c.autoevaluacion - c.examen) > 2).length
+    const sinCal  = alumnos.length - cals.length
+
+    const msgs = [`Promedio del grupo: ${prom}.`]
+    if (riesgo > 0) msgs.push(`${riesgo} alumno${riesgo > 1 ? 's' : ''} en riesgo (< 6.0).`)
+    if (aten   > 0) msgs.push(`${aten} en zona de atención (6.0–6.9).`)
+    if (brecha > 0) msgs.push(`${brecha} alumno${brecha > 1 ? 's' : ''} con brecha autoevaluación vs examen > 2 pts.`)
+    if (sinCal > 0) msgs.push(`${sinCal} sin calificación registrada.`)
+
+    document.getElementById('ia-texto').textContent = msgs.join(' ')
+    document.getElementById('ia-box').style.display = 'block'
+  }
+
+  // ── Helpers ───────────────────────────────────────────────
+  function resetUI() {
+    document.getElementById('sel-materia').innerHTML = '<option value="">—</option>'
+    document.getElementById('sel-materia').disabled  = true
+    document.getElementById('sel-periodo').innerHTML = '<option value="">—</option>'
+    document.getElementById('sel-periodo').disabled  = true
+    resetContent()
+  }
+
+  function resetContent() {
+    document.getElementById('content').style.display   = 'none'
+    document.getElementById('empty-sel').style.display = 'block'
+    document.getElementById('topbar-sub').textContent  = 'Selecciona un grupo para comenzar'
+    gmSelId = null; periodoId = null; dirty = {}
+  }
+
+  function mostrarToast(msg, tipo = 'ok') {
+    const t = document.getElementById('toast')
+    t.textContent = msg
+    t.style.background = tipo === 'error' ? 'var(--co)' : 'var(--vd)'
+    t.style.display = 'block'
+    setTimeout(() => { t.style.display = 'none' }, 2500)
+  }
+</script>
+</body>
+</html>

@@ -209,10 +209,10 @@ create table public.calificaciones (
 create or replace function public.calcular_promedio_banda()
 returns trigger language plpgsql as $$
 declare
-  prom   numeric(4,2);
-  v_banda text;
-  meta   record;
-  ciclo_id uuid;
+  prom      numeric(4,2);
+  v_banda   text;
+  meta      record;
+  v_ciclo_id uuid;
 begin
   -- Calcular promedio ponderado
   prom := coalesce(new.trabajo_clase, 0) * 0.30
@@ -224,13 +224,13 @@ begin
   new.updated_at       := now();
 
   -- Obtener ciclo_id desde el periodo
-  select p.ciclo_id into ciclo_id
+  select p.ciclo_id into v_ciclo_id
   from public.periodos p where p.id = new.periodo_id;
 
   -- Asignar banda según metas del ciclo
   select banda into v_banda
   from public.metas_rendimiento
-  where ciclo_id = ciclo_id
+  where ciclo_id = v_ciclo_id
     and prom >= rango_min
     and prom <= rango_max
   limit 1;
