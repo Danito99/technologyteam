@@ -958,12 +958,12 @@
 
           sesionesDelParcial.forEach((sesion, idx) => {
             html += `
-              <div class="sesion-item" onclick="editarSesionDesdeConsulta(${trimestre}, ${JSON.stringify(sesion).replace(/"/g, '&quot;')})">
+              <div class="sesion-item" onclick="editarSesionDesdeConsulta(${trimestre}, ${sesion.id || 'temp-' + idx})">
                 <div class="sesion-numero">${idx + 1}</div>
                 <div class="sesion-contenido">
-                  <div class="sesion-titulo">${sesion.semana || 'Sesión ' + (idx + 1)}</div>
+                  <div class="sesion-titulo">${(sesion.semana || 'Sesión ' + (idx + 1)).replace(/"/g, '&quot;')}</div>
                   <div class="sesion-detalles">
-                    ${sesion.eje_articulador || 'Sin eje'} • ${sesion.contenido || 'Sin contenido'} • ${sesion.tipo_actividad || 'Sin tipo'}
+                    ${(sesion.eje_articulador || 'Sin eje').replace(/"/g, '&quot;')} • ${(sesion.contenido || 'Sin contenido').replace(/"/g, '&quot;')} • ${(sesion.tipo_actividad || 'Sin tipo').replace(/"/g, '&quot;')}
                   </div>
                 </div>
               </div>
@@ -985,20 +985,22 @@
   }
 
   // ── Editar sesión desde consulta ──────────────────────────
-  window.editarSesionDesdeConsulta = (trimestre, sesion) => {
+  window.editarSesionDesdeConsulta = (trimestre, sesionId) => {
     // Cambiar al trimestre correspondiente y mostrar la vista de plan analítico
     const btnTrimestre = document.querySelector(`[data-trimestre="${trimestre}"]`)
     if (btnTrimestre) {
       btnTrimestre.click() // Esto cambiará el periodo y cargará las filas
       setTimeout(() => {
         mostrarVista('plan-analitico')
-        // Buscar la fila y hacer scroll hacia ella
-        const filaElement = document.querySelector(`tr[data-idx] .cell-input[value*="${sesion.semana}"]`)
-        if (filaElement) {
-          filaElement.closest('tr').scrollIntoView({ behavior: 'smooth', block: 'center' })
-          filaElement.focus()
+        // Hacer scroll al primer parcial del trimestre
+        const primerParcial = document.querySelector('.parcial-header')
+        if (primerParcial) {
+          primerParcial.scrollIntoView({ behavior: 'smooth', block: 'start' })
         }
       }, 500)
+    } else {
+      // Si no encuentra el botón del trimestre, solo cambiar a vista plan analítico
+      mostrarVista('plan-analitico')
     }
   }
 
