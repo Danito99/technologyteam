@@ -160,6 +160,59 @@
       font-size: 11px; color: var(--text-3); margin-top: 8px;
       padding-top: 8px; border-top: 1px solid var(--border);
     }
+
+    /* Vista de consulta */
+    .consulta-header {
+      background: var(--bg-2); padding: 16px; border-radius: 8px;
+      border: 1px solid var(--border); margin-bottom: 20px;
+    }
+    .trimestre-seccion {
+      margin-bottom: 24px; background: var(--bg-card);
+      border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+    }
+    .trimestre-header {
+      background: var(--az); color: white; padding: 12px 16px;
+      font-weight: bold; display: flex; justify-content: space-between; align-items: center;
+    }
+    .parcial-seccion {
+      border-bottom: 1px solid var(--border-light);
+    }
+    .parcial-seccion:last-child {
+      border-bottom: none;
+    }
+    .parcial-titulo {
+      background: var(--bg-2); padding: 8px 16px; font-weight: 600;
+      font-size: 13px; color: var(--text); border-bottom: 1px solid var(--border-light);
+    }
+    .sesiones-lista {
+      padding: 12px;
+    }
+    .sesion-item {
+      display: flex; align-items: center; padding: 8px 12px;
+      border: 1px solid var(--border-light); border-radius: 6px;
+      margin-bottom: 8px; cursor: pointer; transition: all .15s;
+      background: var(--bg);
+    }
+    .sesion-item:hover {
+      border-color: var(--az); background: var(--bg-2);
+    }
+    .sesion-item:last-child {
+      margin-bottom: 0;
+    }
+    .sesion-numero {
+      background: var(--az); color: white; width: 24px; height: 24px;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: bold; margin-right: 12px; flex-shrink: 0;
+    }
+    .sesion-contenido {
+      flex: 1; font-size: 13px; line-height: 1.4;
+    }
+    .sesion-titulo {
+      font-weight: 600; color: var(--text); margin-bottom: 2px;
+    }
+    .sesion-detalles {
+      color: var(--text-2); font-size: 12px;
+    }
     .toast {
       position:fixed; bottom:70px; right:20px; background:var(--vd);
       color:white; padding:10px 16px; border-radius:var(--radius-s);
@@ -203,6 +256,9 @@
           <button class="main-nav-tab active" onclick="mostrarVista('plan-analitico')" id="tab-plan">
             📋 Plan analítico
           </button>
+          <button class="main-nav-tab" onclick="mostrarVista('consultar')" id="tab-consultar">
+            👁️ Consultar plan analítico
+          </button>
           <button class="main-nav-tab" onclick="mostrarVista('sesiones')" id="tab-sesiones">
             📚 Sesiones por período
           </button>
@@ -241,6 +297,19 @@
           </div>
         </div>
         </div> <!-- Fin vista-plan-analitico -->
+
+        <!-- Vista Consultar Plan Analítico -->
+        <div id="vista-consultar" style="display:none;">
+          <div class="consulta-header">
+            <h3 style="margin: 0 0 16px 0; color: var(--az);">📊 Resumen del Plan Analítico</h3>
+            <p style="color: var(--text-2); font-size: 13px; margin: 0 0 20px 0;">
+              Vista consolidada de todos los trimestres. Haz clic en cualquier elemento para editarlo.
+            </p>
+          </div>
+          <div id="consulta-contenido">
+            <!-- El contenido se generará aquí -->
+          </div>
+        </div>
 
         <!-- Vista Sesiones por Período -->
         <div id="vista-sesiones" style="display:none;">
@@ -765,6 +834,7 @@
   window.mostrarVista = (vista) => {
     // Ocultar todas las vistas
     document.getElementById('vista-plan-analitico').style.display = 'none'
+    document.getElementById('vista-consultar').style.display = 'none'
     document.getElementById('vista-sesiones').style.display = 'none'
 
     // Quitar clase active de todos los tabs
@@ -773,6 +843,10 @@
     if (vista === 'plan-analitico') {
       document.getElementById('vista-plan-analitico').style.display = 'block'
       document.getElementById('tab-plan').classList.add('active')
+    } else if (vista === 'consultar') {
+      document.getElementById('vista-consultar').style.display = 'block'
+      document.getElementById('tab-consultar').classList.add('active')
+      generarVistaConsulta()
     } else if (vista === 'sesiones') {
       document.getElementById('vista-sesiones').style.display = 'block'
       document.getElementById('tab-sesiones').classList.add('active')
@@ -806,6 +880,116 @@
         </div>
       </div>
     `).join('')
+  }
+
+  // ── Generar vista de consulta consolidada ─────────────────
+  async function generarVistaConsulta() {
+    const container = document.getElementById('consulta-contenido')
+    container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-3);">Cargando datos de todos los trimestres...</div>'
+
+    try {
+      // Cargar datos de todos los trimestres para este grupo/materia
+      const { data: todasLasFilas } = await supabase
+        .from('plan_analitico_filas')
+        .select('*')
+        .eq('grupo_materia_id', grupoMateriaId)
+        .order('periodo_numero')
+        .order('sub_parcial')
+        .order('orden')
+
+      if (!todasLasFilas || todasLasFilas.length === 0) {
+        container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-3);">No hay datos guardados aún. Crea contenido en el Plan Analítico.</div>'
+        return
+      }
+
+      // Agrupar por trimestre
+      const filasPorTrimestre = {}
+      todasLasFilas.forEach(fila => {
+        const trimestre = fila.periodo_numero || 1
+        if (!filasPorTrimestre[trimestre]) filasPorTrimestre[trimestre] = []
+        filasPorTrimestre[trimestre].push(fila)
+      })
+
+      // Generar HTML
+      let html = ''
+      Object.keys(filasPorTrimestre).sort((a, b) => parseInt(a) - parseInt(b)).forEach(trimestre => {
+        const filasDelTrimestre = filasPorTrimestre[trimestre]
+
+        // Agrupar por sub-parcial dentro del trimestre
+        const filasPorParcial = {}
+        filasDelTrimestre.forEach(fila => {
+          const subParcial = fila.sub_parcial || 1
+          if (!filasPorParcial[subParcial]) filasPorParcial[subParcial] = []
+          filasPorParcial[subParcial].push(fila)
+        })
+
+        const totalSesiones = filasDelTrimestre.filter(f => !f.es_examen).length
+
+        html += `
+          <div class="trimestre-seccion">
+            <div class="trimestre-header">
+              <span>📚 Trimestre ${trimestre}</span>
+              <span>${totalSesiones} sesiones</span>
+            </div>
+        `
+
+        // Generar parciales dentro del trimestre
+        Object.keys(filasPorParcial).sort((a, b) => parseInt(a) - parseInt(b)).forEach(subParcial => {
+          const filasDelParcial = filasPorParcial[subParcial]
+          const sesionesDelParcial = filasDelParcial.filter(f => !f.es_examen)
+
+          html += `
+            <div class="parcial-seccion">
+              <div class="parcial-titulo">
+                📖 Parcial ${subParcial} (${sesionesDelParcial.length} sesiones)
+              </div>
+              <div class="sesiones-lista">
+          `
+
+          sesionesDelParcial.forEach((sesion, idx) => {
+            html += `
+              <div class="sesion-item" onclick="editarSesionDesdeConsulta(${trimestre}, ${JSON.stringify(sesion).replace(/"/g, '&quot;')})">
+                <div class="sesion-numero">${idx + 1}</div>
+                <div class="sesion-contenido">
+                  <div class="sesion-titulo">${sesion.semana || 'Sesión ' + (idx + 1)}</div>
+                  <div class="sesion-detalles">
+                    ${sesion.eje_articulador || 'Sin eje'} • ${sesion.contenido || 'Sin contenido'} • ${sesion.tipo_actividad || 'Sin tipo'}
+                  </div>
+                </div>
+              </div>
+            `
+          })
+
+          html += '</div></div>'
+        })
+
+        html += '</div>'
+      })
+
+      container.innerHTML = html
+
+    } catch (error) {
+      console.error('Error cargando datos:', error)
+      container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--co);">Error cargando datos. Intenta de nuevo.</div>'
+    }
+  }
+
+  // ── Editar sesión desde consulta ──────────────────────────
+  window.editarSesionDesdeConsulta = (trimestre, sesion) => {
+    // Cambiar al trimestre correspondiente y mostrar la vista de plan analítico
+    const btnTrimestre = document.querySelector(`[data-trimestre="${trimestre}"]`)
+    if (btnTrimestre) {
+      btnTrimestre.click() // Esto cambiará el periodo y cargará las filas
+      setTimeout(() => {
+        mostrarVista('plan-analitico')
+        // Buscar la fila y hacer scroll hacia ella
+        const filaElement = document.querySelector(`tr[data-idx] .cell-input[value*="${sesion.semana}"]`)
+        if (filaElement) {
+          filaElement.closest('tr').scrollIntoView({ behavior: 'smooth', block: 'center' })
+          filaElement.focus()
+        }
+      }, 500)
+    }
   }
 
   // ── Abrir detalle de sesión ───────────────────────────────
