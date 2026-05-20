@@ -124,30 +124,111 @@
     .select('id, estado, entregado_at, modificado_at, comentario_admin, grupo_materia_id, periodo_id')
     .in('grupo_materia_id', gmIds.map(x => x.gmId))
 
-  // Construir lista completa (existentes + pendientes)
+  // Cargar datos del plan analítico para auto-generar sesiones
+  const { data: planAnalitico } = await supabase
+    .from('plan_analitico_filas')
+    .select('*')
+    .in('grupo_materia_id', gmIds.map(x => x.gmId))
+    .eq('es_examen', false)
+    .order('periodo_numero')
+    .order('sub_parcial')
+    .order('orden')
+
+  // Construir lista completa (existentes + auto-generados desde plan analítico)
   const planesMap = {}
   planesDB?.forEach(p => { planesMap[`${p.grupo_materia_id}_${p.periodo_id}`] = p })
 
   todosPlanes = []
-  gmIds.forEach(({ gmId, gmLabel, sistema }) => {
+  await Promise.all(gmIds.map(async ({ gmId, gmLabel, sistema }) => {
     const tipo = sistema === 'semestral' ? 'semestre' : 'trimestre'
     const psFiltrados = periodos?.filter(p => p.tipo === tipo) || []
-    psFiltrados.forEach(p => {
+
+    await Promise.all(psFiltrados.map(async (p) => {
       const key = `${gmId}_${p.id}`
-      const plan = planesMap[key]
+      let plan = planesMap[key]
+
+      // Buscar sesiones del plan analítico para este período
+      const sesionesAnalitic = planAnalitico?.filter(pa =>
+        pa.grupo_materia_id === gmId &&
+        pa.periodo_numero === getPeriodoNumero(p.etiqueta)
+      ) || []
+
+      // Auto-generar plan y sesiones si hay datos en plan analítico
+      if (sesionesAnalitic.length > 0 && !plan) {
+        try {
+          plan = await autoGenerarPlanClase(gmId, p.id, gmLabel, p.etiqueta, sesionesAnalitic)
+        } catch (error) {
+          console.warn('Error auto-generando plan:', error)
+        }
+      }
+
       todosPlanes.push({
         id: plan?.id || null,
-        estado: plan?.estado || 'pendiente',
+        estado: plan?.estado || (sesionesAnalitic.length > 0 ? 'pendiente' : 'sin_plan'),
         entregado_at: plan?.entregado_at,
         modificado_at: plan?.modificado_at,
         comentario_admin: plan?.comentario_admin,
         grupo_materia_id: gmId,
         periodo_id: p.id,
         gmLabel,
-        periodoLabel: p.etiqueta
+        periodoLabel: p.etiqueta,
+        sesiones_count: sesionesAnalitic.length
       })
-    })
-  })
+    }))
+  }))
+
+  // Función para auto-generar plan de clase desde plan analítico
+  async function autoGenerarPlanClase(gmId, periodoId, gmLabel, periodoLabel, sesiones) {
+    try {
+      // Crear el plan de clase principal
+      const { data: nuevoPlan, error: errorPlan } = await supabase
+        .from('planes_clase')
+        .insert({
+          grupo_materia_id: gmId,
+          periodo_id: periodoId,
+          estado: 'pendiente',
+          nombre_proyecto: `Plan ${gmLabel} - ${periodoLabel}`
+        })
+        .select()
+        .single()
+
+      if (errorPlan) throw errorPlan
+
+      // Crear las sesiones individuales
+      const sesionesParaInsertar = sesiones.map((sesion, idx) => ({
+        plan_clase_id: nuevoPlan.id,
+        numero: idx + 1,
+        objetivo_particular: sesion.aprendizaje_esperado || `Sesión ${idx + 1}`,
+        inicio: null,
+        desarrollo: null,
+        cierre: null,
+        // Datos del plan analítico para referencia
+        semana_ref: sesion.semana,
+        eje_articulador_ref: sesion.eje_articulador,
+        contenido_ref: sesion.contenido,
+        saber_hacer_ref: sesion.saber_hacer,
+        bloom_nivel_ref: sesion.bloom_nivel,
+        tipo_actividad_ref: sesion.tipo_actividad
+      }))
+
+      const { error: errorSesiones } = await supabase
+        .from('plan_clase_sesiones')
+        .insert(sesionesParaInsertar)
+
+      if (errorSesiones) throw errorSesiones
+
+      return nuevoPlan
+    } catch (error) {
+      console.error('Error auto-generando plan de clase:', error)
+      return null
+    }
+  }
+
+  // Función helper para extraer número de período de la etiqueta
+  function getPeriodoNumero(etiqueta) {
+    const match = etiqueta.match(/(\d+)/)
+    return match ? parseInt(match[1]) : 1
+  }
 
   document.getElementById('loading').style.display = 'none'
   document.getElementById('content').style.display = 'block'
@@ -181,7 +262,8 @@
     lista.innerHTML = planes.map(p => {
       const estadoClass = {
         pendiente: 'chip-red', borrador: 'chip-amber',
-        entregado: 'chip-blue', aprobado: 'chip-green', rechazado: 'chip-red'
+        entregado: 'chip-blue', aprobado: 'chip-green', rechazado: 'chip-red',
+        sin_plan: 'chip-gray'
       }[p.estado] || 'chip-blue'
 
       const estadoLabel = {
@@ -207,11 +289,19 @@
         ? `<button class="btn btn-sm" style="border-color:var(--az);color:var(--az);" onclick="irEditor('${p.grupo_materia_id}','${p.periodo_id}','${p.id}')">Continuar</button>`
         : `<button class="btn btn-sm" onclick="irEditor('${p.grupo_materia_id}','${p.periodo_id}','${p.id}')">Ver</button>`
 
+      const sesionesInfo = p.sesiones_count > 0
+        ? ` · ${p.sesiones_count} sesiones del plan analítico`
+        : ''
+
+      const estadoInfo = p.estado === 'sin_plan'
+        ? '<span class="chip chip-gray">Sin plan analítico</span>'
+        : `<span class="chip ${estadoClass}">${estadoLabel}</span>`
+
       return `
         <div class="plan-card">
           <div>
-            <div class="plan-grupo">${p.gmLabel} <span class="chip ${estadoClass}">${estadoLabel}</span>${modBadge}</div>
-            <div class="plan-meta">${p.periodoLabel} · Entregado: ${fechaEntrega}</div>
+            <div class="plan-grupo">${p.gmLabel} ${estadoInfo}${modBadge}</div>
+            <div class="plan-meta">${p.periodoLabel} · Entregado: ${fechaEntrega}${sesionesInfo}</div>
             ${comentario}
           </div>
           <div class="plan-actions">${btnAccion}</div>
