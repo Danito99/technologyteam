@@ -377,6 +377,7 @@
 
   // ── Render tabla ──────────────────────────────────────────
   function renderTabla() {
+    console.log('Renderizando tabla. Valores tipo_actividad:', filasActuales.map((f, i) => `${i}: ${f.tipo_actividad}`));
     const tbody = document.getElementById('plan-tbody')
     document.getElementById('card-tabla').style.display = 'block'
     const CATS = catalogoFiltrado()
@@ -635,7 +636,11 @@
       el.style.height = 'auto'; el.style.height = Math.max(40, el.scrollHeight) + 'px'
     })
   }
-  window.editarCelda = (idx, campo, valor) => { filasActuales[idx][campo] = valor; marcarCambios() }
+  window.editarCelda = (idx, campo, valor) => {
+    filasActuales[idx][campo] = valor;
+    console.log(`Editando fila ${idx}, campo ${campo}, valor: ${valor}`);
+    marcarCambios()
+  }
   function marcarCambios() {
     haycambios = true
     document.getElementById('save-status').textContent = '● Cambios sin guardar'
