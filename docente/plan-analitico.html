@@ -377,6 +377,9 @@
 
   // ── Render tabla ──────────────────────────────────────────
   function renderTabla() {
+    // Capturar valores actuales de los selects antes de re-renderizar
+    capturarValoresSelect()
+
     console.log('Renderizando tabla. Valores tipo_actividad:', filasActuales.map((f, i) => `${i}: ${f.tipo_actividad}`));
     const tbody = document.getElementById('plan-tbody')
     document.getElementById('card-tabla').style.display = 'block'
@@ -507,6 +510,27 @@
 
     tbody.innerHTML = htmlCompleto
     setTimeout(aplicarAutoResize, 30)
+  }
+
+  // ── Capturar valores de selects antes de re-renderizar ────
+  function capturarValoresSelect() {
+    // Capturar valores de tipo_actividad de todos los selects visibles
+    document.querySelectorAll('tr[data-idx]').forEach(row => {
+      const idx = parseInt(row.getAttribute('data-idx'))
+      if (idx >= 0 && idx < filasActuales.length) {
+        // Tipo actividad (último select en la fila)
+        const tipoSelect = row.querySelector('td:nth-last-child(2) select')
+        if (tipoSelect) {
+          filasActuales[idx].tipo_actividad = tipoSelect.value || null
+        }
+
+        // También capturar otros campos editables
+        const semanaTextarea = row.querySelector('.cell-input')
+        if (semanaTextarea) {
+          filasActuales[idx].semana = semanaTextarea.value || ''
+        }
+      }
+    })
   }
 
   // ── Funciones para manejo de parciales ────────────────────
