@@ -118,6 +118,48 @@
       margin:0 -20px -20px; z-index:10;
     }
     .save-status { font-size:11px; color:var(--text-3); }
+
+    /* Navegación principal */
+    .main-nav {
+      display: flex; gap: 8px; margin-bottom: 16px;
+      border-bottom: 1px solid var(--border); padding-bottom: 8px;
+    }
+    .main-nav-tab {
+      padding: 8px 16px; border: 1px solid var(--border);
+      background: var(--bg); color: var(--text-2);
+      border-radius: 6px; cursor: pointer; transition: all .15s;
+    }
+    .main-nav-tab.active {
+      background: var(--az); color: white; border-color: var(--az);
+    }
+    .main-nav-tab:hover:not(.active) {
+      background: var(--bg-2); color: var(--text);
+    }
+
+    /* Grid de sesiones */
+    .sesiones-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 16px; margin-top: 16px;
+    }
+    .sesion-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 8px; padding: 16px; cursor: pointer;
+      transition: all .15s; position: relative;
+    }
+    .sesion-card:hover {
+      border-color: var(--az); transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .sesion-card h4 {
+      margin: 0 0 8px 0; color: var(--az); font-size: 14px;
+    }
+    .sesion-card .sesion-info {
+      font-size: 12px; color: var(--text-2); line-height: 1.4;
+    }
+    .sesion-card .sesion-meta {
+      font-size: 11px; color: var(--text-3); margin-top: 8px;
+      padding-top: 8px; border-top: 1px solid var(--border);
+    }
     .toast {
       position:fixed; bottom:70px; right:20px; background:var(--vd);
       color:white; padding:10px 16px; border-radius:var(--radius-s);
@@ -155,7 +197,20 @@
         <div class="info-plan" id="info-plan" style="display:none;">
           💡 Planifica por parcial individual. Elige Eje → Contenido para auto-rellenar PDA y nivel Bloom. El 🔒 desbloquea edición del PDA.
         </div>
-        <div class="tab-periodos" id="tab-periodos"></div>
+
+        <!-- Navegación principal -->
+        <div class="main-nav" id="main-nav" style="display:none;">
+          <button class="main-nav-tab active" onclick="mostrarVista('plan-analitico')" id="tab-plan">
+            📋 Plan analítico
+          </button>
+          <button class="main-nav-tab" onclick="mostrarVista('sesiones')" id="tab-sesiones">
+            📚 Sesiones por período
+          </button>
+        </div>
+
+        <!-- Vista Plan Analítico -->
+        <div id="vista-plan-analitico">
+          <div class="tab-periodos" id="tab-periodos"></div>
         <div class="card mb-0" id="card-tabla" style="display:none;">
           <div style="overflow-x:auto;">
             <table class="plan-table" id="plan-table">
@@ -185,6 +240,16 @@
             </button>
           </div>
         </div>
+        </div> <!-- Fin vista-plan-analitico -->
+
+        <!-- Vista Sesiones por Período -->
+        <div id="vista-sesiones" style="display:none;">
+          <div class="tab-periodos" id="tab-periodos-sesiones"></div>
+          <div id="sesiones-cards" class="sesiones-grid">
+            <!-- Los cards de sesiones se generarán aquí -->
+          </div>
+        </div>
+
       </div>
       <div class="save-bar" id="save-bar" style="display:none;">
         <span class="save-status" id="save-status">Sin cambios pendientes</span>
@@ -350,8 +415,12 @@
       await cargarFilas()
     }
     document.getElementById('info-plan').style.display = 'block'
+    document.getElementById('main-nav').style.display = 'flex'
     document.getElementById('save-bar').style.display = 'flex'
     document.getElementById('topbar-sub').textContent = selGrupo.options[selGrupo.selectedIndex].textContent
+
+    // Mostrar la vista de plan analítico por defecto
+    mostrarVista('plan-analitico')
   }
 
   async function seleccionarParcial(pId, pParcial, btnEl) {
@@ -691,6 +760,60 @@
     })
     marcarCambios(); renderTabla()
   })
+
+  // ── Navegación entre vistas ───────────────────────────────
+  window.mostrarVista = (vista) => {
+    // Ocultar todas las vistas
+    document.getElementById('vista-plan-analitico').style.display = 'none'
+    document.getElementById('vista-sesiones').style.display = 'none'
+
+    // Quitar clase active de todos los tabs
+    document.querySelectorAll('.main-nav-tab').forEach(tab => tab.classList.remove('active'))
+
+    if (vista === 'plan-analitico') {
+      document.getElementById('vista-plan-analitico').style.display = 'block'
+      document.getElementById('tab-plan').classList.add('active')
+    } else if (vista === 'sesiones') {
+      document.getElementById('vista-sesiones').style.display = 'block'
+      document.getElementById('tab-sesiones').classList.add('active')
+      generarSesionesCards()
+    }
+  }
+
+  // ── Generar cards de sesiones ─────────────────────────────
+  function generarSesionesCards() {
+    const container = document.getElementById('sesiones-cards')
+
+    // Filtrar solo las sesiones (no exámenes) del periodo actual
+    const sesiones = filasActuales.filter(f => !f.es_examen && f.semana)
+
+    if (sesiones.length === 0) {
+      container.innerHTML = '<div style="text-align:center;color:var(--text-3);padding:40px;">No hay sesiones en este período. Crea algunas en el Plan Analítico.</div>'
+      return
+    }
+
+    container.innerHTML = sesiones.map((sesion, idx) => `
+      <div class="sesion-card" onclick="abrirDetalleSesion(${filasActuales.indexOf(sesion)})">
+        <h4>📚 ${sesion.semana || 'Sesión ' + (idx + 1)}</h4>
+        <div class="sesion-info">
+          <strong>Eje:</strong> ${sesion.eje_articulador || '—'}<br>
+          <strong>Contenido:</strong> ${sesion.contenido || '—'}<br>
+          <strong>PDA:</strong> ${sesion.aprendizaje_esperado ? sesion.aprendizaje_esperado.substring(0, 80) + '...' : '—'}
+        </div>
+        <div class="sesion-meta">
+          <span>Tipo: ${sesion.tipo_actividad || 'Sin definir'}</span>
+          ${sesion.bloom_nivel ? ` • Nivel: ${sesion.bloom_nivel}` : ''}
+        </div>
+      </div>
+    `).join('')
+  }
+
+  // ── Abrir detalle de sesión ───────────────────────────────
+  window.abrirDetalleSesion = (indiceGlobal) => {
+    const sesion = filasActuales[indiceGlobal]
+    // TODO: Aquí abriremos el formulario detallado de la sesión
+    alert('Próximamente: Detalle de sesión para "' + (sesion.semana || 'Sesión') + '"')
+  }
 
   // ── Guardar ───────────────────────────────────────────────
   document.getElementById('btn-guardar').addEventListener('click', async () => {
