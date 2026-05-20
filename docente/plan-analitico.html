@@ -887,15 +887,25 @@
     const container = document.getElementById('consulta-contenido')
     container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-3);">Cargando datos de todos los trimestres...</div>'
 
+    console.log('Consultando datos con grupoMateriaId:', grupoMateriaId)
+
     try {
       // Cargar datos de todos los trimestres para este grupo/materia
-      const { data: todasLasFilas } = await supabase
+      const { data: todasLasFilas, error } = await supabase
         .from('plan_analitico_filas')
         .select('*')
         .eq('grupo_materia_id', grupoMateriaId)
         .order('periodo_numero')
-        .order('sub_parcial')
         .order('orden')
+
+      console.log('Datos recibidos:', todasLasFilas)
+      console.log('Error:', error)
+
+      if (error) {
+        console.error('Error en consulta:', error)
+        container.innerHTML = `<div style="text-align:center;padding:40px;color:var(--co);">Error: ${error.message}</div>`
+        return
+      }
 
       if (!todasLasFilas || todasLasFilas.length === 0) {
         container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-3);">No hay datos guardados aún. Crea contenido en el Plan Analítico.</div>'
@@ -915,10 +925,10 @@
       Object.keys(filasPorTrimestre).sort((a, b) => parseInt(a) - parseInt(b)).forEach(trimestre => {
         const filasDelTrimestre = filasPorTrimestre[trimestre]
 
-        // Agrupar por sub-parcial dentro del trimestre
+        // Agrupar por sub-parcial dentro del trimestre (usar 1 si no existe la columna)
         const filasPorParcial = {}
         filasDelTrimestre.forEach(fila => {
-          const subParcial = fila.sub_parcial || 1
+          const subParcial = (fila.sub_parcial !== undefined && fila.sub_parcial !== null) ? fila.sub_parcial : 1
           if (!filasPorParcial[subParcial]) filasPorParcial[subParcial] = []
           filasPorParcial[subParcial].push(fila)
         })
