@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TechAcademia — Editor de sesión</title>
+  <link rel="stylesheet" href="../css/global.css">
+  <style>
+    .sesion-container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .info-readonly {
+      background: var(--bg-section);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin-bottom: 20px;
+    }
+
+    .info-readonly h3 {
+      color: var(--az);
+      font-size: 14px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .readonly-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 12px;
+    }
+
+    .readonly-field {
+      background: white;
+      border-radius: var(--radius-s);
+      padding: 10px 12px;
+      border: 1px solid var(--border-light);
+    }
+
+    .readonly-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-3);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
+    }
+
+    .readonly-value {
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.4;
+    }
+
+    .editable-section {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .editable-section h3 {
+      color: var(--vd);
+      font-size: 14px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .editor-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    .campo-editor {
+      position: relative;
+    }
+
+    .campo-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-2);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .campo-required::after {
+      content: '*';
+      color: var(--co);
+    }
+
+    .campo-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 12px;
+      border: 2px solid var(--border);
+      border-radius: var(--radius-s);
+      font-size: 13px;
+      line-height: 1.5;
+      resize: vertical;
+      transition: border-color 0.2s ease;
+    }
+
+    .campo-textarea:focus {
+      border-color: var(--az);
+      outline: none;
+    }
+
+    .campo-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 2px solid var(--border);
+      border-radius: var(--radius-s);
+      font-size: 13px;
+      transition: border-color 0.2s ease;
+    }
+
+    .campo-input:focus {
+      border-color: var(--az);
+      outline: none;
+    }
+
+    .materiales-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .material-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: var(--bg-section);
+      border-radius: var(--radius-s);
+      border: 1px solid var(--border-light);
+    }
+
+    .material-item input[type="checkbox"] {
+      margin: 0;
+    }
+
+    .estado-sesion {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .estado-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .estado-badge {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .estado-completada { background: var(--vd-l); color: var(--vd); }
+    .estado-pendiente { background: var(--am-l); color: var(--am); }
+    .estado-no-iniciada { background: var(--border-light); color: var(--text-3); }
+
+    .toggle-completada {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      padding: 8px 16px;
+      border: 2px solid var(--border);
+      border-radius: 20px;
+      background: white;
+      transition: all 0.2s ease;
+    }
+
+    .toggle-completada:hover {
+      border-color: var(--vd);
+      background: var(--vd-l);
+    }
+
+    .toggle-completada.completada {
+      background: var(--vd);
+      border-color: var(--vd);
+      color: white;
+    }
+
+    .save-bar {
+      position: sticky;
+      bottom: 0;
+      background: white;
+      border-top: 1px solid var(--border);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 -4px 12px rgba(0,0,0,0.1);
+      margin: 0 -20px -20px;
+    }
+
+    .save-status {
+      font-size: 12px;
+      color: var(--text-3);
+    }
+
+    .save-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .progreso-sesion {
+      width: 100%;
+      height: 8px;
+      background: var(--border-light);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progreso-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--az), var(--vd));
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+
+    .hints-panel {
+      background: var(--bg-blue);
+      border: 1px solid var(--border-blue);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+
+    .hints-panel h4 {
+      color: var(--text-blue);
+      font-size: 13px;
+      margin-bottom: 10px;
+    }
+
+    .hints-list {
+      font-size: 12px;
+      color: var(--text-blue);
+      line-height: 1.5;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .readonly-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .materiales-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .estado-sesion {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <div id="sidebar-container"></div>
+  <div class="main-area">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title" id="topbar-title">Sesión</div>
+        <div class="topbar-sub" id="topbar-sub">Editor de contenido</div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn" onclick="history.back()">← Volver</button>
+        <button class="btn" onclick="abrirPlanAnalitico()">📋 Ver plan analítico</button>
+      </div>
+    </div>
+
+    <div class="page-content">
+      <div id="loading" class="loading">Cargando sesión...</div>
+
+      <div id="content" style="display:none;">
+        <div class="sesion-container">
+
+          <!-- Estado y progreso de la sesión -->
+          <div class="estado-sesion">
+            <div class="estado-info">
+              <div>
+                <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">
+                  Estado de la sesión
+                </div>
+                <span id="estado-badge" class="estado-badge estado-no-iniciada">No iniciada</span>
+              </div>
+              <div style="flex:1;margin-left:20px;">
+                <div style="font-size:11px;color:var(--text-3);margin-bottom:4px;">
+                  Progreso de contenido
+                </div>
+                <div class="progreso-sesion">
+                  <div class="progreso-fill" id="progreso-fill" style="width:0%"></div>
+                </div>
+              </div>
+            </div>
+            <div class="toggle-completada" id="toggle-completada" onclick="toggleCompletada()">
+              <span id="check-icon">☐</span>
+              <span id="check-text">Marcar como completada</span>
+            </div>
+          </div>
+
+          <!-- Información del plan analítico (solo lectura) -->
+          <div class="info-readonly">
+            <h3>📋 Información del plan analítico</h3>
+            <div class="readonly-grid">
+              <div class="readonly-field">
+                <div class="readonly-label">Número de sesión</div>
+                <div class="readonly-value" id="readonly-numero">—</div>
+              </div>
+              <div class="readonly-field">
+                <div class="readonly-label">Eje articulador</div>
+                <div class="readonly-value" id="readonly-eje">—</div>
+              </div>
+              <div class="readonly-field">
+                <div class="readonly-label">Contenido (concepto específico)</div>
+                <div class="readonly-value" id="readonly-contenido">—</div>
+              </div>
+              <div class="readonly-field">
+                <div class="readonly-label">PDA (Proceso de desarrollo)</div>
+                <div class="readonly-value" id="readonly-pda">—</div>
+              </div>
+              <div class="readonly-field">
+                <div class="readonly-label">Saber y saber hacer (objetivo específico)</div>
+                <div class="readonly-value" id="readonly-saber">—</div>
+              </div>
+              <div class="readonly-field">
+                <div class="readonly-label">Tipo de actividad</div>
+                <div class="readonly-value" id="readonly-tipo">—</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Panel de ayuda -->
+          <div class="hints-panel">
+            <h4>💡 Guía para planear la sesión</h4>
+            <div class="hints-list">
+              <strong>Inicio:</strong> Activación de conocimientos previos, presentación del objetivo<br>
+              <strong>Desarrollo:</strong> Actividad principal basada en el objetivo específico<br>
+              <strong>Cierre:</strong> Síntesis, reflexión, evaluación del aprendizaje
+            </div>
+          </div>
+
+          <!-- Sección editable -->
+          <div class="editable-section">
+            <h3>✏️ Planificación de la sesión</h3>
+            <div class="editor-grid">
+
+              <div class="campo-editor">
+                <div class="campo-label campo-required">Inicio</div>
+                <textarea
+                  id="inicio"
+                  class="campo-textarea"
+                  placeholder="¿Cómo vas a activar los conocimientos previos? ¿Cómo vas a presentar el objetivo de la sesión? ¿Qué pregunta detonante usarás?"
+                  onchange="calcularProgreso()"
+                ></textarea>
+              </div>
+
+              <div class="campo-editor">
+                <div class="campo-label campo-required">Desarrollo</div>
+                <textarea
+                  id="desarrollo"
+                  class="campo-textarea"
+                  placeholder="Describe la actividad principal. ¿Qué van a hacer los alumnos para lograr el objetivo específico? ¿Qué estrategias usarás?"
+                  onchange="calcularProgreso()"
+                ></textarea>
+              </div>
+
+              <div class="campo-editor">
+                <div class="campo-label campo-required">Cierre</div>
+                <textarea
+                  id="cierre"
+                  class="campo-textarea"
+                  placeholder="¿Cómo vas a sintetizar lo aprendido? ¿Qué reflexión harán los alumnos? ¿Cómo evaluarás si se logró el objetivo?"
+                  onchange="calcularProgreso()"
+                ></textarea>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Materiales y recursos -->
+          <div class="editable-section">
+            <h3>🎯 Materiales y recursos</h3>
+
+            <div class="campo-editor" style="margin-bottom:16px;">
+              <div class="campo-label">Materiales específicos</div>
+              <input
+                type="text"
+                id="materiales-texto"
+                class="campo-input"
+                placeholder="Ej: Laptops, proyector, hojas de trabajo, plataforma Google Classroom..."
+              />
+            </div>
+
+            <div class="materiales-grid">
+              <div>
+                <div class="campo-label" style="margin-bottom:8px;">Recursos digitales</div>
+                <div class="material-item">
+                  <input type="checkbox" id="mat-laptop">
+                  <label for="mat-laptop">Laptops/Tablets</label>
+                </div>
+                <div class="material-item">
+                  <input type="checkbox" id="mat-proyector">
+                  <label for="mat-proyector">Proyector/Pantalla</label>
+                </div>
+                <div class="material-item">
+                  <input type="checkbox" id="mat-internet">
+                  <label for="mat-internet">Acceso a internet</label>
+                </div>
+                <div class="material-item">
+                  <input type="checkbox" id="mat-plataforma">
+                  <label for="mat-plataforma">Plataforma educativa</label>
+                </div>
+              </div>
+
+              <div>
+                <div class="campo-label" style="margin-bottom:8px;">Materiales físicos</div>
+                <div class="material-item">
+                  <input type="checkbox" id="mat-papel">
+                  <label for="mat-papel">Hojas de trabajo</label>
+                </div>
+                <div class="material-item">
+                  <input type="checkbox" id="mat-pizarron">
+                  <label for="mat-pizarron">Pizarrón/Marcadores</label>
+                </div>
+                <div class="material-item">
+                  <input type="checkbox" id="mat-manipulativos">
+                  <label for="mat-manipulativos">Materiales manipulativos</label>
+                </div>
+                <div class="material-item">
+                  <input type="checkbox" id="mat-otros">
+                  <label for="mat-otros">Otros materiales</label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Barra de guardado -->
+      <div class="save-bar" id="save-bar" style="display:none;">
+        <div class="save-status" id="save-status">
+          Los cambios se guardan automáticamente
+        </div>
+        <div class="save-actions">
+          <button class="btn btn-primary" onclick="guardarYVolver()">
+            💾 Guardar y volver
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { requireAuth } from '../js/auth.js'
+  import { renderSidebar } from '../js/sidebar-docente.js'
+  import { supabase } from '../js/supabase.js'
+
+  const profile = await requireAuth('docente')
+  if (!profile) throw new Error('No autenticado')
+  await renderSidebar('planes-clase')
+
+  // Obtener parámetros de la URL
+  const params = new URLSearchParams(window.location.search)
+  const gmId = params.get('gmId')
+  const periodoId = params.get('pId')
+  const sesionId = params.get('sesionId')
+
+  let sesionData = {}
+  let planAnaliticoData = {}
+  let autoGuardar = null
+
+  if (!gmId || !periodoId || !sesionId) {
+    window.location.href = 'planes-clase.html'
+    throw new Error('Faltan parámetros requeridos')
+  }
+
+  // Cargar datos de la sesión
+  async function cargarSesion() {
+    try {
+      // Información del grupo y materia
+      const { data: gm } = await supabase
+        .from('grupo_materias')
+        .select(`
+          id,
+          grupos(nombre, nivel, sistema_periodos),
+          materias(nombre)
+        `)
+        .eq('id', gmId)
+        .single()
+
+      const { data: periodo } = await supabase
+        .from('periodos')
+        .select('etiqueta, numero')
+        .eq('id', periodoId)
+        .single()
+
+      // Usar la nueva función SQL para obtener sesión con plan analítico integrado
+      const { data: sesionCompleta, error } = await supabase
+        .rpc('obtener_sesion_con_plan_analitico', { p_sesion_id: sesionId })
+
+      if (error) {
+        throw error
+      }
+
+      if (!sesionCompleta || sesionCompleta.length === 0) {
+        throw new Error('No se encontró la sesión')
+      }
+
+      const sesionConPlan = sesionCompleta[0]
+
+      // Actualizar títulos
+      document.getElementById('topbar-title').textContent =
+        `Sesión ${sesionConPlan.numero || '—'} • ${gm?.grupos?.nombre}`
+      document.getElementById('topbar-sub').textContent =
+        `${gm?.materias?.nombre} • ${periodo?.etiqueta || '—'}`
+
+      // Combinar datos de sesión y plan analítico
+      sesionData = {
+        id: sesionConPlan.sesion_id,
+        numero: sesionConPlan.numero,
+        titulo: sesionConPlan.titulo,
+        inicio: sesionConPlan.inicio,
+        desarrollo: sesionConPlan.desarrollo,
+        cierre: sesionConPlan.cierre,
+        materiales: sesionConPlan.materiales,
+        materiales_json: sesionConPlan.materiales_json,
+        completada: sesionConPlan.completada,
+        fecha_completada: sesionConPlan.fecha_completada,
+        grupo_materia_id: gmId,
+        periodo_id: periodoId
+      }
+
+      planAnaliticoData = {
+        eje_articulador: sesionConPlan.eje_articulador,
+        contenido: sesionConPlan.contenido,
+        aprendizaje_esperado: sesionConPlan.aprendizaje_esperado,
+        saber_hacer: sesionConPlan.saber_hacer,
+        tipo_actividad: sesionConPlan.tipo_actividad,
+        semana: sesionConPlan.semana
+      }
+
+      // Llenar datos
+      llenarDatosReadonly()
+      llenarCamposEditables()
+      actualizarEstado()
+
+    } catch (error) {
+      console.error('Error cargando sesión:', error)
+      throw error
+    }
+  }
+
+  // Llenar datos del plan analítico (solo lectura)
+  function llenarDatosReadonly() {
+    document.getElementById('readonly-numero').textContent = sesionData.numero || '—'
+    document.getElementById('readonly-eje').textContent = planAnaliticoData.eje_articulador || '—'
+    document.getElementById('readonly-contenido').textContent = planAnaliticoData.contenido || '—'
+    document.getElementById('readonly-pda').textContent = planAnaliticoData.aprendizaje_esperado || '—'
+    document.getElementById('readonly-saber').textContent = planAnaliticoData.saber_hacer || '—'
+    document.getElementById('readonly-tipo').textContent = planAnaliticoData.tipo_actividad || 'Trabajo de clase'
+  }
+
+  // Llenar campos editables
+  function llenarCamposEditables() {
+    document.getElementById('inicio').value = sesionData.inicio || ''
+    document.getElementById('desarrollo').value = sesionData.desarrollo || ''
+    document.getElementById('cierre').value = sesionData.cierre || ''
+    document.getElementById('materiales-texto').value = sesionData.materiales || ''
+
+    // Materiales (checkbox)
+    const materiales = sesionData.materiales_json ? JSON.parse(sesionData.materiales_json) : {}
+    Object.keys(materiales).forEach(key => {
+      const checkbox = document.getElementById(`mat-${key}`)
+      if (checkbox) checkbox.checked = materiales[key]
+    })
+
+    calcularProgreso()
+  }
+
+  // Actualizar estado visual
+  function actualizarEstado() {
+    const badge = document.getElementById('estado-badge')
+    const toggle = document.getElementById('toggle-completada')
+    const checkIcon = document.getElementById('check-icon')
+    const checkText = document.getElementById('check-text')
+
+    if (sesionData.completada) {
+      badge.textContent = 'Completada'
+      badge.className = 'estado-badge estado-completada'
+      toggle.classList.add('completada')
+      checkIcon.textContent = '☑'
+      checkText.textContent = 'Completada'
+    } else if (sesionData.inicio || sesionData.desarrollo || sesionData.cierre) {
+      badge.textContent = 'En progreso'
+      badge.className = 'estado-badge estado-pendiente'
+      toggle.classList.remove('completada')
+      checkIcon.textContent = '☐'
+      checkText.textContent = 'Marcar como completada'
+    } else {
+      badge.textContent = 'No iniciada'
+      badge.className = 'estado-badge estado-no-iniciada'
+      toggle.classList.remove('completada')
+      checkIcon.textContent = '☐'
+      checkText.textContent = 'Marcar como completada'
+    }
+  }
+
+  // Calcular progreso
+  function calcularProgreso() {
+    const campos = ['inicio', 'desarrollo', 'cierre']
+    let completados = 0
+
+    campos.forEach(campo => {
+      if (document.getElementById(campo).value.trim()) {
+        completados++
+      }
+    })
+
+    const progreso = (completados / campos.length) * 100
+    document.getElementById('progreso-fill').style.width = `${progreso}%`
+  }
+
+  // Toggle completada
+  window.toggleCompletada = async () => {
+    const nuevoEstado = !sesionData.completada
+
+    try {
+      await supabase
+        .from('sesiones')
+        .update({
+          completada: nuevoEstado,
+          fecha_completada: nuevoEstado ? new Date().toISOString() : null
+        })
+        .eq('id', sesionId)
+
+      sesionData.completada = nuevoEstado
+      sesionData.fecha_completada = nuevoEstado ? new Date().toISOString() : null
+
+      actualizarEstado()
+
+    } catch (error) {
+      console.error('Error actualizando estado:', error)
+      alert('Error al actualizar el estado')
+    }
+  }
+
+  // Autoguardar
+  function iniciarAutoguardado() {
+    const campos = document.querySelectorAll('#inicio, #desarrollo, #cierre, #materiales-texto')
+
+    campos.forEach(campo => {
+      campo.addEventListener('input', () => {
+        clearTimeout(autoGuardar)
+        autoGuardar = setTimeout(guardarCambios, 2000) // 2 segundos de delay
+      })
+    })
+
+    // Checkboxes de materiales
+    document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+      checkbox.addEventListener('change', () => {
+        clearTimeout(autoGuardar)
+        autoGuardar = setTimeout(guardarCambios, 1000)
+      })
+    })
+  }
+
+  // Guardar cambios
+  async function guardarCambios() {
+    try {
+      // Recopilar materiales
+      const materiales = {}
+      document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+        const key = checkbox.id.replace('mat-', '')
+        materiales[key] = checkbox.checked
+      })
+
+      const datosActualizados = {
+        inicio: document.getElementById('inicio').value.trim() || null,
+        desarrollo: document.getElementById('desarrollo').value.trim() || null,
+        cierre: document.getElementById('cierre').value.trim() || null,
+        materiales: document.getElementById('materiales-texto').value.trim() || null,
+        materiales_json: JSON.stringify(materiales),
+        updated_at: new Date().toISOString()
+      }
+
+      await supabase
+        .from('sesiones')
+        .update(datosActualizados)
+        .eq('id', sesionId)
+
+      // Actualizar datos locales
+      Object.assign(sesionData, datosActualizados)
+
+      actualizarEstado()
+
+      // Mostrar confirmación
+      document.getElementById('save-status').textContent =
+        `Guardado ${new Date().toLocaleTimeString('es-MX', {hour:'2-digit', minute:'2-digit'})}`
+
+    } catch (error) {
+      console.error('Error guardando:', error)
+      document.getElementById('save-status').textContent = 'Error al guardar'
+    }
+  }
+
+  // Guardar y volver
+  window.guardarYVolver = async () => {
+    await guardarCambios()
+    history.back()
+  }
+
+  // Abrir plan analítico
+  window.abrirPlanAnalitico = () => {
+    window.open(`plan-analitico.html?gmId=${gmId}`, '_blank')
+  }
+
+  // Inicializar
+  try {
+    await cargarSesion()
+    iniciarAutoguardado()
+
+    document.getElementById('loading').style.display = 'none'
+    document.getElementById('content').style.display = 'block'
+    document.getElementById('save-bar').style.display = 'flex'
+
+  } catch (error) {
+    console.error('Error inicializando:', error)
+    document.getElementById('loading').innerHTML = `
+      <div style="text-align:center;color:var(--co);">
+        <div style="font-size:24px;margin-bottom:8px;">⚠️</div>
+        <div>Error cargando la sesión: ${error.message}</div>
+        <button class="btn btn-primary" onclick="history.back()" style="margin-top:12px;">Volver</button>
+      </div>`
+  }
+</script>
+</body>
+</html>
