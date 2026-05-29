@@ -129,24 +129,91 @@
       outline: none;
     }
 
-    .materiales-grid {
+    .materiales-modernos {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 16px;
+      gap: 24px;
     }
 
-    .material-item {
+    .recursos-seccion h4 {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 12px;
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 8px 12px;
-      background: var(--bg-section);
-      border-radius: var(--radius-s);
-      border: 1px solid var(--border-light);
     }
 
-    .material-item input[type="checkbox"] {
-      margin: 0;
+    .materiales-cuadricula {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .material-checkbox {
+      position: relative;
+    }
+
+    .modern-checkbox {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .material-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: white;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 13px;
+      min-height: 44px;
+    }
+
+    .material-label:hover {
+      border-color: var(--az);
+      background: var(--az-l);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .modern-checkbox:checked + .material-label {
+      border-color: var(--vd);
+      background: var(--vd-l);
+      color: var(--vd);
+    }
+
+    .modern-checkbox:checked + .material-label::before {
+      content: '✓';
+      position: absolute;
+      top: 4px;
+      right: 6px;
+      width: 16px;
+      height: 16px;
+      background: var(--vd);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .material-icon {
+      font-size: 16px;
+      width: 20px;
+      text-align: center;
+    }
+
+    .material-texto {
+      flex: 1;
+      font-weight: 500;
     }
 
     .estado-sesion {
@@ -264,7 +331,12 @@
         grid-template-columns: 1fr;
       }
 
-      .materiales-grid {
+      .materiales-modernos {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+
+      .materiales-cuadricula {
         grid-template-columns: 1fr;
       }
 
@@ -404,56 +476,100 @@
           <div class="editable-section">
             <h3>🎯 Materiales y recursos</h3>
 
-            <div class="campo-editor" style="margin-bottom:16px;">
+            <div class="campo-editor" style="margin-bottom:20px;">
               <div class="campo-label">Materiales específicos</div>
-              <input
-                type="text"
+              <textarea
                 id="materiales-texto"
-                class="campo-input"
-                placeholder="Ej: Laptops, proyector, hojas de trabajo, plataforma Google Classroom..."
-              />
+                class="campo-textarea"
+                style="min-height:60px;"
+                placeholder="Ej: Laptops con software específico, proyector para presentaciones, hojas de trabajo impresas, acceso a Google Classroom..."
+                onchange="calcularProgreso()"
+              ></textarea>
             </div>
 
-            <div class="materiales-grid">
-              <div>
-                <div class="campo-label" style="margin-bottom:8px;">Recursos digitales</div>
-                <div class="material-item">
-                  <input type="checkbox" id="mat-laptop">
-                  <label for="mat-laptop">Laptops/Tablets</label>
-                </div>
-                <div class="material-item">
-                  <input type="checkbox" id="mat-proyector">
-                  <label for="mat-proyector">Proyector/Pantalla</label>
-                </div>
-                <div class="material-item">
-                  <input type="checkbox" id="mat-internet">
-                  <label for="mat-internet">Acceso a internet</label>
-                </div>
-                <div class="material-item">
-                  <input type="checkbox" id="mat-plataforma">
-                  <label for="mat-plataforma">Plataforma educativa</label>
+            <div class="materiales-modernos">
+              <div class="recursos-seccion">
+                <h4>💻 Recursos digitales</h4>
+                <div class="materiales-cuadricula">
+                  <div class="material-checkbox">
+                    <input type="checkbox" id="mat-laptop" class="modern-checkbox">
+                    <label for="mat-laptop" class="material-label">
+                      <span class="material-icon">💻</span>
+                      <span class="material-texto">Laptops/Tablets</span>
+                    </label>
+                  </div>
+                  <div class="material-checkbox">
+                    <input type="checkbox" id="mat-proyector" class="modern-checkbox">
+                    <label for="mat-proyector" class="material-label">
+                      <span class="material-icon">📽️</span>
+                      <span class="material-texto">Proyector/Pantalla</span>
+                    </label>
+                  </div>
+                  <div class="material-checkbox">
+                    <input type="checkbox" id="mat-internet" class="modern-checkbox">
+                    <label for="mat-internet" class="material-label">
+                      <span class="material-icon">🌐</span>
+                      <span class="material-texto">Acceso a internet</span>
+                    </label>
+                  </div>
+                  <div class="material-checkbox">
+                    <input type="checkbox" id="mat-plataforma" class="modern-checkbox">
+                    <label for="mat-plataforma" class="material-label">
+                      <span class="material-icon">🎓</span>
+                      <span class="material-texto">Plataforma educativa</span>
+                    </label>
+                  </div>
                 </div>
               </div>
 
-              <div>
-                <div class="campo-label" style="margin-bottom:8px;">Materiales físicos</div>
-                <div class="material-item">
-                  <input type="checkbox" id="mat-papel">
-                  <label for="mat-papel">Hojas de trabajo</label>
-                </div>
-                <div class="material-item">
-                  <input type="checkbox" id="mat-pizarron">
-                  <label for="mat-pizarron">Pizarrón/Marcadores</label>
-                </div>
-                <div class="material-item">
-                  <input type="checkbox" id="mat-manipulativos">
-                  <label for="mat-manipulativos">Materiales manipulativos</label>
-                </div>
-                <div class="material-item">
-                  <input type="checkbox" id="mat-otros">
-                  <label for="mat-otros">Otros materiales</label>
+              <div class="recursos-seccion">
+                <h4>📋 Materiales físicos</h4>
+                <div class="materiales-cuadricula">
+                  <div class="material-checkbox">
+                    <input type="checkbox" id="mat-papel" class="modern-checkbox">
+                    <label for="mat-papel" class="material-label">
+                      <span class="material-icon">📄</span>
+                      <span class="material-texto">Hojas de trabajo</span>
+                    </label>
+                  </div>
+                  <div class="material-checkbox">
+                    <input type="checkbox" id="mat-pizarron" class="modern-checkbox">
+                    <label for="mat-pizarron" class="material-label">
+                      <span class="material-icon">📝</span>
+                      <span class="material-texto">Pizarrón/Marcadores</span>
+                    </label>
+                  </div>
+                  <div class="material-checkbox">
+                    <input type="checkbox" id="mat-manipulativos" class="modern-checkbox">
+                    <label for="mat-manipulativos" class="material-label">
+                      <span class="material-icon">🧩</span>
+                      <span class="material-texto">Materiales manipulativos</span>
+                    </label>
+                  </div>
+                  <div class="material-checkbox">
+                    <input type="checkbox" id="mat-otros" class="modern-checkbox">
+                    <label for="mat-otros" class="material-label">
+                      <span class="material-icon">📦</span>
+                      <span class="material-texto">Otros materiales</span>
+                    </label>
+                  </div>
                 </div>
               </div>
+            </div>
+          </div>
+
+          <!-- Comentarios del docente -->
+          <div class="editable-section">
+            <h3>💬 Comentarios y reflexiones</h3>
+            <div class="campo-editor">
+              <div class="campo-label">Notas personales</div>
+              <textarea
+                id="comentarios-docente"
+                class="campo-textarea"
+                style="min-height:80px;"
+                placeholder="Notas sobre cómo fue la sesión, ajustes necesarios, observaciones de los alumnos, ideas para mejorar..."
+                onchange="calcularProgreso()"
+              ></textarea>
             </div>
           </div>
 
@@ -592,6 +708,7 @@
     document.getElementById('desarrollo').value = sesionData.desarrollo || ''
     document.getElementById('cierre').value = sesionData.cierre || ''
     document.getElementById('materiales-texto').value = sesionData.materiales || ''
+    document.getElementById('comentarios-docente').value = sesionData.comentarios_docente || ''
 
     // Materiales (checkbox)
     const materiales = sesionData.materiales_json ? JSON.parse(sesionData.materiales_json) : {}
@@ -642,7 +759,14 @@
       }
     })
 
-    const progreso = (completados / campos.length) * 100
+    // Bonus por materiales y comentarios (opcional)
+    const materiales = document.getElementById('materiales-texto').value.trim()
+    const comentarios = document.getElementById('comentarios-docente').value.trim()
+    let bonus = 0
+    if (materiales) bonus += 5
+    if (comentarios) bonus += 5
+
+    const progreso = Math.min(100, (completados / campos.length) * 100 + bonus)
     document.getElementById('progreso-fill').style.width = `${progreso}%`
   }
 
@@ -672,7 +796,7 @@
 
   // Autoguardar
   function iniciarAutoguardado() {
-    const campos = document.querySelectorAll('#inicio, #desarrollo, #cierre, #materiales-texto')
+    const campos = document.querySelectorAll('#inicio, #desarrollo, #cierre, #materiales-texto, #comentarios-docente')
 
     campos.forEach(campo => {
       campo.addEventListener('input', () => {
@@ -705,6 +829,7 @@
         desarrollo: document.getElementById('desarrollo').value.trim() || null,
         cierre: document.getElementById('cierre').value.trim() || null,
         materiales: document.getElementById('materiales-texto').value.trim() || null,
+        comentarios_docente: document.getElementById('comentarios-docente').value.trim() || null,
         materiales_json: JSON.stringify(materiales),
         updated_at: new Date().toISOString()
       }
