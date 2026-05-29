@@ -412,7 +412,13 @@
   <div class="main-area">
     <div class="topbar">
       <div>
-        <div class="topbar-title">Planes de clase</div>
+        <div class="topbar-title">
+          Planes de clase
+          ${verComoId && profile.rol === 'admin' ?
+            `<span style="background:var(--am-l);color:var(--am);padding:2px 8px;border-radius:12px;font-size:10px;margin-left:8px;">Viendo como ${docenteActivo.nombre}</span>` :
+            ''
+          }
+        </div>
         <div class="topbar-sub">Gestión por grupos y sesiones</div>
       </div>
       <div style="display:flex;gap:8px;">
@@ -485,7 +491,33 @@
 
   const profile = await requireAuth('docente')
   if (!profile) throw new Error('No autenticado')
-  await renderSidebar('planes-clase')
+
+  // Verificar si estamos en modo "Ver como docente"
+  const params = new URLSearchParams(window.location.search)
+  const verComoId = params.get('verComo')
+  let docenteActivo = profile
+
+  if (verComoId && profile.rol === 'admin') {
+    // Admin viendo como otro docente
+    const { data: docenteVer } = await supabase
+      .from('profiles')
+      .select('id, nombre, rol')
+      .eq('id', verComoId)
+      .single()
+
+    if (docenteVer) {
+      docenteActivo = docenteVer
+    }
+  }
+
+  // Renderizar sidebar con el contexto correcto
+  if (verComoId && profile.rol === 'admin') {
+    // Usar renderSidebarAdmin para mantener la funcionalidad de cambio
+    const { renderSidebarAdmin } = await import('../js/sidebar-admin.js')
+    await renderSidebarAdmin('ver-docente')
+  } else {
+    await renderSidebar('planes-clase')
+  }
 
   let grupos = []
   let sesionesData = {}
@@ -518,7 +550,7 @@
             materias(nombre)
           )
         `)
-        .eq('docente_id', profile.id)
+        .eq('docente_id', docenteActivo.id)
         .eq('ciclo_id', ciclo.id)
         .order('nombre')
 

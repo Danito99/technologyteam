@@ -19,10 +19,18 @@ export async function renderSidebarAdmin(paginaActiva) {
     { id:'analytics',       label:'Analytics',          href:'/admin/analytics.html' },
   ]
 
-  const verComo = [
-    { label:'Rosalba', href:'/docente/inicio.html' },
-    { label:'Yerim',   href:'/docente/inicio.html' },
-  ]
+  // Obtener docentes dinámicamente
+  const { data: docentes } = await supabase
+    .from('profiles')
+    .select('id, nombre')
+    .eq('rol', 'docente')
+    .order('nombre')
+
+  const verComo = docentes?.map(d => ({
+    label: d.nombre,
+    href: `/docente/inicio.html?verComo=${d.id}`,
+    id: d.id
+  })) || []
 
   let html = `
     <aside class="sidebar">

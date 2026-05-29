@@ -599,6 +599,22 @@
 
   const profile = await requireAuth('docente')
   if (!profile) throw new Error('No autenticado')
+
+  // Verificar si estamos en modo "Ver como docente"
+  const urlParams = new URLSearchParams(window.location.search)
+  const verComoId = urlParams.get('verComo')
+  let docenteActivo = profile
+
+  if (verComoId && profile.rol === 'admin') {
+    const { data: docenteVer } = await supabase
+      .from('profiles')
+      .select('id, nombre, rol')
+      .eq('id', verComoId)
+      .single()
+
+    if (docenteVer) docenteActivo = docenteVer
+  }
+
   await renderSidebar('planes-clase')
 
   // Obtener parámetros de la URL
