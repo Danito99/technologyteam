@@ -398,6 +398,15 @@
     selGrupo.appendChild(opt)
   })
 
+  // Auto-seleccionar primer grupo si existe
+  if (grupos && grupos.length > 0) {
+    selGrupo.value = grupos[0].id
+    // Llamar onGrupoChange para cargar contenido automáticamente
+    setTimeout(() => {
+      onGrupoChange()
+    }, 100)
+  }
+
   document.getElementById('loading').style.display = 'none'
   document.getElementById('content').style.display = 'block'
 
