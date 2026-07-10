@@ -138,7 +138,7 @@
               </table>
             </div>
             <div class="ia-box mt-12" id="ia-resumen-cal" style="display:none;">
-              <div class="ia-label">Resumen IA</div>
+              <div class="ia-label">Resumen automático</div>
               <p id="ia-texto"></p>
             </div>
           </div>
@@ -164,10 +164,25 @@
 
 <div class="toast" id="toast"></div>
 
+<div class="modal-overlay" id="modal-sesion" style="display:none;">
+  <div class="modal" style="max-width:420px;" onclick="event.stopPropagation()">
+    <div style="font-size:15px;font-weight:600;margin-bottom:14px;">Nueva sesión</div>
+    <label class="form-label">Título</label>
+    <input type="text" id="modal-titulo-sesion"
+           style="width:100%;margin-bottom:18px;"
+           placeholder="Ej: Introducción al tema..." maxlength="120">
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button class="btn" id="btn-cancelar-sesion">Cancelar</button>
+      <button class="btn btn-primary" id="btn-confirmar-sesion">Agregar sesión</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
-  import { requireAuth }   from '../js/auth.js'
-  import { renderSidebar } from '../js/sidebar-docente.js'
-  import { supabase }      from '../js/supabase.js'
+  import { requireAuth }                from '../js/auth.js'
+  import { renderSidebar }              from '../js/sidebar-docente.js'
+  import { supabase }                   from '../js/supabase.js'
+  import { calcBanda, mostrarToast }    from '../js/utils.js'
 
   const profile = await requireAuth('docente')
   if (!profile) throw new Error('No autenticado')
@@ -309,9 +324,32 @@
     await cargarSesiones()
   }
 
-  document.getElementById('btn-add-sesion').addEventListener('click', async () => {
-    const titulo = prompt('Título de la sesión:')
-    if (!titulo) return
+  const modalSesion = document.getElementById('modal-sesion')
+  const inputTitulo = document.getElementById('modal-titulo-sesion')
+
+  document.getElementById('btn-add-sesion').addEventListener('click', () => {
+    inputTitulo.value = ''
+    modalSesion.style.display = 'flex'
+    setTimeout(() => inputTitulo.focus(), 50)
+  })
+
+  document.getElementById('btn-cancelar-sesion').addEventListener('click', () => {
+    modalSesion.style.display = 'none'
+  })
+
+  modalSesion.addEventListener('click', e => {
+    if (e.target === modalSesion) modalSesion.style.display = 'none'
+  })
+
+  inputTitulo.addEventListener('keydown', e => {
+    if (e.key === 'Enter')  document.getElementById('btn-confirmar-sesion').click()
+    if (e.key === 'Escape') modalSesion.style.display = 'none'
+  })
+
+  document.getElementById('btn-confirmar-sesion').addEventListener('click', async () => {
+    const titulo = inputTitulo.value.trim()
+    if (!titulo) { inputTitulo.focus(); return }
+    modalSesion.style.display = 'none'
     await supabase.from('sesiones').insert({
       grupo_materia_id: gmSelId, periodo_id: periodoId,
       numero: sesiones.length + 1, titulo
@@ -372,18 +410,18 @@
         <td>${a.apellido}, ${a.nombre}</td>
         <td><input class="cal-input" type="number" min="0" max="10" step="0.1"
           value="${c.trabajo_clase ?? ''}" placeholder="—"
-          onchange="editCal('${a.id}','trabajo_clase',this.value)"></td>
+          oninput="editCal('${a.id}','trabajo_clase',this.value)"></td>
         <td><input class="cal-input" type="number" min="0" max="10" step="0.1"
           value="${c.proyecto ?? ''}" placeholder="—"
-          onchange="editCal('${a.id}','proyecto',this.value)"></td>
+          oninput="editCal('${a.id}','proyecto',this.value)"></td>
         <td><input class="cal-input" type="number" min="0" max="10" step="0.1"
           value="${c.examen ?? ''}" placeholder="—"
-          onchange="editCal('${a.id}','examen',this.value)"></td>
+          oninput="editCal('${a.id}','examen',this.value)"></td>
         <td><input class="cal-input" type="number" min="0" max="10" step="0.1"
           value="${c.autoevaluacion ?? ''}" placeholder="—"
-          onchange="editCal('${a.id}','autoevaluacion',this.value)"></td>
-        <td class="prom-cell">${prom}</td>
-        <td>${bandaLabel ? `<span class="chip ${bandaClass}">${bandaLabel}</span>` : '—'}</td>
+          oninput="editCal('${a.id}','autoevaluacion',this.value)"></td>
+        <td class="prom-cell" id="prom-${a.id}">${prom}</td>
+        <td id="banda-${a.id}">${bandaLabel ? `<span class="chip ${bandaClass}">${bandaLabel}</span>` : '—'}</td>
       </tr>`
     }).join('')
 
@@ -393,6 +431,27 @@
   window.editCal = (alumnoId, campo, valor) => {
     if (!calsMap[alumnoId]) calsMap[alumnoId] = { alumno_id: alumnoId }
     calsMap[alumnoId][campo] = valor === '' ? null : parseFloat(valor)
+
+    const c    = calsMap[alumnoId]
+    const vals = [c.trabajo_clase, c.proyecto, c.examen, c.autoevaluacion]
+    if (vals.every(v => v == null)) return
+
+    const prom = (c.trabajo_clase  ?? 0) * 0.30
+               + (c.proyecto       ?? 0) * 0.25
+               + (c.examen         ?? 0) * 0.40
+               + (c.autoevaluacion ?? 0) * 0.05
+
+    const promCell  = document.getElementById(`prom-${alumnoId}`)
+    const bandaCell = document.getElementById(`banda-${alumnoId}`)
+    if (promCell)  promCell.textContent = prom.toFixed(1)
+    if (bandaCell) {
+      const banda = calcBanda(prom)
+      const cls = { gold1:'chip-green', green2:'chip-green', green1:'chip-green',
+                    yellow1:'chip-amber', red2:'chip-red', red1:'chip-red' }[banda] || ''
+      const lbl = { gold1:'Gold', green2:'Green 2', green1:'Green 1',
+                    yellow1:'Yellow', red2:'Red 2', red1:'Red 1' }[banda] || ''
+      bandaCell.innerHTML = lbl ? `<span class="chip ${cls}">${lbl}</span>` : '—'
+    }
   }
 
   document.getElementById('btn-guardar-cals').addEventListener('click', async () => {
@@ -483,13 +542,6 @@
 
   window.cargarPeriodos = async () => { await cargarContenido() }
 
-  function mostrarToast(msg, tipo = 'ok') {
-    const t = document.getElementById('toast')
-    t.textContent = msg
-    t.style.background = tipo === 'error' ? 'var(--co)' : 'var(--vd)'
-    t.style.display = 'block'
-    setTimeout(() => { t.style.display = 'none' }, 2500)
-  }
 </script>
 </body>
 </html>

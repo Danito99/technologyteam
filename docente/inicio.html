@@ -59,7 +59,7 @@
         </div>
 
         <div class="ia-box mt-12">
-          <div class="ia-label">Resumen IA</div>
+          <div class="ia-label">Resumen automático</div>
           <p id="ia-resumen">Calculando resumen...</p>
         </div>
       </div>
@@ -93,27 +93,48 @@
   // Grupos del docente
   const { data: grupos } = await supabase
     .from('grupos')
-    .select('id, nombre, nivel, grado')
+    .select('id, nombre, nivel, grado, grupo_materias(id)')
     .eq('docente_id', profile.id)
 
   document.getElementById('grupos-badge').textContent = `${grupos?.length || 0} grupos`
 
-  // Métricas básicas
-  const { data: planes } = await supabase
-    .from('planes_clase')
-    .select('estado, grupo_materia_id')
+  const gmIds = grupos?.flatMap(g => g.grupo_materias?.map(gm => gm.id) || []) || []
+
+  // Todas las consultas en paralelo
+  const [
+    { data: planes },
+    { data: enRiesgo },
+    { count: planFilasCount },
+    { count: sesCompCount },
+    { count: calsCount },
+  ] = await Promise.all([
+    supabase.from('planes_clase')
+      .select('id, estado, grupo_materia_id, periodo_id, grupo_materias(materias(nombre), grupos(nombre)), periodos(etiqueta)'),
+    supabase.from('calificaciones')
+      .select('alumno_id, promedio_parcial, alumnos(nombre, apellido), grupo_materias(grupos(nombre))')
+      .lt('promedio_parcial', 6),
+    gmIds.length
+      ? supabase.from('plan_analitico_filas').select('id', { count: 'exact', head: true }).in('grupo_materia_id', gmIds)
+      : { count: 0 },
+    gmIds.length
+      ? supabase.from('sesiones').select('id', { count: 'exact', head: true }).in('grupo_materia_id', gmIds).eq('completada', true)
+      : { count: 0 },
+    gmIds.length
+      ? supabase.from('calificaciones').select('id', { count: 'exact', head: true }).in('grupo_materia_id', gmIds)
+      : { count: 0 },
+  ])
 
   const entregados = planes?.filter(p => ['entregado','aprobado'].includes(p.estado)).length || 0
   const pendientes = planes?.filter(p => ['borrador','pendiente', null].includes(p.estado)).length || 0
 
-  // Alumnos en riesgo (promedio_parcial < 6)
-  const { data: enRiesgo } = await supabase
-    .from('calificaciones')
-    .select('alumno_id, promedio_parcial, alumnos(nombre, apellido), grupo_materias(grupos(nombre))')
-    .lt('promedio_parcial', 6)
-
   renderMetrics(grupos?.length, entregados, pendientes, enRiesgo?.length)
-  renderFlujo()
+  renderFlujo(
+    (grupos?.length || 0) > 0,
+    (planFilasCount || 0) > 0,
+    entregados > 0,
+    (sesCompCount  || 0) > 0,
+    (calsCount     || 0) > 0
+  )
   renderPlanesPendientes(planes)
   renderRiesgo(enRiesgo)
   renderIAResumen(pendientes, enRiesgo?.length, grupos?.length)
@@ -132,17 +153,20 @@
     `
   }
 
-  function renderFlujo() {
+  function renderFlujo(hayGrupos, planAnaliticoOk, planesOk, sesionesOk, calsOk) {
     const steps = [
-      { n: 1, label: 'Materias y grupos', done: true },
-      { n: 2, label: 'Plan analítico',    done: true },
-      { n: 3, label: 'Planes de clase',   done: false, active: true },
-      { n: 4, label: 'Sesiones',          done: false },
-      { n: 5, label: 'Calificaciones',    done: false },
+      { n: 1, label: 'Materias y grupos', done: hayGrupos },
+      { n: 2, label: 'Plan analítico',    done: planAnaliticoOk },
+      { n: 3, label: 'Planes de clase',   done: planesOk },
+      { n: 4, label: 'Sesiones',          done: sesionesOk },
+      { n: 5, label: 'Calificaciones',    done: calsOk },
     ]
+    const firstPending = steps.findIndex(s => !s.done)
+    if (firstPending >= 0) steps[firstPending].active = true
+
     const el = document.getElementById('flujo-steps')
     el.innerHTML = steps.map((s, i) => {
-      const cls = s.done ? 'background:var(--vd-l);color:var(--vd)' :
+      const cls = s.done   ? 'background:var(--vd-l);color:var(--vd)' :
                   s.active ? 'background:var(--az);color:white' :
                   'background:var(--bg);color:var(--text-3);border:1px solid var(--border)'
       const line = i < steps.length - 1 ? `<div style="flex:1;height:1px;background:var(--border);min-width:12px;"></div>` : ''
@@ -165,9 +189,12 @@
       const estadoCls = p.estado === 'borrador' ? 'chip-amber' :
                         p.estado === 'entregado' ? 'chip-blue' : 'chip-red'
       const estadoLabel = p.estado || 'Pendiente'
+      const grupoNombre   = p.grupo_materias?.grupos?.nombre   || '—'
+      const materiaNombre = p.grupo_materias?.materias?.nombre || '—'
+      const periodoEtiq   = p.periodos?.etiqueta               || '—'
       return `<tr>
-        <td>${p.grupo_materia_id || '—'}</td>
-        <td class="text-muted text-small">T2 · P2</td>
+        <td>${grupoNombre} · ${materiaNombre}</td>
+        <td class="text-muted text-small">${periodoEtiq}</td>
         <td><span class="chip ${estadoCls}">${estadoLabel}</span></td>
       </tr>`
     }).join('')

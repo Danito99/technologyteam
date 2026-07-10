@@ -144,20 +144,8 @@
       color: var(--text-3);
     }
 
-    .progress-bar {
-      width: 120px;
-      height: 6px;
-      background: var(--border);
-      border-radius: 3px;
-      overflow: hidden;
-    }
-
-    .progress-fill {
-      height: 100%;
-      background: var(--vd);
-      border-radius: 3px;
-      transition: width 0.3s ease;
-    }
+    /* constrain progress bar only inside trimestre headers */
+    .trimestre-progress .progress-bar { width: 120px; }
 
     .trimestre-content {
       display: none;
@@ -412,12 +400,8 @@
   <div class="main-area">
     <div class="topbar">
       <div>
-        <div class="topbar-title">
+        <div class="topbar-title" id="topbar-title">
           Planes de clase
-          ${verComoId && profile.rol === 'admin' ?
-            `<span style="background:var(--am-l);color:var(--am);padding:2px 8px;border-radius:12px;font-size:10px;margin-left:8px;">Viendo como ${docenteActivo.nombre}</span>` :
-            ''
-          }
         </div>
         <div class="topbar-sub">Gestión por grupos y sesiones</div>
       </div>
@@ -485,9 +469,10 @@
 </div>
 
 <script type="module">
-  import { requireAuth } from '../js/auth.js'
+  import { requireAuth }   from '../js/auth.js'
   import { renderSidebar } from '../js/sidebar-docente.js'
-  import { supabase } from '../js/supabase.js'
+  import { supabase }      from '../js/supabase.js'
+  import { mostrarToast }  from '../js/utils.js'
 
   const profile = await requireAuth('docente')
   if (!profile) throw new Error('No autenticado')
@@ -519,12 +504,26 @@
     await renderSidebar('planes-clase')
   }
 
+  // Actualizar título dinámicamente si estamos en modo "ver como docente"
+  const topbarTitle = document.getElementById('topbar-title')
+  if (verComoId && profile.rol === 'admin' && docenteActivo) {
+    topbarTitle.innerHTML = `
+      Planes de clase
+      <span style="background:var(--am-l);color:var(--am);padding:2px 8px;border-radius:12px;font-size:10px;margin-left:8px;">
+        Viendo como ${docenteActivo.nombre}
+      </span>
+    `
+  }
+
   let grupos = []
   let sesionesData = {}
   let planAnaliticoData = {}
   let expandedGrupos = new Set()
   let expandedTrimestres = new Set()
   let modoSeleccion = false
+  let filtroEstado            = ''
+  let filtroTrimestreEtiqueta = ''
+  let filtroVista             = 'jerarquico'
 
   // Cargar datos iniciales
   async function cargarDatos() {
@@ -753,9 +752,13 @@
       return '<div style="padding:20px;text-align:center;color:var(--text-3);">No hay materias asignadas</div>'
     }
 
+    const periodosFiltrados = filtroTrimestreEtiqueta
+      ? grupo.periodos.filter(p => p.etiqueta === filtroTrimestreEtiqueta)
+      : grupo.periodos
+
     return grupo.grupo_materias.map(gm => `
       <div class="materia-section">
-        ${grupo.periodos.map(periodo => renderTrimestre(grupo, gm, periodo)).join('')}
+        ${periodosFiltrados.map(periodo => renderTrimestre(grupo, gm, periodo)).join('')}
       </div>
     `).join('')
   }
@@ -763,11 +766,17 @@
   // Renderizar un trimestre/semestre
   function renderTrimestre(grupo, grupoMateria, periodo) {
     const key = `${grupoMateria.id}_${periodo.id}`
-    const sesiones = sesionesData[key] || []
+    const todasSesiones = sesionesData[key] || []
+    const sesiones = filtroEstado
+      ? todasSesiones.filter(s => determinarEstadoSesion(s).estadoClass === filtroEstado)
+      : todasSesiones
     const trimestreKey = `${grupo.id}_${grupoMateria.id}_${periodo.id}`
     const isExpanded = expandedTrimestres.has(trimestreKey)
 
-    if (sesiones.length === 0) {
+    // Filtro activo y sin sesiones que coincidan: ocultar bloque
+    if (filtroEstado && sesiones.length === 0) return ''
+
+    if (todasSesiones.length === 0) {
       return `
         <div class="trimestre-bloque" data-trimestre-key="${trimestreKey}">
           <div class="trimestre-header" onclick="toggleTrimestre('${trimestreKey}')">
@@ -959,7 +968,7 @@
     })
 
     if (!sesionEncontrada) {
-      mostrarNotificacion('No se encontró la sesión', 'error')
+      mostrarToast('No se encontró la sesión', 'error')
       return
     }
 
@@ -1000,14 +1009,14 @@
       renderGrupos()
 
       // Mostrar notificación de éxito
-      mostrarNotificacion(
+      mostrarToast(
         completada ? '✅ Sesión marcada como completada' : '📝 Sesión marcada como pendiente',
         'success'
       )
 
     } catch (error) {
       console.error('Error actualizando sesión:', error)
-      mostrarNotificacion('Error al actualizar la sesión', 'error')
+      mostrarToast('Error al actualizar la sesión', 'error')
 
       // Restaurar el estado original del botón
       const checkIcon = document.querySelector(`[data-sesion-id="${sesionId}"] .estado-check`)
@@ -1018,57 +1027,11 @@
     }
   }
 
-  // Sistema de notificaciones
-  function mostrarNotificacion(mensaje, tipo = 'info') {
-    // Crear elemento de notificación si no existe
-    let notificacion = document.getElementById('notificacion-toast')
-    if (!notificacion) {
-      notificacion = document.createElement('div')
-      notificacion.id = 'notificacion-toast'
-      notificacion.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        padding: 12px 20px;
-        border-radius: 8px;
-        font-size: 13px;
-        font-weight: 600;
-        z-index: 1000;
-        transform: translateX(100%);
-        transition: transform 0.3s ease;
-        max-width: 300px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      `
-      document.body.appendChild(notificacion)
-    }
-
-    // Configurar colores según el tipo
-    const colores = {
-      success: { bg: '#22c55e', color: 'white' },
-      error: { bg: '#ef4444', color: 'white' },
-      warning: { bg: '#f59e0b', color: 'white' },
-      info: { bg: '#3b82f6', color: 'white' }
-    }
-
-    const color = colores[tipo] || colores.info
-    notificacion.style.backgroundColor = color.bg
-    notificacion.style.color = color.color
-    notificacion.textContent = mensaje
-
-    // Mostrar
-    notificacion.style.transform = 'translateX(0)'
-
-    // Ocultar después de 3 segundos
-    setTimeout(() => {
-      notificacion.style.transform = 'translateX(100%)'
-    }, 3000)
-  }
-
   // Funcionalidad para marcar múltiples sesiones
   window.marcarMultiples = (estado) => {
     const sesionesSeleccionadas = document.querySelectorAll('.sesion-card.selected')
     if (sesionesSeleccionadas.length === 0) {
-      mostrarNotificacion('Selecciona al menos una sesión', 'warning')
+      mostrarToast('Selecciona al menos una sesión', 'warning')
       return
     }
 
@@ -1085,7 +1048,7 @@
     })
 
     Promise.allSettled(promesas).then(() => {
-      mostrarNotificacion(`${sesionesSeleccionadas.length} sesiones actualizadas`, 'success')
+      mostrarToast(`${sesionesSeleccionadas.length} sesiones actualizadas`, 'success')
       // Limpiar selección
       document.querySelectorAll('.sesion-card.selected').forEach(card => {
         card.classList.remove('selected')
@@ -1195,7 +1158,9 @@
   }
 
   window.aplicarFiltros = () => {
-    // Implementar filtros
+    filtroEstado            = document.getElementById('filtro-estado').value
+    filtroTrimestreEtiqueta = document.getElementById('filtro-trimestre').value
+    filtroVista             = document.getElementById('filtro-vista').value
     renderGrupos()
   }
 

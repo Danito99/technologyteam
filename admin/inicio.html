@@ -47,7 +47,7 @@
         </div>
 
         <div class="ia-box mt-12">
-          <div class="ia-label">Resumen IA</div>
+          <div class="ia-label">Resumen automático</div>
           <p id="ia-texto">Calculando...</p>
         </div>
 
@@ -102,6 +102,21 @@
     <div class="metric"><div class="metric-label">Alumnos en riesgo</div><div class="metric-value red">${nRiesgo}</div></div>
   `
 
+  function avatarColor(id) {
+    const palettes = [
+      { bg:'#EBF1FA', tx:'#1A5FA8' },
+      { bg:'#E8F5E9', tx:'#2E7D32' },
+      { bg:'#FFF3E0', tx:'#B45309' },
+      { bg:'#F3E5F5', tx:'#6A1B9A' },
+      { bg:'#E0F2F1', tx:'#00695C' },
+      { bg:'#FCE4EC', tx:'#9D174D' },
+    ]
+    let h = 0
+    for (const c of (id || '')) h = (Math.imul(31, h) + c.charCodeAt(0)) | 0
+    const p = palettes[Math.abs(h) % palettes.length]
+    return `background:${p.bg};color:${p.tx};`
+  }
+
   // Cards por docente
   const cardsEl = document.getElementById('cards-docentes')
   cardsEl.innerHTML = docentes?.map(d => {
@@ -115,12 +130,12 @@
     const pPend   = planes.filter(p => !['entregado','aprobado'].includes(p.estado)).length
     const rDoc    = enRiesgo?.filter(r => r.grupo_materias?.grupos?.docente_id === d.id).length || 0
     const iniciales = d.nombre.split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase()
-    const avCls   = d.nombre.includes('Rosalba') ? 'avatar-rosalba' : 'avatar-yerim'
+    const avStyle  = avatarColor(d.id)
 
     return `
       <div class="doc-card">
         <div class="doc-head">
-          <div class="avatar ${avCls}" style="width:34px;height:34px;font-size:13px;">${iniciales}</div>
+          <div class="avatar" style="${avStyle}width:34px;height:34px;font-size:13px;">${iniciales}</div>
           <div style="flex:1;">
             <div style="font-size:14px;font-weight:600;">${d.nombre}</div>
             <div style="font-size:11px;color:var(--text-3);">${gDoc.length} grupos</div>

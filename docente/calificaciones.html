@@ -181,9 +181,10 @@
 <div class="toast" id="toast"></div>
 
 <script type="module">
-  import { requireAuth }   from '../js/auth.js'
-  import { renderSidebar } from '../js/sidebar-docente.js'
-  import { supabase }      from '../js/supabase.js'
+  import { requireAuth }                          from '../js/auth.js'
+  import { renderSidebar }                        from '../js/sidebar-docente.js'
+  import { supabase }                             from '../js/supabase.js'
+  import { calcProm, calcBanda, bandaDefs, mostrarToast } from '../js/utils.js'
 
   const profile = await requireAuth('docente')
   if (!profile) throw new Error('No autenticado')
@@ -198,15 +199,6 @@
   let dirty    = {}
   let gmSelId  = null
   let periodoId = null
-
-  const bandaDefs = [
-    { key:'gold1',   label:'Gold',    cls:'bc-gold',   bandaCls:'banda-gold'   },
-    { key:'green2',  label:'Green 2', cls:'bc-green2', bandaCls:'banda-green2' },
-    { key:'green1',  label:'Green 1', cls:'bc-green1', bandaCls:'banda-green1' },
-    { key:'yellow1', label:'Yellow',  cls:'bc-yellow', bandaCls:'banda-yellow' },
-    { key:'red2',    label:'Red 2',   cls:'bc-red2',   bandaCls:'banda-red2'   },
-    { key:'red1',    label:'Red 1',   cls:'bc-red1',   bandaCls:'banda-red1'   },
-  ]
 
   // ── Bootstrap ─────────────────────────────────────────────
   const { data: cicloData } = await supabase
@@ -363,7 +355,7 @@
 
   function fila(a, c, i) {
     const prom = calcProm(c)
-    const b    = prom !== null ? calcBanda(prom) : null
+    const b    = prom !== null ? calcBanda(prom, metas) : null
     const bd   = bandaDefs.find(d => d.key === b)
 
     return `<tr id="row-${a.id}">
@@ -395,7 +387,7 @@
     input.classList.add('dirty')
 
     const prom = calcProm(calsMap[aid])
-    const b    = prom !== null ? calcBanda(prom) : null
+    const b    = prom !== null ? calcBanda(prom, metas) : null
     const bd   = bandaDefs.find(d => d.key === b)
 
     // Actualizar promedio y banda en la fila
@@ -415,7 +407,7 @@
   window.guardar = async () => {
     const btn = document.getElementById('btn-guardar')
     const pendientes = alumnos.filter(a => dirty[a.id])
-    if (!pendientes.length) { toast('Sin cambios pendientes'); return }
+    if (!pendientes.length) { mostrarToast('Sin cambios pendientes'); return }
 
     btn.disabled = true; btn.textContent = 'Guardando...'
     try {
@@ -432,10 +424,10 @@
         }, { onConflict: 'alumno_id,grupo_materia_id,periodo_id' })
       }
       const n = pendientes.length
-      toast(`${n} alumno${n > 1 ? 's' : ''} guardado${n > 1 ? 's' : ''} ✓`)
+      mostrarToast(`${n} alumno${n > 1 ? 's' : ''} guardado${n > 1 ? 's' : ''} ✓`)
       await cargar()
     } catch(e) {
-      toast(e.message, 'error')
+      mostrarToast(e.message, 'error')
     } finally {
       btn.disabled = false; btn.textContent = 'Guardar cambios'
     }
@@ -469,21 +461,6 @@
   }
 
   // ── Helpers ───────────────────────────────────────────────
-  function calcProm(c) {
-    if (!c) return null
-    const allNull = [c.trabajo_clase, c.proyecto, c.examen, c.autoevaluacion].every(v => v == null)
-    if (allNull) return null
-    return (c.trabajo_clase  ?? 0) * 0.30
-         + (c.proyecto       ?? 0) * 0.25
-         + (c.examen         ?? 0) * 0.40
-         + (c.autoevaluacion ?? 0) * 0.05
-  }
-
-  function calcBanda(prom) {
-    const m = metas.find(m => prom >= m.rango_min && prom <= m.rango_max)
-    return m?.banda || 'red1'
-  }
-
   function resetView() {
     document.getElementById('cortes-wrap').style.display   = 'none'
     document.getElementById('content').style.display      = 'none'
@@ -493,13 +470,6 @@
     gmSelId = null; periodoId = null; dirty = {}
   }
 
-  function toast(msg, tipo = 'ok') {
-    const t = document.getElementById('toast')
-    t.textContent = msg
-    t.style.background = tipo === 'error' ? 'var(--co)' : 'var(--vd)'
-    t.style.display = 'block'
-    setTimeout(() => { t.style.display = 'none' }, 2500)
-  }
 </script>
 </body>
 </html>

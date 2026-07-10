@@ -167,9 +167,10 @@
 </div>
 
 <script type="module">
-  import { requireAuth }   from '../js/auth.js'
-  import { renderSidebar } from '../js/sidebar-docente.js'
-  import { supabase }      from '../js/supabase.js'
+  import { requireAuth }                    from '../js/auth.js'
+  import { renderSidebar }                  from '../js/sidebar-docente.js'
+  import { supabase }                       from '../js/supabase.js'
+  import { calcProm, calcBanda, bandaDefs } from '../js/utils.js'
 
   const profile = await requireAuth('docente')
   if (!profile) throw new Error('No autenticado')
@@ -181,15 +182,6 @@
   let periodos = []
   let gmSelId  = null
   let periodoId = null
-
-  const bandaDefs = [
-    { key:'gold1',   label:'Gold',    cls:'bc-gold',   bandaCls:'banda-gold',   fill:'#DAA520' },
-    { key:'green2',  label:'Green 2', cls:'bc-green2', bandaCls:'banda-green2', fill:'#1a6b1a' },
-    { key:'green1',  label:'Green 1', cls:'bc-green1', bandaCls:'banda-green1', fill:'#2d7a2d' },
-    { key:'yellow1', label:'Yellow',  cls:'bc-yellow', bandaCls:'banda-yellow', fill:'#EF9F27' },
-    { key:'red2',    label:'Red 2',   cls:'bc-red2',   bandaCls:'banda-red2',   fill:'#D85A30' },
-    { key:'red1',    label:'Red 1',   cls:'bc-red1',   bandaCls:'banda-red1',   fill:'#a32d2d' },
-  ]
 
   // ── Bootstrap ─────────────────────────────────────────────
   const { data: cicloData } = await supabase
@@ -349,16 +341,6 @@
 
   // ── Ranking ───────────────────────────────────────────────
   function renderRanking(alumnos, calsMap) {
-    const calcProm = (c) => {
-      if (!c) return null
-      const all = [c.trabajo_clase, c.proyecto, c.examen, c.autoevaluacion]
-      if (all.every(v => v == null)) return null
-      return (c.trabajo_clase  ?? 0) * 0.30
-           + (c.proyecto       ?? 0) * 0.25
-           + (c.examen         ?? 0) * 0.40
-           + (c.autoevaluacion ?? 0) * 0.05
-    }
-
     const sorted = [...alumnos]
       .map(a => ({ ...a, cal: calsMap[a.id] || null, prom: calcProm(calsMap[a.id]) }))
       .sort((a, b) => {
@@ -383,7 +365,7 @@
       const bd       = bandaDefs.find(d => d.key === (cal.banda || 'red1'))
       const fillPct  = maxProm ? (prom / maxProm * 100).toFixed(0) : 0
       const posCls   = i === 0 ? 'pos-1' : i === 1 ? 'pos-2' : i === 2 ? 'pos-3' : 'pos-n'
-      const fmt      = v => v != null ? Number(v).toFixed(1) : <span class="text-muted">—</span>
+      const fmt      = v => v != null ? Number(v).toFixed(1) : '<span class="sin-cal">—</span>'
 
       return `<tr>
         <td class="center"><span class="pos-badge ${posCls}">${i + 1}</span></td>
@@ -399,11 +381,6 @@
         <td>${bd ? `<span class="banda ${bd.bandaCls}">${bd.label}</span>` : '—'}</td>
       </tr>`
     }).join('')
-  }
-
-  function calcBanda(prom) {
-    const m = metas.find(m => prom >= m.rango_min && prom <= m.rango_max)
-    return m?.banda || 'red1'
   }
 
   function reset() {

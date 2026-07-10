@@ -50,7 +50,7 @@
 
   const { data: grupos } = await supabase
     .from('grupos')
-    .select('id,nombre,nivel,grado,docente_id,sistema_periodos,grupo_materias(id,materias(nombre),planes_clase(id,estado,entregado_at,periodos(etiqueta)),sesiones(id,completada))')
+    .select('id,nombre,nivel,grado,docente_id,sistema_periodos,grupo_materias(id,materias(nombre),planes_clase(id,estado,periodo_id,entregado_at),sesiones(id,completada))')
     .eq('ciclo_id', ciclo.id)
 
   const { data: periodos } = await supabase
@@ -77,8 +77,24 @@
     const pPend   = planes.filter(p => !['entregado','aprobado'].includes(p.estado)).length
 
     const iniciales = d.nombre.split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase()
-    const avCls     = d.nombre.includes('Rosalba') ? 'avatar-rosalba' : 'avatar-yerim'
-    const nivel     = d.nombre.includes('Rosalba') ? 'Primaria · Secundaria (1°–9°)' : 'Preparatoria (10°–12°)'
+
+    function avatarColor(id) {
+      const palettes = [
+        { bg:'#EBF1FA', tx:'#1A5FA8' },
+        { bg:'#E8F5E9', tx:'#2E7D32' },
+        { bg:'#FFF3E0', tx:'#B45309' },
+        { bg:'#F3E5F5', tx:'#6A1B9A' },
+        { bg:'#E0F2F1', tx:'#00695C' },
+        { bg:'#FCE4EC', tx:'#9D174D' },
+      ]
+      let h = 0
+      for (const c of (id || '')) h = (Math.imul(31, h) + c.charCodeAt(0)) | 0
+      const p = palettes[Math.abs(h) % palettes.length]
+      return `background:${p.bg};color:${p.tx};`
+    }
+
+    const avStyle = avatarColor(d.id)
+    const nivel   = 'Nivel no especificado'
 
     // Agrupar planes por periodo
     const periodosCumplimiento = periodos?.map(p => {
@@ -87,9 +103,9 @@
         .flatMap(g => g.grupo_materias || []).length
       const entregados = planes.filter(pl =>
         ['entregado','aprobado'].includes(pl.estado) &&
-        pl.periodos?.etiqueta === p.etiqueta
+        pl.periodo_id === p.id
       ).length
-      const aprobados = planes.filter(pl => pl.estado === 'aprobado' && pl.periodos?.etiqueta === p.etiqueta).length
+      const aprobados = planes.filter(pl => pl.estado === 'aprobado' && pl.periodo_id === p.id).length
       if (esperados === 0) return null
       const pctCumpl = Math.round((entregados/esperados)*100)
       const chipCls = pctCumpl === 100 ? 'chip-green' : pctCumpl >= 70 ? 'chip-amber' : 'chip-red'
@@ -106,7 +122,7 @@
     const html = `
       <div class="doc-section">
         <div class="doc-header">
-          <div class="avatar ${avCls}" style="width:38px;height:38px;font-size:14px;">${iniciales}</div>
+          <div class="avatar" style="${avStyle}width:38px;height:38px;font-size:14px;">${iniciales}</div>
           <div>
             <div class="doc-nombre">${d.nombre}</div>
             <div class="doc-sub">${nivel}</div>

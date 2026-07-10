@@ -17,14 +17,13 @@ export async function renderSidebar(paginaActiva) {
     { id:'grupos',         label:'Mis grupos',         href:'/docente/grupos.html',          icon:iconPeople() },
     { id:'calificaciones', label:'Calificaciones',     href:'/docente/calificaciones.html',  icon:iconChart() },
     { id:'scoreboard',     label:'Scoreboard',         href:'/docente/scoreboard.html',      icon:iconTrophy() },
-    { id:'reactivos',      label:'Reactivos IA',       href:'/docente/reactivos.html',       icon:iconQuestion() },
   ]
 
   const sections = [
     { label:'Mi espacio',  ids:['inicio','materias'] },
     { label:'Planeación',  ids:['plan-analitico','planes-clase'] },
     { label:'Grupos',      ids:['grupos'] },
-    { label:'Evaluación',  ids:['calificaciones','scoreboard','reactivos'] },
+    { label:'Evaluación',  ids:['calificaciones','scoreboard'] },
   ]
 
   const esAdmin = profile?.rol === 'admin'
