@@ -6,23 +6,39 @@
   <title>TechAcademia — Acceso</title>
   <link rel="stylesheet" href="css/global.css">
   <style>
-    body { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    body {
+      display: flex; align-items: center; justify-content: center; min-height: 100vh;
+      background: linear-gradient(160deg, #4A54A4 0%, #39418A 55%, #2E3572 100%);
+    }
     .login-card {
       background: white;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 36px 32px;
+      border-radius: 20px;
+      padding: 40px 36px 36px;
       width: 100%;
-      max-width: 380px;
+      max-width: 400px;
+      box-shadow: 0 16px 48px rgba(20,24,55,.35);
     }
-    .login-brand { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+    .login-head { display: flex; align-items: center; gap: 14px; margin-bottom: 8px; }
+    .login-brand { font-size: 20px; font-weight: 700; color: var(--text); letter-spacing: -.015em; line-height: 1.2; }
+    .login-org   { font-size: 12px; font-weight: 600; color: var(--ch-indigo); }
     .login-sub   { font-size: 13px; color: var(--text-3); margin-bottom: 28px; }
     .error-msg   { display: none; }
   </style>
 </head>
 <body>
   <div class="login-card">
-    <div class="login-brand">TechAcademia</div>
+    <div class="login-head">
+      <svg width="44" height="44" viewBox="0 0 48 48" fill="none" role="img" aria-label="Christel House México">
+        <rect width="48" height="48" rx="11" fill="#4A54A4"/>
+        <path d="M23 7a17 17 0 1 0 0 34V7z" fill="#F7941D"/>
+        <path d="M26 7h6.5A8.5 8.5 0 0 1 41 15.5V41H26V7z" fill="#2E9BD8"/>
+        <path d="M14.5 16l2 4.6 5 .5-3.8 3.3 1.1 4.9-4.3-2.6-4.3 2.6 1.1-4.9L7.5 21.1l5-.5 2-4.6z" fill="#4A54A4"/>
+      </svg>
+      <div>
+        <div class="login-org">Christel House México</div>
+        <div class="login-brand">TechAcademia</div>
+      </div>
+    </div>
     <div class="login-sub">Academia de Tecnología · Ciclo 2025–2026</div>
 
     <div id="error-msg" class="alert alert-danger error-msg" style="display:none;"></div>

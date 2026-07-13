@@ -43,7 +43,7 @@ export function mostrarToast(msg, tipo = 'ok') {
     ].join(';')
     document.body.appendChild(el)
   }
-  const colors = { ok:'#3B6D11', success:'#3B6D11', error:'#993C1D', warning:'#BA7517', info:'#185FA5' }
+  const colors = { ok:'#2E7D32', success:'#2E7D32', error:'#BC4318', warning:'#B26A00', info:'#1176B5' }
   el.style.background = colors[tipo] ?? colors.ok
   el.style.color = 'white'
   el.textContent = msg

@@ -88,17 +88,20 @@
   const totalGrupos   = grupos?.length || 0
   const totalDocentes = docentes?.length || 0
 
-  const todosPlanes   = grupos?.flatMap(g => g.grupo_materias?.flatMap(gm => gm.planes_clase || []) || []) || []
-  const planesEntregados = todosPlanes.filter(p => ['entregado','aprobado'].includes(p.estado)).length
-  const planesPendientes = todosPlanes.filter(p => !['entregado','aprobado'].includes(p.estado)).length
-  const nRiesgo          = enRiesgo?.length || 0
+  const todasSesiones     = grupos?.flatMap(g => g.grupo_materias?.flatMap(gm => gm.sesiones || []) || []) || []
+  const sesCompletadas    = todasSesiones.filter(s => s.completada).length
+  const sesTotal          = todasSesiones.length
+
+  const todosPlanes       = grupos?.flatMap(g => g.grupo_materias?.flatMap(gm => gm.planes_clase || []) || []) || []
+  const planesEntregados  = todosPlanes.filter(p => ['entregado','aprobado'].includes(p.estado)).length
+  const nRiesgo           = enRiesgo?.length || 0
 
   document.getElementById('total-badge').textContent = `${totalGrupos} grupos · ${totalDocentes} docentes`
 
   document.getElementById('metricas-globales').innerHTML = `
     <div class="metric"><div class="metric-label">Total grupos</div><div class="metric-value blue">${totalGrupos}</div></div>
-    <div class="metric"><div class="metric-label">Planes entregados</div><div class="metric-value green">${planesEntregados}</div></div>
-    <div class="metric"><div class="metric-label">Planes pendientes</div><div class="metric-value amber">${planesPendientes}</div></div>
+    <div class="metric"><div class="metric-label">Sesiones completadas</div><div class="metric-value green">${sesCompletadas}${sesTotal ? ` / ${sesTotal}` : ''}</div></div>
+    <div class="metric"><div class="metric-label">Planes entregados</div><div class="metric-value amber">${planesEntregados}</div></div>
     <div class="metric"><div class="metric-label">Alumnos en riesgo</div><div class="metric-value red">${nRiesgo}</div></div>
   `
 
@@ -175,9 +178,10 @@
 
   // IA Resumen
   const msgs = []
-  if (planesPendientes > 0) msgs.push(`${planesPendientes} planes pendientes de entrega entre ambos docentes.`)
-  if (nRiesgo > 0) msgs.push(`${nRiesgo} alumnos en riesgo académico (promedio menor a 6.0).`)
-  if (!msgs.length) msgs.push('Todo al día. Los docentes están al corriente con planes y calificaciones.')
+  if (sesTotal > 0) msgs.push(`${sesCompletadas} de ${sesTotal} sesiones completadas (${Math.round(sesCompletadas/sesTotal*100)}% de avance).`)
+  if (planesEntregados > 0) msgs.push(`${planesEntregados} planes entregados.`)
+  if (nRiesgo > 0) msgs.push(`${nRiesgo} alumno${nRiesgo > 1 ? 's' : ''} en riesgo académico (promedio menor a 6.0).`)
+  if (!msgs.length) msgs.push('Sin datos aún. Una vez que los docentes registren sesiones y calificaciones, aquí verás el resumen.')
   document.getElementById('ia-texto').textContent = msgs.join(' ')
 
   document.getElementById('loading').style.display = 'none'

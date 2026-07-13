@@ -412,8 +412,10 @@
     btn.disabled = true; btn.textContent = 'Guardando...'
     try {
       for (const a of pendientes) {
-        const c = calsMap[a.id] || {}
-        await supabase.from('calificaciones').upsert({
+        const c    = calsMap[a.id] || {}
+        const prom = calcProm(c)
+        const b    = prom !== null ? calcBanda(prom, metas) : null
+        const { error } = await supabase.from('calificaciones').upsert({
           alumno_id:        a.id,
           grupo_materia_id: gmSelId,
           periodo_id:       periodoId,
@@ -421,7 +423,10 @@
           proyecto:         c.proyecto         ?? null,
           examen:           c.examen           ?? null,
           autoevaluacion:   c.autoevaluacion   ?? null,
+          promedio_parcial: prom               ?? null,
+          banda:            b                  ?? null,
         }, { onConflict: 'alumno_id,grupo_materia_id,periodo_id' })
+        if (error) throw error
       }
       const n = pendientes.length
       mostrarToast(`${n} alumno${n > 1 ? 's' : ''} guardado${n > 1 ? 's' : ''} ✓`)

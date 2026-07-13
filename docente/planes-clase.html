@@ -71,11 +71,11 @@
       font-weight: 600;
     }
 
-    .stat-completadas { background: #dcfce7; color: #22c55e; }
-    .stat-pendientes { background: #fef3c7; color: #f59e0b; }
-    .stat-planificadas { background: #dbeafe; color: #3b82f6; }
-    .stat-no-iniciadas { background: #f3f4f6; color: #6b7280; }
-    .stat-total { background: var(--az-l); color: var(--az); }
+    .stat-completadas { background: var(--vd-l); color: var(--vd); }
+    .stat-pendientes { background: var(--am-l); color: var(--am); }
+    .stat-planificadas { background: var(--az-l); color: var(--az); }
+    .stat-no-iniciadas { background: var(--bg-hover); color: var(--text-3); }
+    .stat-total { background: var(--ch-indigo-l); color: var(--ch-indigo); }
 
     .grupo-content {
       display: none;
@@ -175,35 +175,30 @@
       position: relative;
     }
 
-    /* Estados de sesión con código de colores mejorado */
+    /* Estados de sesión */
     .sesion-card.completada {
-      border-color: #22c55e; /* Verde */
-      background: linear-gradient(135deg, #f0fdf4, #dcfce7);
-      box-shadow: 0 2px 8px rgba(34, 197, 94, 0.1);
+      border-color: var(--vd);
+      background: var(--vd-l);
     }
 
     .sesion-card.pendiente {
-      border-color: #f59e0b; /* Amarillo/Naranja */
-      background: linear-gradient(135deg, #fffbeb, #fef3c7);
-      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.1);
+      border-color: var(--ch-orange);
+      background: var(--am-l);
     }
 
     .sesion-card.no-iniciada {
-      border-color: #6b7280; /* Gris */
-      background: linear-gradient(135deg, #f9fafb, #f3f4f6);
-      box-shadow: 0 2px 8px rgba(107, 114, 128, 0.05);
+      border-color: var(--border-m);
+      background: var(--bg-section);
     }
 
     .sesion-card.atrasada {
-      border-color: #ef4444; /* Rojo */
-      background: linear-gradient(135deg, #fef2f2, #fecaca);
-      box-shadow: 0 2px 8px rgba(239, 68, 68, 0.1);
+      border-color: var(--co);
+      background: var(--co-l);
     }
 
     .sesion-card.planificada {
-      border-color: #3b82f6; /* Azul */
-      background: linear-gradient(135deg, #eff6ff, #dbeafe);
-      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+      border-color: var(--ch-blue);
+      background: var(--az-l);
     }
 
     .sesion-card:hover {
@@ -213,8 +208,8 @@
 
     .sesion-card.selected {
       transform: translateY(-2px);
-      box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
-      border-color: #3b82f6 !important;
+      box-shadow: 0 4px 16px rgba(46, 155, 216, 0.3);
+      border-color: var(--ch-blue) !important;
     }
 
     .sesion-card.selected::before {
@@ -224,7 +219,7 @@
       right: -8px;
       width: 20px;
       height: 20px;
-      background: #3b82f6;
+      background: var(--ch-blue);
       color: white;
       border-radius: 50%;
       display: flex;
@@ -453,10 +448,10 @@
           <div class="acciones-multiples-botones">
             <button class="btn btn-sm" onclick="seleccionarTodas()">Seleccionar todas</button>
             <button class="btn btn-sm" onclick="limpiarSeleccion()">Limpiar</button>
-            <button class="btn btn-sm" style="background:#22c55e;color:white;border-color:#22c55e;" onclick="marcarMultiples('completada')">
+            <button class="btn btn-sm" style="background:var(--vd);color:white;border-color:var(--vd);" onclick="marcarMultiples('completada')">
               ✓ Marcar completadas
             </button>
-            <button class="btn btn-sm" style="background:#f59e0b;color:white;border-color:#f59e0b;" onclick="marcarMultiples('pendiente')">
+            <button class="btn btn-sm" style="background:var(--ch-orange);color:white;border-color:var(--ch-orange);" onclick="marcarMultiples('pendiente')">
               📝 Marcar pendientes
             </button>
           </div>
@@ -839,7 +834,7 @@
         <div class="sesion-header">
           <div class="sesion-numero" style="background:${estadoColor};">${sesion.numero}</div>
           <div class="estado-check" onclick="event.stopPropagation(); toggleCompletada('${sesion.id}', ${!sesion.completada})"
-               style="${sesion.completada ? 'background:#22c55e;border-color:#22c55e;color:white;' : ''}">
+               style="${sesion.completada ? 'background:var(--vd);border-color:var(--vd);color:white;' : ''}">
             ${estadoIcon}
           </div>
         </div>
@@ -883,29 +878,29 @@
         estadoClass: 'completada',
         estadoIcon: '✓',
         estadoTexto: '✅ Completada',
-        estadoColor: '#22c55e'
+        estadoColor: '#2E7D32'
       }
     }
 
-    // 2. EN PROGRESO (Amarillo/Naranja)
+    // 2. EN PROGRESO (Naranja Christel House)
     const tienePlanificacion = sesion.inicio || sesion.desarrollo || sesion.cierre
     if (tienePlanificacion) {
       return {
         estadoClass: 'pendiente',
         estadoIcon: '◐',
         estadoTexto: '📝 En progreso',
-        estadoColor: '#f59e0b'
+        estadoColor: '#F7941D'
       }
     }
 
-    // 3. PLANIFICADA (Azul) - Tiene información del plan analítico
+    // 3. PLANIFICADA (Azul Christel House) - Tiene información del plan analítico
     const tieneContenidoPlan = sesion.aprendizaje_esperado || sesion.contenido || sesion.saber_hacer
     if (tieneContenidoPlan) {
       return {
         estadoClass: 'planificada',
         estadoIcon: '📋',
         estadoTexto: '📋 Planificada',
-        estadoColor: '#3b82f6'
+        estadoColor: '#2E9BD8'
       }
     }
 
@@ -914,7 +909,7 @@
       estadoClass: 'no-iniciada',
       estadoIcon: '○',
       estadoTexto: '⏳ No iniciada',
-      estadoColor: '#6b7280'
+      estadoColor: '#7A8194'
     }
   }
 
@@ -1075,9 +1070,9 @@
 
     if (modoSeleccion) {
       btn.textContent = '❌ Cancelar selección'
-      btn.style.background = '#ef4444'
+      btn.style.background = 'var(--co)'
       btn.style.color = 'white'
-      btn.style.borderColor = '#ef4444'
+      btn.style.borderColor = 'var(--co)'
       acciones.classList.add('visible')
       document.body.style.userSelect = 'none' // Evitar selección de texto accidental
     } else {

@@ -1,5 +1,6 @@
 import { supabase } from './supabase.js'
 import { logout }   from './auth.js'
+import { logoSVG }  from './brand.js'
 
 export async function renderSidebarAdmin(paginaActiva) {
   const { data: { user } } = await supabase.auth.getUser()
@@ -35,8 +36,13 @@ export async function renderSidebarAdmin(paginaActiva) {
   let html = `
     <aside class="sidebar">
       <div class="sidebar-logo">
-        <div class="brand">TechAcademia</div>
-        <div class="role">Administrador</div>
+        <div class="brand-row">
+          ${logoSVG(34)}
+          <div>
+            <div class="brand">Christel House</div>
+            <div class="role">TechAcademia · Admin</div>
+          </div>
+        </div>
       </div>
       <div class="nav-section">Global</div>`
 
