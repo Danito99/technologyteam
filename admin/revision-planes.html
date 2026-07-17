@@ -96,7 +96,7 @@
       id, estado, entregado_at, modificado_at, comentario_admin,
       nombre_proyecto, metodologia, ejes_articuladores, ajustes_razonados,
       grupo_materia_id, periodo_id,
-      grupo_materias ( id, grupos(nombre,nivel,docente_id), materias(nombre) ),
+      grupo_materias ( id, grupos(id,nombre,nivel,docente_id), materias(nombre) ),
       periodos ( etiqueta )
     `)
     .order('entregado_at', { ascending: false })
@@ -208,10 +208,17 @@
               const check  = s.completada ? '✅' : s.inicio || s.desarrollo || s.cierre ? '📝' : '⚪'
               const esAprobada  = s.estado_revision === 'aprobada'
               const esRechazada = s.estado_revision === 'rechazada'
+              const grupoId = gm?.grupos?.id || ''
+              const docenteId = gm?.grupos?.docente_id || ''
+              const linkSesion = grupoId
+                ? `/docente/sesion-editor.html?grupoId=${grupoId}&gmId=${gmId}&periodoId=${p.periodo_id}&sesionId=${s.id}&verComo=${docenteId}`
+                : '#'
               return `
               <div class="sp-row" id="sp-row-${s.id}">
                 <span style="font-weight:600;color:var(--text-3);">${s.numero}${check}</span>
-                <span style="color:var(--az-d);">${titulo.substring(0,60)}</span>
+                <a href="${linkSesion}" target="_blank" style="color:var(--az-d);text-decoration:none;"
+                   onmouseover="this.style.textDecoration='underline'"
+                   onmouseout="this.style.textDecoration='none'">${titulo.substring(0,60)}</a>
                 <span>${s.inicio     ? s.inicio.substring(0,60)+'…'     : '<span style="color:var(--text-3);">Sin inicio</span>'}</span>
                 <span>${s.desarrollo ? s.desarrollo.substring(0,60)+'…' : '<span style="color:var(--text-3);">Sin desarrollo</span>'}</span>
                 <div class="rev-acciones">
@@ -229,9 +236,17 @@
         ? `<a href="/docente/planes-clase.html?verComo=${docIdParaVer}" class="btn btn-sm" target="_blank" title="Ver planes de clase del docente">👁 Ver sesiones</a>`
         : ''
 
+      const guiaFlujo = p.estado === 'entregado'
+        ? `<div style="font-size:11px;color:var(--text-3);margin-top:10px;padding:8px 10px;background:var(--am-l);border-radius:var(--radius-s);border-left:3px solid var(--am);">
+            <strong style="color:var(--am);">Paso a seguir:</strong>
+            Revisa cada sesión con ✓ / ✗ arriba. Cuando termines, usa <strong>Aprobar plan</strong> para notificar al docente
+            o <strong>Rechazar</strong> con un comentario global.
+           </div>`
+        : ''
+
       const acciones = p.estado === 'entregado'
         ? `${linkVerComo}
-           <button class="btn btn-sm" style="background:var(--vd);color:white;border-color:var(--vd);" onclick="aprobar('${p.id}')">✓ Aprobar</button>
+           <button class="btn btn-sm" style="background:var(--vd);color:white;border-color:var(--vd);" onclick="aprobar('${p.id}')">✓ Aprobar plan</button>
            <button class="btn btn-sm btn-danger" onclick="abrirRechazo('${p.id}')">✕ Rechazar</button>`
         : p.estado === 'aprobado'
         ? `${linkVerComo}<span class="chip chip-green">Aprobado ✓</span>`
@@ -253,6 +268,7 @@
             <div class="plan-actions">${acciones}</div>
           </div>
           ${sesionesHtml}
+          ${guiaFlujo}
         </div>`
     }).join('')
   }
