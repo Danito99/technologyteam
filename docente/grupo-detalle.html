@@ -195,10 +195,17 @@
   }
 
   // ── Periodos ──────────────────────────────────────────────
-  const tipo = grupo?.sistema_periodos === 'semestral' ? 'semestre' : 'trimestre'
-  const { data: periodos } = await supabase
-    .from('periodos').select('id,etiqueta').eq('ciclo_id', ciclo.id)
-    .eq('tipo', tipo).order('numero').order('parcial')
+  const sistema = grupo?.sistema_periodos
+  const tipo = sistema === 'semestral' ? 'semestre' : 'trimestre'
+  const soloTrimestre = sistema === 'trimestral'
+
+  let pq = supabase.from('periodos').select('id,etiqueta,numero,parcial')
+    .eq('ciclo_id', ciclo.id).eq('tipo', tipo).order('numero').order('parcial')
+  if (soloTrimestre) pq = pq.eq('parcial', 1)
+  const { data: rawPeriodos } = await pq
+  const periodos = (rawPeriodos || []).map(p =>
+    soloTrimestre ? { ...p, etiqueta: `T${p.numero}` } : p
+  )
 
   const selPeriodo = document.getElementById('sel-periodo')
   periodos?.forEach((p, i) => {

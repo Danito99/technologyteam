@@ -234,13 +234,17 @@
     if (!gmSelId) { reset(); return }
 
     const grupo = grupos.find(g => g.id === selGrupo.value)
-    const tipo  = grupo?.sistema_periodos === 'semestral' ? 'semestre' : 'trimestre'
+    const sistema = grupo?.sistema_periodos
+    const tipo    = sistema === 'semestral' ? 'semestre' : 'trimestre'
+    const soloTrimestre = sistema === 'trimestral'
 
-    const { data } = await supabase
-      .from('periodos').select('id,etiqueta,numero,parcial')
-      .eq('ciclo_id', ciclo.id).eq('tipo', tipo)
-      .order('numero').order('parcial')
-    periodos = data || []
+    let q = supabase.from('periodos').select('id,etiqueta,numero,parcial')
+      .eq('ciclo_id', ciclo.id).eq('tipo', tipo).order('numero').order('parcial')
+    if (soloTrimestre) q = q.eq('parcial', 1)
+    const { data } = await q
+    periodos = (data || []).map(p =>
+      soloTrimestre ? { ...p, etiqueta: `T${p.numero}` } : p
+    )
 
     const bar = document.getElementById('cortes-bar')
     bar.innerHTML = ''
