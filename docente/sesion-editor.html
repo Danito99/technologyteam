@@ -615,7 +615,12 @@
     if (docenteVer) docenteActivo = docenteVer
   }
 
-  await renderSidebar('planes-clase')
+  if (verComoId && profile.rol === 'admin') {
+    const { renderSidebarAdmin } = await import('../js/sidebar-admin.js')
+    await renderSidebarAdmin('ver-docente')
+  } else {
+    await renderSidebar('planes-clase')
+  }
 
   // Obtener parámetros de la URL
   const params = new URLSearchParams(window.location.search)

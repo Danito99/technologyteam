@@ -65,7 +65,21 @@
   const content = document.getElementById('content')
   content.style.display = 'block'
 
-  docentes?.forEach(d => {
+  // Filtrar por docente específico si viene ?id= en la URL
+  const urlParams     = new URLSearchParams(window.location.search)
+  const filtroId      = urlParams.get('id')
+  const listaDocentes = filtroId
+    ? (docentes || []).filter(d => d.id === filtroId)
+    : (docentes || [])
+
+  if (filtroId) {
+    content.insertAdjacentHTML('beforeend', `
+      <div style="margin-bottom:16px;">
+        <a href="docentes.html" class="btn btn-sm">← Ver todos los docentes</a>
+      </div>`)
+  }
+
+  listaDocentes.forEach(d => {
     const gDoc    = grupos?.filter(g => g.docente_id === d.id) || []
     const sesiones= gDoc.flatMap(g => g.grupo_materias?.flatMap(gm => gm.sesiones || []) || [])
     const dadas   = sesiones.filter(s => s.completada).length
@@ -94,7 +108,8 @@
     }
 
     const avStyle = avatarColor(d.id)
-    const nivel   = 'Nivel no especificado'
+    const niveles = [...new Set(gDoc.map(g => g.nivel).filter(Boolean))]
+    const nivel   = niveles.length ? niveles.join(' · ') : '—'
 
     // Agrupar planes por periodo
     const periodosCumplimiento = periodos?.map(p => {

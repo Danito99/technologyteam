@@ -77,19 +77,20 @@
 
   let tabActual = 'entregado'
   let todosPlanes = []
+  let sesionesMap = {}
 
   const { data: ciclo } = await supabase
     .from('ciclos_escolares').select('id').eq('activo',true).single()
 
-  // Cargar todos los planes con sus sesiones
+  // Cargar todos los planes (sin sesiones snapshot — se cargan por separado)
   const { data: planes } = await supabase
     .from('planes_clase')
     .select(`
       id, estado, entregado_at, modificado_at, comentario_admin,
       nombre_proyecto, metodologia, ejes_articuladores, ajustes_razonados,
+      grupo_materia_id, periodo_id,
       grupo_materias ( id, grupos(nombre,nivel,docente_id), materias(nombre) ),
-      periodos ( etiqueta ),
-      plan_clase_sesiones ( numero, objetivo_particular, inicio, desarrollo, cierre )
+      periodos ( etiqueta )
     `)
     .order('entregado_at', { ascending: false })
 
@@ -100,6 +101,32 @@
   docentes?.forEach(d => { docMap[d.id] = d.nombre })
 
   todosPlanes = planes || []
+
+  // Cargar sesiones vivas para todos los planes cargados
+  if (todosPlanes.length > 0) {
+    const gmIds    = [...new Set(todosPlanes.map(p => p.grupo_materia_id).filter(Boolean))]
+    const perIds   = [...new Set(todosPlanes.map(p => p.periodo_id).filter(Boolean))]
+
+    const { data: sesiones } = await supabase
+      .from('sesiones')
+      .select(`
+        id, numero, titulo, inicio, desarrollo, cierre, completada,
+        grupo_materia_id, periodo_id,
+        plan_analitico_filas!plan_analitico_ref_id(
+          eje_articulador, contenido, aprendizaje_esperado
+        )
+      `)
+      .in('grupo_materia_id', gmIds)
+      .in('periodo_id', perIds)
+      .order('numero')
+
+    sesionesMap = {}
+    sesiones?.forEach(s => {
+      const key = `${s.grupo_materia_id}_${s.periodo_id}`
+      if (!sesionesMap[key]) sesionesMap[key] = []
+      sesionesMap[key].push(s)
+    })
+  }
 
   const pendientes = todosPlanes.filter(p => p.estado === 'entregado').length
   const badgeEl = document.getElementById('badge-pendientes')
@@ -146,28 +173,47 @@
         ? `<span style="font-size:10px;color:var(--am);margin-left:6px;">Modificado ${new Date(p.modificado_at).toLocaleDateString('es-MX',{day:'numeric',month:'short'})}</span>`
         : ''
 
-      const sesiones = (p.plan_clase_sesiones || []).sort((a,b) => a.numero - b.numero)
+      const gmId    = p.grupo_materias?.id
+      const sesiones = (sesionesMap[`${gmId}_${p.periodo_id}`] || [])
+      const sesCompletadas  = sesiones.filter(s => s.completada).length
+      const sesConContenido = sesiones.filter(s => s.inicio || s.desarrollo || s.cierre).length
+      const progresoPct     = sesiones.length ? Math.round((sesCompletadas / sesiones.length) * 100) : 0
+
       const sesionesHtml = sesiones.length
         ? `<div class="sesion-preview">
-            <div class="sesion-preview-title">Sesiones (${sesiones.length})</div>
-            ${sesiones.slice(0,3).map(s => `
+            <div class="sesion-preview-title" style="display:flex;justify-content:space-between;align-items:center;">
+              <span>Sesiones (${sesiones.length})</span>
+              <span style="font-weight:400;color:var(--text-3);">
+                ${sesCompletadas} completadas · ${sesConContenido} con contenido · ${progresoPct}%
+              </span>
+            </div>
+            ${sesiones.slice(0,4).map(s => {
+              const titulo = s.titulo || s.plan_analitico_filas?.aprendizaje_esperado || '—'
+              const check  = s.completada ? '✅' : s.inicio || s.desarrollo || s.cierre ? '📝' : '⚪'
+              return `
               <div class="sp-row">
-                <span style="font-weight:600;color:var(--text-3);">${s.numero}</span>
-                <span style="color:var(--az-d);">${s.objetivo_particular || '—'}</span>
-                <span>${s.inicio ? s.inicio.substring(0,60)+'...' : '—'}</span>
-                <span>${s.desarrollo ? s.desarrollo.substring(0,60)+'...' : '—'}</span>
-              </div>`).join('')}
-            ${sesiones.length > 3 ? `<div style="font-size:10px;color:var(--text-3);padding-top:4px;">+ ${sesiones.length-3} sesiones más</div>` : ''}
+                <span style="font-weight:600;color:var(--text-3);">${s.numero} ${check}</span>
+                <span style="color:var(--az-d);">${titulo.substring(0,50)}</span>
+                <span>${s.inicio    ? s.inicio.substring(0,55)+'…'    : '<span style="color:var(--text-3);">Sin inicio</span>'}</span>
+                <span>${s.desarrollo? s.desarrollo.substring(0,55)+'…': '<span style="color:var(--text-3);">Sin desarrollo</span>'}</span>
+              </div>`}).join('')}
+            ${sesiones.length > 4 ? `<div style="font-size:10px;color:var(--text-3);padding-top:4px;">+ ${sesiones.length-4} sesiones más</div>` : ''}
            </div>`
+        : '<div style="font-size:12px;color:var(--text-3);padding:8px 0;">Sin sesiones registradas en este periodo.</div>'
+
+      const docIdParaVer = gm?.grupos?.docente_id
+      const linkVerComo  = docIdParaVer
+        ? `<a href="/docente/planes-clase.html?verComo=${docIdParaVer}" class="btn btn-sm" target="_blank" title="Ver planes de clase del docente">👁 Ver sesiones</a>`
         : ''
 
       const acciones = p.estado === 'entregado'
-        ? `<button class="btn btn-sm" style="background:var(--vd);color:white;border-color:var(--vd);" onclick="aprobar('${p.id}')">✓ Aprobar</button>
+        ? `${linkVerComo}
+           <button class="btn btn-sm" style="background:var(--vd);color:white;border-color:var(--vd);" onclick="aprobar('${p.id}')">✓ Aprobar</button>
            <button class="btn btn-sm btn-danger" onclick="abrirRechazo('${p.id}')">✕ Rechazar</button>`
         : p.estado === 'aprobado'
-        ? `<span class="chip chip-green">Aprobado ✓</span>`
+        ? `${linkVerComo}<span class="chip chip-green">Aprobado ✓</span>`
         : p.estado === 'rechazado'
-        ? `<button class="btn btn-sm" style="background:var(--vd);color:white;border-color:var(--vd);" onclick="aprobar('${p.id}')">✓ Aprobar ahora</button>`
+        ? `${linkVerComo}<button class="btn btn-sm" style="background:var(--vd);color:white;border-color:var(--vd);" onclick="aprobar('${p.id}')">✓ Aprobar ahora</button>`
         : ''
 
       return `

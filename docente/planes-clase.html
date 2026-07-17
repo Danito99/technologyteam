@@ -387,6 +387,53 @@
         gap: 8px;
       }
     }
+
+    /* Entrega de planes */
+    .plan-estado-badge {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 10px;
+      white-space: nowrap;
+    }
+    .plan-estado-entregado { background: var(--az-l);  color: var(--az); }
+    .plan-estado-aprobado  { background: var(--vd-l);  color: var(--vd); }
+    .plan-estado-rechazado { background: var(--co-l);  color: var(--co); }
+
+    .entrega-section {
+      padding: 12px 20px;
+      border-top: 1px solid var(--border-light);
+      background: var(--bg-section);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .rechazo-banner {
+      margin: 12px 20px 0;
+      padding: 10px 14px;
+      background: var(--co-l);
+      border: 1px solid #F0997B;
+      border-radius: var(--radius-s);
+      font-size: 12px;
+      color: var(--co);
+      line-height: 1.5;
+    }
+
+    /* Vista lista plana */
+    .lista-table { width:100%; border-collapse:collapse; font-size:12px; }
+    .lista-table th {
+      text-align:left; font-size:10px; font-weight:600;
+      color:var(--text-3); text-transform:uppercase; letter-spacing:.05em;
+      padding:8px 12px; border-bottom:1px solid var(--border);
+      background:var(--bg-section); white-space:nowrap;
+    }
+    .lista-table td { padding:10px 12px; border-bottom:1px solid var(--border-light); vertical-align:middle; }
+    .lista-row { cursor:pointer; transition:background .1s; }
+    .lista-row:hover td { background:var(--bg-hover); }
+    .lista-row:last-child td { border-bottom:none; }
   </style>
 </head>
 <body>
@@ -513,6 +560,7 @@
   let grupos = []
   let sesionesData = {}
   let planAnaliticoData = {}
+  let planesClaseData = {}
   let expandedGrupos = new Set()
   let expandedTrimestres = new Set()
   let modoSeleccion = false
@@ -650,6 +698,18 @@
 
       sesionesData[key].push(sesionCompleta)
     })
+
+    // Cargar estados de entrega por (grupo_materia, periodo)
+    const { data: planesClase } = await supabase
+      .from('planes_clase')
+      .select('id, estado, entregado_at, comentario_admin, grupo_materia_id, periodo_id')
+      .in('grupo_materia_id', grupoMateriaIds)
+
+    planesClaseData = {}
+    planesClase?.forEach(p => {
+      const key = `${p.grupo_materia_id}_${p.periodo_id}`
+      planesClaseData[key] = p
+    })
   }
 
   // Calcular estadísticas de un grupo
@@ -711,6 +771,11 @@
       return
     }
 
+    if (filtroVista === 'lista') {
+      renderVistaLista(container)
+      return
+    }
+
     container.innerHTML = grupos.map(grupo => {
       const stats = calcularEstadisticas(grupo)
       const isExpanded = expandedGrupos.has(grupo.id)
@@ -741,6 +806,86 @@
     }).join('')
   }
 
+  // Vista lista plana — todas las sesiones en una tabla
+  function renderVistaLista(container) {
+    const filas = []
+
+    grupos.forEach(grupo => {
+      const periodosFiltrados = filtroTrimestreEtiqueta
+        ? grupo.periodos.filter(p => p.etiqueta === filtroTrimestreEtiqueta)
+        : grupo.periodos
+
+      grupo.grupo_materias?.forEach(gm => {
+        periodosFiltrados.forEach(periodo => {
+          const key = `${gm.id}_${periodo.id}`
+          const sesiones = sesionesData[key] || []
+          sesiones.forEach(sesion => {
+            const estado = determinarEstadoSesion(sesion)
+            if (filtroEstado && estado.estadoClass !== filtroEstado) return
+            filas.push({ sesion, grupo, gm, periodo, estado })
+          })
+        })
+      })
+    })
+
+    if (!filas.length) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">📋</div>
+          <h3>Sin sesiones con ese filtro</h3>
+          <p>Cambia los filtros o sincroniza el plan analítico.</p>
+        </div>`
+      return
+    }
+
+    container.innerHTML = `
+      <div class="card mb-0" style="overflow:hidden;">
+        <table class="lista-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Grupo · Materia</th>
+              <th>Periodo</th>
+              <th>Sesión</th>
+              <th>Estado</th>
+              <th>Contenido</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${filas.map(({ sesion, grupo, gm, periodo, estado }) => {
+              const campos = [sesion.inicio, sesion.desarrollo, sesion.cierre].filter(c => c?.trim()).length
+              const progreso = Math.round((campos / 3) * 100)
+              const titulo = sesion.titulo || sesion.aprendizaje_esperado || '—'
+              return `
+                <tr class="lista-row"
+                    onclick="abrirSesion('${grupo.id}','${gm.id}','${periodo.id}','${sesion.id}')">
+                  <td style="color:var(--text-3);width:32px;">${sesion.numero}</td>
+                  <td>
+                    <div style="font-weight:600;font-size:12px;">${grupo.nombre}</div>
+                    <div style="font-size:11px;color:var(--text-3);">${gm.materias?.nombre || ''}</div>
+                  </td>
+                  <td style="color:var(--text-3);font-size:11px;white-space:nowrap;">${periodo.etiqueta}</td>
+                  <td style="max-width:260px;">
+                    <div style="font-size:12px;line-height:1.4;color:var(--text);">${titulo}</div>
+                  </td>
+                  <td style="white-space:nowrap;">
+                    <span style="font-size:11px;color:${estado.estadoColor};font-weight:600;">${estado.estadoTexto}</span>
+                  </td>
+                  <td style="width:100px;">
+                    <div style="display:flex;align-items:center;gap:6px;">
+                      <div style="flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden;">
+                        <div style="width:${progreso}%;height:100%;background:${estado.estadoColor};border-radius:2px;"></div>
+                      </div>
+                      <span style="font-size:10px;color:var(--text-3);flex-shrink:0;">${progreso}%</span>
+                    </div>
+                  </td>
+                </tr>`
+            }).join('')}
+          </tbody>
+        </table>
+      </div>`
+  }
+
   // Renderizar materias y trimestres de un grupo
   function renderMaterias(grupo) {
     if (!grupo.grupo_materias?.length) {
@@ -767,9 +912,20 @@
       : todasSesiones
     const trimestreKey = `${grupo.id}_${grupoMateria.id}_${periodo.id}`
     const isExpanded = expandedTrimestres.has(trimestreKey)
+    const planClase   = planesClaseData[key]
+    const estadoPlan  = planClase?.estado
 
     // Filtro activo y sin sesiones que coincidan: ocultar bloque
     if (filtroEstado && sesiones.length === 0) return ''
+
+    // Badge de estado del plan (visible en header aunque esté colapsado)
+    const estadoBadge = estadoPlan === 'entregado'
+      ? '<span class="plan-estado-badge plan-estado-entregado">📤 En revisión</span>'
+      : estadoPlan === 'aprobado'
+      ? '<span class="plan-estado-badge plan-estado-aprobado">✅ Aprobado</span>'
+      : estadoPlan === 'rechazado'
+      ? '<span class="plan-estado-badge plan-estado-rechazado">⚠️ Rechazado</span>'
+      : ''
 
     if (todasSesiones.length === 0) {
       return `
@@ -780,15 +936,38 @@
               <span>${periodo.etiqueta} • ${grupoMateria.materias?.nombre || 'Materia'}</span>
             </div>
             <div style="font-size:12px;color:var(--text-3);">
-              Sin plan analítico
+              Sin plan analítico — sincroniza primero
             </div>
           </div>
         </div>`
     }
 
     const completadas = sesiones.filter(s => s.completada).length
-    const enProgreso = sesiones.filter(s => !s.completada && (s.inicio || s.desarrollo || s.cierre)).length
-    const progreso = (completadas / sesiones.length) * 100
+    const enProgreso  = sesiones.filter(s => !s.completada && (s.inicio || s.desarrollo || s.cierre)).length
+    const progreso    = (completadas / sesiones.length) * 100
+
+    // Banner de rechazo (mostrar dentro del contenido expandido)
+    const rechazoHtml = estadoPlan === 'rechazado' && planClase?.comentario_admin
+      ? `<div class="rechazo-banner">
+           <strong>Retroalimentación del admin:</strong> ${planClase.comentario_admin}
+           <br><span style="font-size:11px;opacity:.8;">Corrige las sesiones y re-entrega cuando estés listo.</span>
+         </div>`
+      : ''
+
+    // Botón de entrega / estado
+    const puedeEntregar = !estadoPlan || estadoPlan === 'borrador' || estadoPlan === 'rechazado'
+    const entregadoInfo = planClase?.entregado_at
+      ? `<span style="font-size:10px;color:var(--text-3);">· Entregado ${new Date(planClase.entregado_at).toLocaleDateString('es-MX',{day:'numeric',month:'short'})}</span>`
+      : ''
+
+    const botonEntregaHtml = puedeEntregar
+      ? `<button class="btn btn-sm btn-primary"
+           onclick="event.stopPropagation(); entregarPeriodo('${grupoMateria.id}','${periodo.id}')">
+           📤 Entregar para revisión
+         </button>`
+      : estadoPlan === 'entregado'
+      ? `<span style="font-size:12px;color:var(--az);">⏳ En revisión — el admin evaluará pronto</span>`
+      : `<span style="font-size:12px;color:var(--vd);font-weight:600;">✅ Aprobado por el admin</span>`
 
     return `
       <div class="trimestre-bloque ${isExpanded ? 'expanded' : ''}" data-trimestre-key="${trimestreKey}">
@@ -796,6 +975,7 @@
           <div class="trimestre-titulo">
             <div class="trimestre-icon">▶</div>
             <span>${periodo.etiqueta} • ${grupoMateria.materias?.nombre || 'Materia'}</span>
+            ${estadoBadge}
           </div>
           <div class="trimestre-progress">
             <span>${completadas}/${sesiones.length}</span>
@@ -808,8 +988,17 @@
         </div>
 
         <div class="trimestre-content">
+          ${rechazoHtml}
           <div class="sesiones-grid">
             ${sesiones.map(sesion => renderSesion(grupo, grupoMateria, periodo, sesion)).join('')}
+          </div>
+          <div class="entrega-section">
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+              <span style="font-size:12px;color:var(--text-2);font-weight:500;">Estado del plan:</span>
+              ${estadoBadge || '<span style="font-size:12px;color:var(--text-3);">Sin entregar</span>'}
+              ${entregadoInfo}
+            </div>
+            ${botonEntregaHtml}
           </div>
         </div>
       </div>`
@@ -1052,14 +1241,13 @@
   }
 
   window.abrirSesion = (grupoId, grupoMateriaId, periodoId, sesionId) => {
-    // Si está en modo selección, seleccionar/deseleccionar
     if (modoSeleccion) {
       toggleSeleccion(sesionId)
       return
     }
 
-    // Redirigir al editor de sesión individual
-    window.location.href = `sesion-editor.html?gmId=${grupoMateriaId}&pId=${periodoId}&sesionId=${sesionId}`
+    const verComoParam = verComoId ? `&verComo=${verComoId}` : ''
+    window.location.href = `sesion-editor.html?gmId=${grupoMateriaId}&pId=${periodoId}&sesionId=${sesionId}${verComoParam}`
   }
 
   // Funciones de selección múltiple
@@ -1117,7 +1305,12 @@
   }
 
   window.sincronizarTodo = async () => {
-    if (!confirm('¿Sincronizar todas las sesiones con el plan analítico? Esto regenerará las sesiones basándose en el plan actual.')) return
+    if (!confirm(
+      '¿Sincronizar sesiones con el plan analítico?\n\n' +
+      '✅ Solo se crearán sesiones para filas del plan que aún no tienen sesión asignada.\n' +
+      '✅ El contenido ya escrito (inicio, desarrollo, cierre) no se modificará.\n' +
+      '✅ Las sesiones existentes no se borrarán.'
+    )) return
 
     try {
       const btn = document.querySelector('button[onclick="sincronizarTodo()"]')
@@ -1125,30 +1318,76 @@
       btn.disabled = true
       btn.textContent = '🔄 Sincronizando...'
 
-      // Usar la función SQL para sincronizar
       const { data, error } = await supabase.rpc('sincronizar_sesiones_con_plan_analitico')
 
-      if (error) {
-        throw error
-      }
+      if (error) throw error
 
-      // Recargar datos y renderizar
+      // Recargar y renderizar
       await cargarDatos()
       renderGrupos()
 
-      const sesionesCreadas = data ? data.length : 0
-      alert(`✅ Sincronización completada. ${sesionesCreadas > 0 ? `Se procesaron ${sesionesCreadas} grupos.` : 'No se encontraron cambios.'}`)
+      const gruposActualizados = data ? data.length : 0
+      const totalCreadas = data ? data.reduce((sum, r) => sum + (r.sesiones_sincronizadas || 0), 0) : 0
+
+      if (totalCreadas > 0) {
+        mostrarToast(`✅ Se crearon ${totalCreadas} sesión(es) nuevas en ${gruposActualizados} grupo(s).`)
+      } else {
+        mostrarToast('Sin cambios — todas las sesiones ya estaban sincronizadas.')
+      }
 
       btn.disabled = false
       btn.textContent = textoOriginal
 
     } catch (error) {
       console.error('Error en sincronización:', error)
-      alert(`Error en la sincronización: ${error.message}`)
+      mostrarToast(`Error en la sincronización: ${error.message}`, 'error')
 
       const btn = document.querySelector('button[onclick="sincronizarTodo()"]')
-      btn.disabled = false
-      btn.textContent = '🔄 Sincronizar con plan analítico'
+      if (btn) {
+        btn.disabled = false
+        btn.textContent = '🔄 Sincronizar con plan analítico'
+      }
+    }
+  }
+
+  window.entregarPeriodo = async (gmId, periodoId) => {
+    const key = `${gmId}_${periodoId}`
+    const sesiones = sesionesData[key] || []
+
+    if (sesiones.length === 0) {
+      mostrarToast('No hay sesiones en este periodo. Sincroniza el plan analítico primero.', 'error')
+      return
+    }
+
+    const conContenido = sesiones.filter(s => s.inicio || s.desarrollo || s.cierre).length
+    const planExistente = planesClaseData[key]
+    const accion = planExistente?.estado === 'rechazado' ? 'Re-entregar' : 'Entregar'
+
+    if (!confirm(`${accion} este periodo para revisión del admin?\n\n${sesiones.length} sesiones en total, ${conContenido} con contenido planificado.`)) return
+
+    try {
+      const { data, error } = await supabase
+        .from('planes_clase')
+        .upsert({
+          grupo_materia_id: gmId,
+          periodo_id:       periodoId,
+          estado:           'entregado',
+          entregado_at:     new Date().toISOString(),
+          modificado_at:    new Date().toISOString(),
+          comentario_admin: null
+        }, { onConflict: 'grupo_materia_id,periodo_id' })
+        .select()
+        .single()
+
+      if (error) throw error
+
+      planesClaseData[key] = data
+      renderGrupos()
+      mostrarToast('Plan entregado para revisión ✓')
+
+    } catch (err) {
+      console.error('Error entregando plan:', err)
+      mostrarToast('Error al entregar el plan. Intenta de nuevo.', 'error')
     }
   }
 
