@@ -604,13 +604,22 @@
         .order('numero')
         .order('parcial')
 
-      // Procesar datos de grupos
-      grupos = gruposDB?.map(grupo => ({
-        ...grupo,
-        periodos: periodos?.filter(p =>
-          p.tipo === (grupo.sistema_periodos === 'semestral' ? 'semestre' : 'trimestre')
+      // Procesar datos de grupos — filtrar periodos según sistema
+      grupos = gruposDB?.map(grupo => {
+        const esTrimestral  = grupo.sistema_periodos === 'trimestral'
+        const esSemestral   = grupo.sistema_periodos === 'semestral'
+        const tipoFiltro    = esSemestral ? 'semestre' : 'trimestre'
+
+        const periodosFiltrados = periodos?.filter(p => {
+          if (p.tipo !== tipoFiltro) return false
+          if (esTrimestral) return p.parcial === 1   // solo T1, T2, T3
+          return true
+        }).map(p =>
+          esTrimestral ? { ...p, etiqueta: `T${p.numero}` } : p
         ) || []
-      })) || []
+
+        return { ...grupo, periodos: periodosFiltrados }
+      }) || []
 
       // Auto-sincronizar sesiones con plan analítico
       await sincronizarSesionesAutomatico()
@@ -618,10 +627,10 @@
       // Cargar sesiones con plan analítico integrado
       await cargarSesionesCompletas()
 
-      // Poblar filtro de trimestres
+      // Poblar filtro de trimestres desde los periodos ya procesados
       const filtroTrimestre = document.getElementById('filtro-trimestre')
       const trimestres = new Set()
-      periodos?.forEach(p => trimestres.add(p.etiqueta))
+      grupos.forEach(g => g.periodos.forEach(p => trimestres.add(p.etiqueta)))
       Array.from(trimestres).forEach(etiqueta => {
         const option = document.createElement('option')
         option.value = etiqueta

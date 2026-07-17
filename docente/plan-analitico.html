@@ -445,51 +445,44 @@
   }
 
   // ── Periodos ──────────────────────────────────────────────
+  // Homologado: secundaria = T1, T2, T3 · preparatoria = Sem A/B · P1..P3.
+  // Una pestaña por fila de `periodos`, con su etiqueta real.
   async function cargarPeriodos(sistema) {
     const tipo = sistema === 'semestral' ? 'semestre' : 'trimestre'
-    const { data: periodos } = await supabase
+    // 'trimestral' = solo T1, T2, T3 (parcial 1 de cada trimestre, renombrado)
+    // 'trimestral_parciales' = T1·P1, T1·P2, T1·P3, etc.
+    const soloTrimestre = sistema === 'trimestral'
+
+    let query = supabase
       .from('periodos').select('id, etiqueta, numero, parcial, tipo')
       .eq('ciclo_id', cicloId).eq('tipo', tipo).order('numero').order('parcial')
+    if (soloTrimestre) query = query.eq('parcial', 1)
 
-    // Función para mapear parcial a trimestre según la distribución correcta
-    function getParcialTrimestre(parcial) {
-      if (parcial === 1) return 1         // Parcial 1 → T1
-      if (parcial === 2 || parcial === 3) return 2  // Parciales 2,3 → T2
-      if (parcial === 4 || parcial === 5) return 3  // Parciales 4,5 → T3
-      return Math.ceil(parcial / 2) + 1  // Fallback para parciales adicionales
-    }
+    const { data: rawPeriodos } = await query
+
+    periodosActuales = (rawPeriodos || []).map(p =>
+      soloTrimestre ? { ...p, etiqueta: `T${p.numero}` } : p
+    )
 
     const tabsEl = document.getElementById('tab-periodos')
     tabsEl.innerHTML = ''
     let primerPeriodo = null
 
-    // Filtrar para obtener solo UN periodo por cada número de parcial (eliminar duplicados)
-    const parcialesUnicos = []
-    const parcialVistos = new Set()
-
-    periodos?.sort((a,b) => a.parcial - b.parcial).forEach(p => {
-      if (!parcialVistos.has(p.parcial)) {
-        parcialVistos.add(p.parcial)
-        parcialesUnicos.push(p)
-      }
-    })
-
-    // Mostrar botones para parciales únicos
-    parcialesUnicos.forEach(p => {
+    periodosActuales.forEach(p => {
       if (!primerPeriodo) primerPeriodo = p
       const btn = document.createElement('button')
       btn.className = 'tab-periodo' + (p === primerPeriodo ? ' active' : '')
-      const trimestre = getParcialTrimestre(p.parcial)
-      btn.setAttribute('data-trimestre', trimestre)
-      btn.setAttribute('data-parcial', p.parcial)
-      btn.textContent = `Trimestre ${trimestre}`
-      btn.onclick = () => seleccionarParcial(p.id, p.parcial, btn)
+      btn.dataset.periodoId = p.id
+      // Separación visual entre Semestre A y Semestre B
+      if (p.tipo === 'semestre' && p.numero > 1 && p.parcial === 1) btn.style.marginLeft = '14px'
+      btn.textContent = p.etiqueta
+      btn.onclick = () => seleccionarPeriodo(p, btn)
       tabsEl.appendChild(btn)
     })
 
     if (primerPeriodo) {
       periodoId = primerPeriodo.id
-      periodoNumero = primerPeriodo.parcial
+      periodoNumero = primerPeriodo.numero
       await cargarFilas()
     }
     document.getElementById('info-plan').style.display = 'block'
@@ -501,23 +494,23 @@
     mostrarVista('plan-analitico')
   }
 
-  async function seleccionarParcial(pId, pParcial, btnEl) {
-    if (haycambios && !confirm('Tienes cambios sin guardar. ¿Cambiar de parcial?')) return
+  async function seleccionarPeriodo(p, btnEl) {
+    if (haycambios && !confirm('Tienes cambios sin guardar. ¿Cambiar de periodo?')) return
     document.querySelectorAll('.tab-periodo').forEach(b => b.classList.remove('active'))
     btnEl.classList.add('active')
-    periodoId = pId
-    periodoNumero = pParcial
+    periodoId = p.id
+    periodoNumero = p.numero
     haycambios = false
     await cargarFilas()
   }
 
   // ── Cargar filas ──────────────────────────────────────────
   async function cargarFilas() {
-    if (!grupoMateriaId || !periodoNumero) return
+    if (!grupoMateriaId || !periodoId) return
     const { data } = await supabase
       .from('plan_analitico_filas')
       .select('id,semana,eje_articulador,contenido,aprendizaje_esperado,saber_hacer,es_examen,orden,tipo_actividad,periodo_numero,bloom_nivel,sub_parcial')
-      .eq('grupo_materia_id', grupoMateriaId).eq('periodo_numero', periodoNumero).order('orden')
+      .eq('grupo_materia_id', grupoMateriaId).eq('periodo_id', periodoId).order('orden')
     filasActuales = data || []
     renderTabla()
   }
@@ -532,36 +525,8 @@
     document.getElementById('card-tabla').style.display = 'block'
     const CATS = catalogoFiltrado()
 
-    // Agrupar filas por sub_parcial
-    const filasPorParcial = {}
-    filasActuales.forEach((f, i) => {
-      const subParcial = f.sub_parcial || 1
-      if (!filasPorParcial[subParcial]) filasPorParcial[subParcial] = []
-      filasPorParcial[subParcial].push({ fila: f, indice: i })
-    })
-
-    // Generar HTML para cada parcial
-    const parciales = Object.keys(filasPorParcial).sort((a, b) => parseInt(a) - parseInt(b))
-    let htmlCompleto = ''
-
-    parciales.forEach(numParcial => {
-      const filasDelParcial = filasPorParcial[numParcial]
-
-      // Header del parcial
-      htmlCompleto += `
-        <tr class="parcial-header">
-          <td colspan="7" style="background: var(--bg-2); font-weight: bold; padding: 12px; border-bottom: 2px solid var(--border);">
-            📚 Parcial ${numParcial}
-            <div style="float: right;">
-              <button class="btn-add-parcial-fila" onclick="agregarFilaAParcial(${numParcial})" style="font-size: 12px; margin-right: 8px;">+ Agregar sesión</button>
-              <button class="btn-add-parcial-examen" onclick="agregarExamenAParcial(${numParcial})" style="font-size: 12px; color: var(--text-3);">+ Examen</button>
-            </div>
-          </td>
-        </tr>
-      `
-
-      // Filas del parcial
-      htmlCompleto += filasDelParcial.map(({ fila: f, indice: i }) => {
+    // Lista plana: el periodo (T1..T3 o Sem X · Pn) ya es la unidad de planeación
+    let htmlCompleto = filasActuales.map((f, i) => {
         if (f.es_examen) return (
         '<tr class="examen-row" data-idx="' + i + '">' +
         '<td colspan="6">— Periodo de exámenes —</td>' +
@@ -600,7 +565,7 @@
         // Semana
         '<td class="col-semana">' +
         '<textarea class="cell-input" placeholder="Sesión 1"' +
-        ' oninput="autoResize(this)" onchange="editarCelda(" + i + ",\"semana\",this.value)">' +
+        ' oninput="autoResize(this)" onchange="editarCelda(' + i + ',\'semana\',this.value)">' +
         esc(f.semana || '') + '</textarea></td>' +
         // Eje
         '<td class="col-eje">' +
@@ -619,7 +584,7 @@
         '<div class="pda-wrap">' +
         '<div class="pda-text" id="pda-text-' + i + '">' + (pda || '<span style="color:var(--text-3);font-style:italic;">Se llenará al elegir contenido</span>') + '</div>' +
         '<textarea class="pda-textarea" id="pda-edit-' + i + '"' +
-        ' oninput="autoResize(this);editarCelda(" + i + ",\"aprendizaje_esperado\",this.value)">' +
+        ' oninput="autoResize(this);editarCelda(' + i + ',\'aprendizaje_esperado\',this.value)">' +
         esc(pda) + '</textarea>' +
         '<button class="btn-lock" onclick="togglePdaEdit(' + i + ',this)">🔒</button>' +
         '</div></td>' +
@@ -630,7 +595,7 @@
         '</select>' +
         '</td>' +
         // Tipo actividad
-        '<td><select class="cell-select" style="margin:0;" onchange="editarCelda(" + i + ",\"tipo_actividad\",this.value)">' +
+        '<td><select class="cell-select" style="margin:0;" onchange="editarCelda(' + i + ',\'tipo_actividad\',this.value)">' +
         '<option value=""' + (!f.tipo_actividad ? ' selected' : '') + '>—</option>' +
         '<option value="Trabajo de clase"' + (f.tipo_actividad === 'Trabajo de clase' ? ' selected' : '') + '>Trabajo de clase</option>' +
         '<option value="Proyecto"' + (f.tipo_actividad === 'Proyecto' ? ' selected' : '') + '>Proyecto</option>' +
@@ -641,19 +606,16 @@
         '<td class="col-acciones"><button class="btn-fila" onclick="eliminarFila(' + i + ')">✕</button></td>' +
         '</tr>'
       )
-      }).join('')
-    })
+    }).join('')
 
-    // Botón para agregar nuevo parcial
-    htmlCompleto += `
-      <tr class="nuevo-parcial-row">
-        <td colspan="7" style="text-align: center; padding: 20px; border-top: 2px dashed var(--border);">
-          <button class="btn-add-nuevo-parcial" onclick="crearNuevoParcial()" style="background: var(--az); color: white; padding: 10px 20px; border: none; border-radius: 6px;">
-            📚 + Agregar nuevo parcial
-          </button>
-        </td>
-      </tr>
-    `
+    if (!filasActuales.length) {
+      htmlCompleto = `
+        <tr>
+          <td colspan="7" style="text-align:center;padding:32px;color:var(--text-3);">
+            Sin sesiones en este periodo. Usa "+ Agregar sesión" para empezar.
+          </td>
+        </tr>`
+    }
 
     tbody.innerHTML = htmlCompleto
     setTimeout(aplicarAutoResize, 30)
@@ -680,36 +642,26 @@
     })
   }
 
-  // ── Funciones para manejo de parciales ────────────────────
-  window.agregarFilaAParcial = (numParcial) => {
+  // ── Agregar filas al periodo actual ───────────────────────
+  function agregarFila() {
     filasActuales.push({
       id: null, grupo_materia_id: grupoMateriaId, periodo_id: periodoId,
-      periodo_numero: periodoNumero, sub_parcial: parseInt(numParcial),
+      periodo_numero: periodoNumero, sub_parcial: 1,
       semana: '', eje_articulador: '', contenido: '',
       aprendizaje_esperado: '', saber_hacer: '', bloom_nivel: '',
       es_examen: false, tipo_actividad: null, orden: filasActuales.length
     })
     marcarCambios()
     renderTabla()
-    // Scroll al final de la tabla
     setTimeout(() => {
-      document.getElementById('plan-tbody').lastElementChild?.previousElementSibling?.scrollIntoView({ behavior:'smooth', block:'center' })
+      document.getElementById('plan-tbody').lastElementChild?.scrollIntoView({ behavior:'smooth', block:'center' })
     }, 100)
   }
 
-  window.crearNuevoParcial = () => {
-    // Encontrar el número del siguiente parcial
-    const parcialesExistentes = [...new Set(filasActuales.map(f => f.sub_parcial || 1))]
-    const siguienteParcial = Math.max(...parcialesExistentes) + 1
-
-    // Crear la primera fila del nuevo parcial
-    agregarFilaAParcial(siguienteParcial)
-  }
-
-  window.agregarExamenAParcial = (numParcial) => {
+  function agregarExamen() {
     filasActuales.push({
       id: null, grupo_materia_id: grupoMateriaId, periodo_id: periodoId,
-      periodo_numero: periodoNumero, sub_parcial: parseInt(numParcial),
+      periodo_numero: periodoNumero, sub_parcial: 1,
       es_examen: true, orden: filasActuales.length
     })
     marcarCambios()
@@ -819,25 +771,8 @@
   }
   window.eliminarFila = idx => { filasActuales.splice(idx, 1); marcarCambios(); renderTabla() }
 
-  document.getElementById('btn-add-fila').addEventListener('click', () => {
-    // Agregar al primer parcial existente, o crear parcial 1 si no hay ninguno
-    const parcialesExistentes = [...new Set(filasActuales.map(f => f.sub_parcial || 1))]
-    const parcialDestino = parcialesExistentes.length > 0 ? Math.min(...parcialesExistentes) : 1
-    agregarFilaAParcial(parcialDestino)
-  })
-
-  document.getElementById('btn-add-examen').addEventListener('click', () => {
-    // Agregar examen al primer parcial existente, o crear parcial 1 si no hay ninguno
-    const parcialesExistentes = [...new Set(filasActuales.map(f => f.sub_parcial || 1))]
-    const parcialDestino = parcialesExistentes.length > 0 ? Math.min(...parcialesExistentes) : 1
-
-    filasActuales.push({
-      id: null, grupo_materia_id: grupoMateriaId, periodo_id: periodoId,
-      periodo_numero: periodoNumero, sub_parcial: parcialDestino,
-      es_examen: true, orden: filasActuales.length
-    })
-    marcarCambios(); renderTabla()
-  })
+  document.getElementById('btn-add-fila').addEventListener('click', agregarFila)
+  document.getElementById('btn-add-examen').addEventListener('click', agregarExamen)
 
   // ── Navegación entre vistas ───────────────────────────────
   window.mostrarVista = (vista) => {
@@ -1026,15 +961,16 @@
     const btn = document.getElementById('btn-guardar')
     btn.textContent = 'Guardando...'; btn.disabled = true
     try {
-      await supabase.from('plan_analitico_filas')
-        .delete().eq('grupo_materia_id', grupoMateriaId).eq('periodo_numero', periodoNumero)
+      const { error: delError } = await supabase.from('plan_analitico_filas')
+        .delete().eq('grupo_materia_id', grupoMateriaId).eq('periodo_id', periodoId)
+      if (delError) throw delError
       if (filasActuales.length) {
-        await supabase.from('plan_analitico_filas').insert(
+        const { error: insError } = await supabase.from('plan_analitico_filas').insert(
           filasActuales.map((f, i) => ({
             grupo_materia_id:     grupoMateriaId,
             periodo_id:           periodoId,
             periodo_numero:       periodoNumero,
-            sub_parcial:          f.sub_parcial || 1,
+            sub_parcial:          1,
             semana:               f.semana || null,
             eje_articulador:      f.eje_articulador || null,
             contenido:            f.contenido || null,
