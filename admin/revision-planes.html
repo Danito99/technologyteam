@@ -238,20 +238,20 @@
 
       const guiaFlujo = p.estado === 'entregado'
         ? `<div style="font-size:11px;color:var(--text-3);margin-top:10px;padding:8px 10px;background:var(--am-l);border-radius:var(--radius-s);border-left:3px solid var(--am);">
-            <strong style="color:var(--am);">Paso a seguir:</strong>
-            Revisa cada sesión con ✓ / ✗ arriba. Cuando termines, usa <strong>Aprobar plan</strong> para notificar al docente
-            o <strong>Rechazar</strong> con un comentario global.
+            <strong style="color:var(--am);">Cómo revisar:</strong>
+            Marca cada sesión con ✓ (correcta) o ✗ (necesita corrección). Al terminar presiona
+            <strong>Finalizar revisión</strong> — si hay sesiones con ✗ el plan se rechaza automáticamente
+            para que el docente corrija; si todas están ✓ se aprueba.
            </div>`
         : ''
 
       const acciones = p.estado === 'entregado'
         ? `${linkVerComo}
-           <button class="btn btn-sm" style="background:var(--vd);color:white;border-color:var(--vd);" onclick="aprobar('${p.id}')">✓ Aprobar plan</button>
-           <button class="btn btn-sm btn-danger" onclick="abrirRechazo('${p.id}')">✕ Rechazar</button>`
+           <button class="btn btn-sm btn-primary" onclick="finalizarRevision('${p.id}')">Finalizar revisión</button>`
         : p.estado === 'aprobado'
         ? `${linkVerComo}<span class="chip chip-green">Aprobado ✓</span>`
         : p.estado === 'rechazado'
-        ? `${linkVerComo}<button class="btn btn-sm" style="background:var(--vd);color:white;border-color:var(--vd);" onclick="aprobar('${p.id}')">✓ Aprobar ahora</button>`
+        ? `${linkVerComo}<button class="btn btn-sm btn-primary" onclick="finalizarRevision('${p.id}')">Re-finalizar revisión</button>`
         : ''
 
       return `
@@ -299,60 +299,51 @@
     )
   }
 
-  window.aprobar = async (planId) => {
-    await supabase.from('planes_clase').update({
-      estado: 'aprobado', comentario_admin: null
-    }).eq('id', planId)
+  window.finalizarRevision = async (planId) => {
+    const plan = todosPlanes.find(p => p.id === planId)
+    const key  = `${plan?.grupo_materia_id}_${plan?.periodo_id}`
+    const ses  = sesionesMap[key] || []
+
+    const aprobadas  = ses.filter(s => s.estado_revision === 'aprobada').length
+    const rechazadas = ses.filter(s => s.estado_revision === 'rechazada').length
+    const sinRevisar = ses.filter(s => !s.estado_revision).length
+    const decision   = rechazadas > 0 ? 'rechazado' : 'aprobado'
+
+    const resumen = [
+      `✓ ${aprobadas} aprobada${aprobadas !== 1 ? 's' : ''}`,
+      rechazadas ? `✗ ${rechazadas} para corregir` : '',
+      sinRevisar ? `⚪ ${sinRevisar} sin revisar` : ''
+    ].filter(Boolean).join('  ·  ')
+
+    const msg = decision === 'aprobado'
+      ? `${resumen}\n\nEl plan se APROBARÁ y el docente podrá continuar. ¿Confirmas?`
+      : `${resumen}\n\nEl plan se RECHAZARÁ — el docente verá las sesiones marcadas con ✗ y deberá re-entregarlo. ¿Confirmas?`
+
+    if (!confirm(msg)) return
+
+    const comentario = rechazadas > 0
+      ? `${rechazadas} sesión${rechazadas !== 1 ? 'es necesitan' : ' necesita'} corrección. Revisa las marcadas con ✗ en tu plan de clase y re-entrega cuando estén listas.`
+      : null
+
+    const { error } = await supabase.from('planes_clase')
+      .update({ estado: decision, comentario_admin: comentario })
+      .eq('id', planId)
+
+    if (error) { mostrarToast('Error al finalizar revisión', 'error'); return }
 
     await supabase.from('historial_planes').insert({
       plan_clase_id: planId,
-      snapshot: { accion: 'aprobado' },
-      accion: 'aprobado',
+      snapshot: { aprobadas, rechazadas, sinRevisar },
+      accion: decision,
       actor_id: profile.id
     })
 
-    mostrarToast('Plan aprobado ✓')
-    todosPlanes = todosPlanes.map(p => p.id === planId ? { ...p, estado:'aprobado', comentario_admin:null } : p)
-    renderPlanes()
-    await renderSidebarAdmin('revision-planes') // actualizar badge
-  }
-
-  window.abrirRechazo = (planId) => {
-    document.getElementById('rechazo-plan-id').value = planId
-    document.getElementById('rechazo-comentario').value = ''
-    document.getElementById('modal-rechazo').classList.add('open')
-  }
-
-  window.cerrarModal = () => {
-    document.getElementById('modal-rechazo').classList.remove('open')
-  }
-
-  window.confirmarRechazo = async () => {
-    const planId     = document.getElementById('rechazo-plan-id').value
-    const comentario = document.getElementById('rechazo-comentario').value.trim()
-    if (!comentario) { mostrarToast('Escribe un comentario para el docente', 'error'); return }
-
-    await supabase.from('planes_clase').update({
-      estado: 'rechazado', comentario_admin: comentario
-    }).eq('id', planId)
-
-    await supabase.from('historial_planes').insert({
-      plan_clase_id: planId,
-      snapshot: { comentario },
-      accion: 'rechazado',
-      actor_id: profile.id
-    })
-
-    mostrarToast('Plan rechazado')
-    todosPlanes = todosPlanes.map(p => p.id === planId ? { ...p, estado:'rechazado', comentario_admin:comentario } : p)
-    cerrarModal()
+    mostrarToast(decision === 'aprobado' ? 'Plan aprobado ✓' : 'Correcciones solicitadas al docente')
+    todosPlanes = todosPlanes.map(p =>
+      p.id === planId ? { ...p, estado: decision, comentario_admin: comentario } : p)
     renderPlanes()
     await renderSidebarAdmin('revision-planes')
   }
-
-  document.getElementById('modal-rechazo').addEventListener('click', e => {
-    if (e.target === document.getElementById('modal-rechazo')) cerrarModal()
-  })
 
   function mostrarToast(msg, tipo = 'ok') {
     const t = document.getElementById('toast')
