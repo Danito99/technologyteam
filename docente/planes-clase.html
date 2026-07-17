@@ -1049,9 +1049,11 @@
             </div>
           </div>
           <div style="text-align:right;">
-            <div style="font-size:10px;color:${estadoColor};font-weight:600;">
-              ${estadoTexto}
-            </div>
+            ${sesion.estado_revision === 'aprobada'
+              ? `<div style="font-size:10px;color:var(--vd);font-weight:700;">✓ Aprobada</div>`
+              : sesion.estado_revision === 'rechazada'
+              ? `<div style="font-size:10px;color:var(--co);font-weight:700;">✗ Por corregir</div>`
+              : `<div style="font-size:10px;color:${estadoColor};font-weight:600;">${estadoTexto}</div>`}
             ${fecha ? `<div style="font-size:9px;color:var(--text-4);">${fecha}</div>` : ''}
             ${sesion.semana ? `<div style="font-size:9px;color:var(--text-4);">Sem ${sesion.semana}</div>` : ''}
           </div>

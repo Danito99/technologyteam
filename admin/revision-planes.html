@@ -14,8 +14,15 @@
     .plan-actions { display:flex; gap:6px; flex-shrink:0; }
     .sesion-preview { background:var(--bg); border-radius:var(--radius-s); padding:10px 12px; margin-top:10px; font-size:11px; }
     .sesion-preview-title { font-size:10px; font-weight:600; color:var(--text-3); text-transform:uppercase; letter-spacing:.05em; margin-bottom:8px; }
-    .sp-row { padding:4px 0; border-bottom:1px solid var(--border); display:grid; grid-template-columns:20px 1fr 1fr 1fr; gap:8px; }
+    .sp-row { padding:6px 0; border-bottom:1px solid var(--border); display:grid; grid-template-columns:24px 1fr 1fr 1fr 88px; gap:8px; align-items:center; }
     .sp-row:last-child { border-bottom:none; }
+    .sp-header { font-size:9px; font-weight:700; color:var(--text-3); text-transform:uppercase; letter-spacing:.06em; }
+    .rev-btn { font-size:10px; padding:2px 7px; border-radius:4px; border:1px solid; cursor:pointer; font-weight:600; line-height:1.4; }
+    .rev-btn-ok  { background:var(--vd-l); color:var(--vd); border-color:var(--vd); }
+    .rev-btn-ok.activo  { background:var(--vd); color:white; }
+    .rev-btn-no  { background:var(--co-l); color:var(--co); border-color:var(--co); }
+    .rev-btn-no.activo  { background:var(--co); color:white; }
+    .rev-acciones { display:flex; gap:4px; justify-content:flex-end; }
     .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:100; align-items:center; justify-content:center; }
     .modal-overlay.open { display:flex; }
     .modal { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:22px; width:100%; max-width:420px; }
@@ -111,6 +118,7 @@
       .from('sesiones')
       .select(`
         id, numero, titulo, inicio, desarrollo, cierre, completada,
+        estado_revision, comentario_revision,
         grupo_materia_id, periodo_id,
         plan_analitico_filas!plan_analitico_ref_id(
           eje_articulador, contenido, aprendizaje_esperado
@@ -179,25 +187,40 @@
       const sesConContenido = sesiones.filter(s => s.inicio || s.desarrollo || s.cierre).length
       const progresoPct     = sesiones.length ? Math.round((sesCompletadas / sesiones.length) * 100) : 0
 
+      const sesAprobadas = sesiones.filter(s => s.estado_revision === 'aprobada').length
+      const sesRechazadas = sesiones.filter(s => s.estado_revision === 'rechazada').length
+
       const sesionesHtml = sesiones.length
         ? `<div class="sesion-preview">
             <div class="sesion-preview-title" style="display:flex;justify-content:space-between;align-items:center;">
               <span>Sesiones (${sesiones.length})</span>
               <span style="font-weight:400;color:var(--text-3);">
-                ${sesCompletadas} completadas · ${sesConContenido} con contenido · ${progresoPct}%
+                ${sesCompletadas} completadas · ${sesConContenido} con contenido
+                ${sesAprobadas ? ` · <span style="color:var(--vd);font-weight:600;">${sesAprobadas} ✓</span>` : ''}
+                ${sesRechazadas ? ` · <span style="color:var(--co);font-weight:600;">${sesRechazadas} ✗</span>` : ''}
               </span>
             </div>
-            ${sesiones.slice(0,4).map(s => {
+            <div class="sp-row sp-header">
+              <span>#</span><span>Aprendizaje esperado</span><span>Inicio</span><span>Desarrollo</span><span style="text-align:right;">Revisión</span>
+            </div>
+            ${sesiones.map(s => {
               const titulo = s.titulo || s.plan_analitico_filas?.aprendizaje_esperado || '—'
               const check  = s.completada ? '✅' : s.inicio || s.desarrollo || s.cierre ? '📝' : '⚪'
+              const esAprobada  = s.estado_revision === 'aprobada'
+              const esRechazada = s.estado_revision === 'rechazada'
               return `
-              <div class="sp-row">
-                <span style="font-weight:600;color:var(--text-3);">${s.numero} ${check}</span>
-                <span style="color:var(--az-d);">${titulo.substring(0,50)}</span>
-                <span>${s.inicio    ? s.inicio.substring(0,55)+'…'    : '<span style="color:var(--text-3);">Sin inicio</span>'}</span>
-                <span>${s.desarrollo? s.desarrollo.substring(0,55)+'…': '<span style="color:var(--text-3);">Sin desarrollo</span>'}</span>
+              <div class="sp-row" id="sp-row-${s.id}">
+                <span style="font-weight:600;color:var(--text-3);">${s.numero}${check}</span>
+                <span style="color:var(--az-d);">${titulo.substring(0,60)}</span>
+                <span>${s.inicio     ? s.inicio.substring(0,60)+'…'     : '<span style="color:var(--text-3);">Sin inicio</span>'}</span>
+                <span>${s.desarrollo ? s.desarrollo.substring(0,60)+'…' : '<span style="color:var(--text-3);">Sin desarrollo</span>'}</span>
+                <div class="rev-acciones">
+                  <button class="rev-btn rev-btn-ok ${esAprobada?'activo':''}"
+                    onclick="revisarSesion('${s.id}','aprobada',this)">✓</button>
+                  <button class="rev-btn rev-btn-no ${esRechazada?'activo':''}"
+                    onclick="revisarSesion('${s.id}','rechazada',this)">✗</button>
+                </div>
               </div>`}).join('')}
-            ${sesiones.length > 4 ? `<div style="font-size:10px;color:var(--text-3);padding-top:4px;">+ ${sesiones.length-4} sesiones más</div>` : ''}
            </div>`
         : '<div style="font-size:12px;color:var(--text-3);padding:8px 0;">Sin sesiones registradas en este periodo.</div>'
 
@@ -232,6 +255,32 @@
           ${sesionesHtml}
         </div>`
     }).join('')
+  }
+
+  window.revisarSesion = async (sesionId, nuevoEstado, btnEl) => {
+    const row = document.getElementById(`sp-row-${sesionId}`)
+    const estadoActual = btnEl.classList.contains('activo') ? null : nuevoEstado
+
+    const { error } = await supabase
+      .from('sesiones')
+      .update({ estado_revision: estadoActual })
+      .eq('id', sesionId)
+
+    if (error) { mostrarToast('Error al guardar', 'error'); return }
+
+    // Actualizar UI sin re-render completo
+    if (row) {
+      const [btnOk, btnNo] = row.querySelectorAll('.rev-btn')
+      btnOk.classList.toggle('activo', estadoActual === 'aprobada')
+      btnNo.classList.toggle('activo', estadoActual === 'rechazada')
+    }
+
+    // Actualizar en memoria
+    sesionesMap = Object.fromEntries(
+      Object.entries(sesionesMap).map(([k, arr]) => [
+        k, arr.map(s => s.id === sesionId ? { ...s, estado_revision: estadoActual } : s)
+      ])
+    )
   }
 
   window.aprobar = async (planId) => {
