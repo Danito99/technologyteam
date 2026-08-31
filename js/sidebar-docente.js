@@ -10,14 +10,18 @@ export async function renderSidebar(paginaActiva) {
   const iniciales = (profile?.nombre || 'U')
     .split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase()
 
+  // Propagar verComo en los links si el admin está en modo "ver como docente"
+  const verComoId = new URLSearchParams(window.location.search).get('verComo')
+  const vc = (verComoId && profile?.rol === 'admin') ? `?verComo=${verComoId}` : ''
+
   const items = [
-    { id:'inicio',         label:'Inicio',             href:'/docente/inicio.html',         icon:iconGrid() },
-    { id:'materias',       label:'Materias y grupos',  href:'/docente/materias.html',        icon:iconSettings() },
-    { id:'plan-analitico', label:'Plan analítico',     href:'/docente/plan-analitico.html',  icon:iconDoc() },
-    { id:'planes-clase',   label:'Planes de clase',    href:'/docente/planes-clase.html',    icon:iconCalendar() },
-    { id:'grupos',         label:'Mis grupos',         href:'/docente/grupos.html',          icon:iconPeople() },
-    { id:'calificaciones', label:'Calificaciones',     href:'/docente/calificaciones.html',  icon:iconChart() },
-    { id:'scoreboard',     label:'Scoreboard',         href:'/docente/scoreboard.html',      icon:iconTrophy() },
+    { id:'inicio',         label:'Inicio',             href:`/docente/inicio.html${vc}`,         icon:iconGrid() },
+    { id:'materias',       label:'Materias y grupos',  href:`/docente/materias.html${vc}`,        icon:iconSettings() },
+    { id:'plan-analitico', label:'Plan analítico',     href:`/docente/plan-analitico.html${vc}`,  icon:iconDoc() },
+    { id:'planes-clase',   label:'Planes de clase',    href:`/docente/planes-clase.html${vc}`,    icon:iconCalendar() },
+    { id:'grupos',         label:'Mis grupos',         href:`/docente/grupos.html${vc}`,          icon:iconPeople() },
+    { id:'calificaciones', label:'Calificaciones',     href:`/docente/calificaciones.html${vc}`,  icon:iconChart() },
+    { id:'scoreboard',     label:'Scoreboard',         href:`/docente/scoreboard.html${vc}`,      icon:iconTrophy() },
   ]
 
   const sections = [

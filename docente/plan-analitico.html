@@ -329,9 +329,25 @@
 </div>
 <div class="toast" id="toast"></div>
 
+<!-- Modal: proponer indicador personalizado -->
+<div id="modal-propuesta" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;">
+  <div style="background:var(--bg-card);border-radius:var(--radius-m);padding:24px;max-width:500px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.2);">
+    <div style="font-weight:600;margin-bottom:4px;font-size:14px;">Proponer indicador personalizado</div>
+    <div style="font-size:12px;color:var(--text-2);margin-bottom:12px;">Se aplicará a tu plan de inmediato. El admin lo revisará antes de que aparezca para todos los docentes.</div>
+    <div id="modal-prop-ctx" style="font-size:11px;color:var(--text-3);background:var(--bg-row);padding:4px 8px;border-radius:var(--radius-s);margin-bottom:10px;"></div>
+    <textarea id="modal-prop-texto" placeholder="Escribe el saber y saber hacer o indicador de logro…" rows="4"
+      style="width:100%;box-sizing:border-box;padding:8px;border:1px solid var(--border);border-radius:var(--radius-s);font-size:13px;resize:vertical;font-family:inherit;"></textarea>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
+      <button onclick="cerrarModalPropuesta()" style="padding:7px 14px;border:1px solid var(--border);border-radius:var(--radius-s);background:transparent;cursor:pointer;font-size:13px;">Cancelar</button>
+      <button onclick="enviarPropuesta()" style="padding:7px 14px;background:var(--am);color:white;border:none;border-radius:var(--radius-s);cursor:pointer;font-weight:600;font-size:13px;">Enviar propuesta</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
   import { requireAuth }   from '../js/auth.js'
   import { renderSidebar } from '../js/sidebar-docente.js'
+  import { renderSidebarAdmin } from '../js/sidebar-admin.js'
   import { supabase }      from '../js/supabase.js'
 
   // ── Catálogo incrustado ───────────────────────────────────
@@ -375,7 +391,25 @@
   // ── Auth ──────────────────────────────────────────────────
   const profile = await requireAuth('docente')
   if (!profile) throw new Error('No autenticado')
-  await renderSidebar('plan-analitico')
+
+  // Soporte verComo: admin viendo como docente
+  const _params = new URLSearchParams(window.location.search)
+  const verComoId = _params.get('verComo')
+  let docenteActivo = profile
+
+  if (verComoId && profile.rol === 'admin') {
+    const { data: docenteVer } = await supabase
+      .from('profiles').select('id, nombre, rol').eq('id', verComoId).single()
+    if (docenteVer) docenteActivo = docenteVer
+  }
+
+  if (verComoId && profile.rol === 'admin') {
+    await renderSidebarAdmin('ver-docente')
+    const titleEl = document.querySelector('.topbar-title')
+    if (titleEl) titleEl.innerHTML = `Plan analítico <span style="background:var(--am-l);color:var(--am);padding:2px 8px;border-radius:12px;font-size:10px;margin-left:8px;">Viendo como ${docenteActivo.nombre}</span>`
+  } else {
+    await renderSidebar('plan-analitico')
+  }
 
   const { data: ciclo } = await supabase
     .from('ciclos_escolares').select('id').eq('activo', true).single()
@@ -384,7 +418,7 @@
   const { data: grupos } = await supabase
     .from('grupos')
     .select('id, nombre, nivel, grado, sistema_periodos, grupo_materias(id, materias(id, nombre))')
-    .eq('docente_id', profile.id).eq('ciclo_id', cicloId).order('grado')
+    .eq('docente_id', docenteActivo.id).eq('ciclo_id', cicloId).order('grado')
 
   const selGrupo = document.getElementById('sel-grupo')
   grupos?.forEach(g => {
@@ -556,7 +590,7 @@
       const optsBloom = BLOOM_KEYS.map((k, ki) => {
         const textoOpcion = catalogoItemBloom ? (catalogoItemBloom.saber[k] || BLOOM_LABELS[k]) : BLOOM_LABELS[k]
         return '<option value="' + k + '"' + (bloomNivel === k ? ' selected' : '') + '>' + textoOpcion + '</option>'
-      }).join('')
+      }).join('') + (bloomNivel === 'custom' ? '<option value="custom" selected>✏️ Personalizado</option>' : '')
 
       // Saber y saber hacer: solo desplegable con texto completo
 
@@ -588,11 +622,14 @@
         esc(pda) + '</textarea>' +
         '<button class="btn-lock" onclick="togglePdaEdit(' + i + ',this)">🔒</button>' +
         '</div></td>' +
-        // Saber y saber hacer — select Bloom + texto
+        // Saber y saber hacer — select Bloom + botón proponer
         '<td class="col-saber">' +
-        '<select class="cell-select" onchange="onBloomChange(' + i + ',this.value)">' +
+        '<div style="display:flex;gap:4px;align-items:flex-start;">' +
+        '<select class="cell-select" style="flex:1;min-width:0;" onchange="onBloomChange(' + i + ',this.value)">' +
         '<option value="">— Nivel Bloom —</option>' + optsBloom +
         '</select>' +
+        '<button class="btn-fila" title="Proponer indicador personalizado" onclick="abrirModalPropuesta(' + i + ')" style="flex-shrink:0;padding:4px 7px;font-size:13px;">✏️</button>' +
+        '</div>' +
         '</td>' +
         // Tipo actividad
         '<td><select class="cell-select" style="margin:0;" onchange="editarCelda(' + i + ',\'tipo_actividad\',this.value)">' +
@@ -701,6 +738,7 @@
   }
 
   window.onBloomChange = (idx, nivel) => {
+    if (nivel === 'custom') return // gestionado desde el modal
     filasActuales[idx].bloom_nivel = nivel
     marcarCambios()
     const f    = filasActuales[idx]
@@ -708,6 +746,48 @@
     const item = f.contenido ? (CATS[f.eje_articulador] || []).find(c => c.concepto === f.contenido) : null
     const texto = (item && nivel) ? (item.saber[nivel] || '') : ''
     filasActuales[idx].saber_hacer = texto
+  }
+
+  // ── Modal: proponer indicador personalizado ───────────────
+  let _idxPropuesta = null
+
+  window.abrirModalPropuesta = (idx) => {
+    _idxPropuesta = idx
+    const f = filasActuales[idx]
+    const ctx = [f.eje_articulador, f.contenido].filter(Boolean).join(' › ')
+    document.getElementById('modal-prop-ctx').textContent = ctx || 'Sin eje/contenido seleccionado'
+    document.getElementById('modal-prop-texto').value = f.saber_hacer || ''
+    document.getElementById('modal-propuesta').style.display = 'flex'
+  }
+
+  window.cerrarModalPropuesta = () => {
+    document.getElementById('modal-propuesta').style.display = 'none'
+    _idxPropuesta = null
+  }
+
+  window.enviarPropuesta = async () => {
+    const texto = document.getElementById('modal-prop-texto').value.trim()
+    if (!texto) { mostrarToast('Escribe el texto del indicador', 'error'); return }
+    const idx = _idxPropuesta
+    const f = filasActuales[idx]
+    // Aplicar inmediatamente al plan
+    filasActuales[idx].saber_hacer = texto
+    filasActuales[idx].bloom_nivel = 'custom'
+    marcarCambios()
+    cerrarModalPropuesta()
+    renderTabla()
+    // Enviar propuesta al admin
+    const { error } = await supabase.from('indicadores_propuestos').insert({
+      docente_id: docenteActivo.id,
+      grupo_materia_id: grupoMateriaId,
+      nivel: selGrupo.options[selGrupo.selectedIndex]?.dataset.nivel || null,
+      eje_articulador: f.eje_articulador || null,
+      contenido: f.contenido || null,
+      bloom_nivel: f.bloom_nivel || null,
+      texto
+    })
+    if (error) mostrarToast('Guardado en plan, error al notificar al admin', 'error')
+    else mostrarToast('Propuesta enviada al admin para revisión ✓')
   }
 
   function actualizarOptsBloom(idx, catalogoItem) {

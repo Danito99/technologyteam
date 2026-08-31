@@ -13,10 +13,14 @@ export async function renderSidebarAdmin(paginaActiva) {
   const { count } = await supabase
     .from('planes_clase').select('id', { count:'exact', head:true }).eq('estado','entregado')
 
+  const { count: countIndicadores } = await supabase
+    .from('indicadores_propuestos').select('id', { count:'exact', head:true }).eq('estado','pendiente')
+
   const items = [
     { id:'inicio',          label:'Resumen general',    href:'/admin/inicio.html' },
     { id:'docentes',        label:'Docentes',           href:'/admin/docentes.html' },
     { id:'revision-planes', label:'Revisión de planes', href:'/admin/revision-planes.html', badge: count > 0 ? count : null },
+    { id:'indicadores',     label:'Indicadores propuestos', href:'/admin/indicadores.html', badge: countIndicadores > 0 ? countIndicadores : null },
     { id:'analytics',       label:'Analytics',          href:'/admin/analytics.html' },
   ]
 
