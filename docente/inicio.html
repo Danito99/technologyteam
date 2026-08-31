@@ -68,18 +68,19 @@
 </div>
 
 <script type="module">
-  import { requireAuth }      from '../js/auth.js'
-  import { renderSidebar }    from '../js/sidebar-docente.js'
-  import { supabase }         from '../js/supabase.js'
+  import { requireAuth }                       from '../js/auth.js'
+  import { supabase }                          from '../js/supabase.js'
+  import { initDocenteActivo, mostrarBadgeVerComo } from '../js/ver-como.js'
 
   const profile = await requireAuth('docente')
   if (!profile) throw new Error('No autenticado')
 
-  await renderSidebar('inicio')
+  const { docenteActivo, verComoId } = await initDocenteActivo(profile, 'inicio')
 
   // Saludo y ciclo
-  const nombre = profile.nombre.split(' ')[0]
+  const nombre = docenteActivo.nombre.split(' ')[0]
   document.getElementById('saludo').textContent = `Bienvenida, ${nombre}`
+  mostrarBadgeVerComo(docenteActivo, verComoId)
 
   // Ciclo activo
   const { data: ciclo } = await supabase
@@ -94,7 +95,7 @@
   const { data: grupos } = await supabase
     .from('grupos')
     .select('id, nombre, nivel, grado, grupo_materias(id)')
-    .eq('docente_id', profile.id)
+    .eq('docente_id', docenteActivo.id)
 
   document.getElementById('grupos-badge').textContent = `${grupos?.length || 0} grupos`
 

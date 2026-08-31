@@ -59,13 +59,14 @@
 </div>
 
 <script type="module">
-  import { requireAuth }   from '../js/auth.js'
-  import { renderSidebar } from '../js/sidebar-docente.js'
-  import { supabase }      from '../js/supabase.js'
+  import { requireAuth }                            from '../js/auth.js'
+  import { supabase }                               from '../js/supabase.js'
+  import { initDocenteActivo, mostrarBadgeVerComo } from '../js/ver-como.js'
 
   const profile = await requireAuth('docente')
   if (!profile) throw new Error('No autenticado')
-  await renderSidebar('grupos')
+  const { docenteActivo, verComoId } = await initDocenteActivo(profile, 'grupos')
+  mostrarBadgeVerComo(docenteActivo, verComoId)
 
   const { data: ciclo } = await supabase
     .from('ciclos_escolares').select('id,nombre').eq('activo',true).single()
@@ -84,7 +85,7 @@
       ),
       alumnos ( id )
     `)
-    .eq('docente_id', profile.id)
+    .eq('docente_id', docenteActivo.id)
     .eq('ciclo_id', ciclo.id)
     .order('grado')
 

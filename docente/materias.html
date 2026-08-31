@@ -272,14 +272,15 @@
 <div class="toast" id="toast"></div>
 
 <script type="module">
-  import { requireAuth }   from '../js/auth.js'
-  import { renderSidebar } from '../js/sidebar-docente.js'
-  import { supabase }      from '../js/supabase.js'
+  import { requireAuth }                            from '../js/auth.js'
+  import { supabase }                               from '../js/supabase.js'
+  import { initDocenteActivo, mostrarBadgeVerComo } from '../js/ver-como.js'
 
   // ── Auth ──────────────────────────────────────────────────
   const profile = await requireAuth('docente')
   if (!profile) throw new Error('No autenticado')
-  await renderSidebar('materias')
+  const { docenteActivo, verComoId } = await initDocenteActivo(profile, 'materias')
+  mostrarBadgeVerComo(docenteActivo, verComoId)
 
   // ── Ciclo activo ──────────────────────────────────────────
   const { data: ciclo } = await supabase
@@ -305,7 +306,7 @@
         ),
         alumnos ( id )
       `)
-      .eq('docente_id', profile.id)
+      .eq('docente_id', docenteActivo.id)
       .eq('ciclo_id', window._cicloId)
       .order('grado')
 

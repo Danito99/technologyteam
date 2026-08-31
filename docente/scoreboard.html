@@ -168,14 +168,15 @@
 </div>
 
 <script type="module">
-  import { requireAuth }                    from '../js/auth.js'
-  import { renderSidebar }                  from '../js/sidebar-docente.js'
-  import { supabase }                       from '../js/supabase.js'
-  import { calcProm, calcBanda, bandaDefs } from '../js/utils.js'
+  import { requireAuth }                            from '../js/auth.js'
+  import { supabase }                               from '../js/supabase.js'
+  import { calcProm, calcBanda, bandaDefs }         from '../js/utils.js'
+  import { initDocenteActivo, mostrarBadgeVerComo } from '../js/ver-como.js'
 
   const profile = await requireAuth('docente')
   if (!profile) throw new Error('No autenticado')
-  await renderSidebar('scoreboard')
+  const { docenteActivo, verComoId } = await initDocenteActivo(profile, 'scoreboard')
+  mostrarBadgeVerComo(docenteActivo, verComoId)
 
   let ciclo    = null
   let metas    = []
@@ -193,7 +194,7 @@
     supabase.from('metas_rendimiento').select('banda,rango_min,rango_max').eq('ciclo_id', ciclo.id),
     supabase.from('grupos')
       .select('id,nombre,nivel,sistema_periodos, grupo_materias(id, materias(id,nombre))')
-      .eq('docente_id', profile.id).eq('ciclo_id', ciclo.id).order('nombre'),
+      .eq('docente_id', docenteActivo.id).eq('ciclo_id', ciclo.id).order('nombre'),
   ])
   metas  = metasData  || []
   grupos = gruposData || []
