@@ -1,10 +1,10 @@
-import { supabase }           from './supabase.js'
-import { renderSidebar }      from './sidebar-docente.js'
-import { renderSidebarAdmin } from './sidebar-admin.js'
+import { supabase }      from './supabase.js'
+import { renderSidebar } from './sidebar-docente.js'
 
 /**
  * Detecta el modo "ver como docente" (admin impersonando a un docente).
- * Renderiza el sidebar correcto y devuelve el perfil activo.
+ * Siempre renderiza el sidebar docente (que ya propaga ?verComo en sus links)
+ * y devuelve el perfil activo para usarlo en las queries de datos.
  *
  * @param {object} profile  - resultado de requireAuth()
  * @param {string} pagina   - id de la página activa para el sidebar docente
@@ -19,10 +19,10 @@ export async function initDocenteActivo(profile, pagina) {
     const { data: docenteVer } = await supabase
       .from('profiles').select('id, nombre, rol').eq('id', verComoId).single()
     if (docenteVer) docenteActivo = docenteVer
-    await renderSidebarAdmin('ver-docente')
-  } else {
-    await renderSidebar(pagina)
   }
+
+  // Siempre sidebar docente — sus links ya propagan ?verComo (sidebar-docente.js)
+  await renderSidebar(pagina)
 
   return { docenteActivo, verComoId }
 }

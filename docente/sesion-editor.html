@@ -593,34 +593,15 @@
 </div>
 
 <script type="module">
-  import { requireAuth } from '../js/auth.js'
-  import { renderSidebar } from '../js/sidebar-docente.js'
-  import { supabase } from '../js/supabase.js'
+  import { requireAuth }                            from '../js/auth.js'
+  import { supabase }                               from '../js/supabase.js'
+  import { initDocenteActivo, mostrarBadgeVerComo } from '../js/ver-como.js'
 
   const profile = await requireAuth('docente')
   if (!profile) throw new Error('No autenticado')
 
-  // Verificar si estamos en modo "Ver como docente"
-  const urlParams = new URLSearchParams(window.location.search)
-  const verComoId = urlParams.get('verComo')
-  let docenteActivo = profile
-
-  if (verComoId && profile.rol === 'admin') {
-    const { data: docenteVer } = await supabase
-      .from('profiles')
-      .select('id, nombre, rol')
-      .eq('id', verComoId)
-      .single()
-
-    if (docenteVer) docenteActivo = docenteVer
-  }
-
-  if (verComoId && profile.rol === 'admin') {
-    const { renderSidebarAdmin } = await import('../js/sidebar-admin.js')
-    await renderSidebarAdmin('ver-docente')
-  } else {
-    await renderSidebar('planes-clase')
-  }
+  const { docenteActivo, verComoId } = await initDocenteActivo(profile, 'planes-clase')
+  mostrarBadgeVerComo(docenteActivo, verComoId)
 
   // Obtener parámetros de la URL
   const params = new URLSearchParams(window.location.search)
