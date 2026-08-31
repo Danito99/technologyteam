@@ -109,11 +109,17 @@
     { count: sesCompCount },
     { count: calsCount },
   ] = await Promise.all([
-    supabase.from('planes_clase')
-      .select('id, estado, grupo_materia_id, periodo_id, grupo_materias(materias(nombre), grupos(nombre)), periodos(etiqueta)'),
-    supabase.from('calificaciones')
-      .select('alumno_id, promedio_parcial, alumnos(nombre, apellido), grupo_materias(grupos(nombre))')
-      .lt('promedio_parcial', 6),
+    gmIds.length
+      ? supabase.from('planes_clase')
+          .select('id, estado, grupo_materia_id, periodo_id, grupo_materias(materias(nombre), grupos(nombre)), periodos(etiqueta)')
+          .in('grupo_materia_id', gmIds)
+      : { data: [] },
+    gmIds.length
+      ? supabase.from('calificaciones')
+          .select('alumno_id, promedio_parcial, alumnos(nombre, apellido), grupo_materias(grupos(nombre))')
+          .in('grupo_materia_id', gmIds)
+          .lt('promedio_parcial', 6)
+      : { data: [] },
     gmIds.length
       ? supabase.from('plan_analitico_filas').select('id', { count: 'exact', head: true }).in('grupo_materia_id', gmIds)
       : { count: 0 },
