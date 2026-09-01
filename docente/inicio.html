@@ -96,6 +96,7 @@
     .from('grupos')
     .select('id, nombre, nivel, grado, grupo_materias(id)')
     .eq('docente_id', docenteActivo.id)
+    .eq('ciclo_id', ciclo?.id)
 
   document.getElementById('grupos-badge').textContent = `${grupos?.length || 0} grupos`
 
