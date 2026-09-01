@@ -41,7 +41,7 @@
   --text-3:  #7A8194;
   --text-4:  #A3A9B8;
 
-  --radius:   16px;
+  --radius:   12px;
   --radius-s: 10px;
   --shadow:    0 1px 2px rgba(31,36,48,.05), 0 4px 16px rgba(31,36,48,.07);
   --shadow-sm: 0 1px 2px rgba(31,36,48,.04), 0 2px 8px  rgba(31,36,48,.05);
@@ -162,7 +162,7 @@ a:hover { text-decoration:underline; }
 }
 .topbar-title { font-size: 18px; font-weight: 700; color: var(--text); letter-spacing: -.015em; }
 .topbar-sub   { font-size: 12px; color: var(--text-3); margin-top: 1px; }
-.page-content { padding: 24px 28px; overflow-y: auto; flex: 1; }
+.page-content { padding: 24px 28px; overflow-y: auto; flex: 1; max-width: 1100px; margin: 0 auto; width: 100%; }
 
 /* ─── Cards ─── */
 .card {
@@ -176,12 +176,12 @@ a:hover { text-decoration:underline; }
 }
 .card:hover { box-shadow: var(--shadow); }
 .card:last-child { margin-bottom: 0; }
-.card-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 14px; letter-spacing: -.005em; }
+.card-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 14px; letter-spacing: -.005em; }
 
 /* ─── Métricas ─── */
 .metrics-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 12px;
   margin-bottom: 16px;
 }
@@ -194,7 +194,7 @@ a:hover { text-decoration:underline; }
   transition: var(--transition);
 }
 .metric:hover { border-color: var(--border-m); box-shadow: var(--shadow); }
-.metric-label { font-size: 11px; color: var(--text-3); margin-bottom: 6px; font-weight: 600; letter-spacing: .01em; }
+.metric-label { font-size: 12px; color: var(--text-3); margin-bottom: 6px; font-weight: 600; letter-spacing: .01em; }
 .metric-value { font-size: 26px; font-weight: 800; color: var(--text); letter-spacing: -.03em; line-height: 1; }
 .metric-value.blue  { color: var(--az); }
 .metric-value.green { color: var(--vd); }
