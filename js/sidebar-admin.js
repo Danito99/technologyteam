@@ -56,10 +56,14 @@ export async function renderSidebarAdmin(paginaActiva) {
     html += `<a class="nav-item ${active}" href="${item.href}">${item.label}${badge}</a>`
   })
 
-  html += `<div class="nav-section">Ver como docente</div>`
+  html += `<div class="nav-section">Ver como docente</div><div style="max-height:160px;overflow-y:auto;margin:0 4px;">`
   verComo.forEach(d => {
-    html += `<a class="nav-item" href="${d.href}">${d.label}</a>`
+    html += `<a class="nav-item" href="${d.href}" style="padding:6px 12px;font-size:12px;">
+      <span style="width:18px;height:18px;border-radius:50%;background:var(--ch-indigo-l);color:var(--ch-indigo);display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0;">${d.label[0]}</span>
+      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${d.label}</span>
+    </a>`
   })
+  html += `</div>`
 
   html += `
       <div class="sidebar-user">

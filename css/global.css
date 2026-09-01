@@ -81,8 +81,8 @@ a:hover { text-decoration:underline; }
 
 /* ─── Sidebar ─── */
 .sidebar {
-  width: 236px;
-  min-width: 236px;
+  width: 260px;
+  min-width: 260px;
   background: var(--bg-card);
   border-right: 1px solid var(--border);
   display: flex;
@@ -201,10 +201,30 @@ a:hover { text-decoration:underline; }
 .metric-value.amber { color: var(--am); }
 .metric-value.red   { color: var(--co); }
 
+/* ─── Títulos de Sección ─── */
+.section-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  margin-top: 20px;
+  margin-bottom: 12px;
+  letter-spacing: -.01em;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.section-title:first-child { margin-top: 0; }
+
 /* ─── Grids ─── */
-.grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px; }
-.grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; margin-bottom:14px; }
-.grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:14px; }
+.grid-2   { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px; }
+.grid-2-1 { display:grid; grid-template-columns:2fr 1fr; gap:14px; margin-bottom:14px; }
+.grid-3   { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; margin-bottom:14px; }
+.grid-4   { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:14px; }
+
+@media (max-width: 900px) {
+  .grid-2, .grid-2-1, .grid-3 { grid-template-columns: 1fr; }
+  .grid-4 { grid-template-columns: 1fr 1fr; }
+}
 
 /* ─── Tablas ─── */
 .table-wrap { overflow-x: auto; }
