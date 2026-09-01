@@ -241,6 +241,9 @@
         <select id="sel-materia" onchange="onMateriaChange()" style="display:none;">
           <option value="">Materia...</option>
         </select>
+        <button class="btn btn-sm btn-ghost" id="btn-copiar-plan" onclick="abrirModalCopiarPlan()" style="display:none;align-items:center;gap:4px;">
+          📋 Replicar plan
+        </button>
       </div>
     </div>
 
@@ -340,6 +343,56 @@
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
       <button onclick="cerrarModalPropuesta()" style="padding:7px 14px;border:1px solid var(--border);border-radius:var(--radius-s);background:transparent;cursor:pointer;font-size:13px;">Cancelar</button>
       <button onclick="enviarPropuesta()" style="padding:7px 14px;background:var(--am);color:white;border:none;border-radius:var(--radius-s);cursor:pointer;font-weight:600;font-size:13px;">Enviar propuesta</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Copiar / Replicar Plan Analítico -->
+<div class="modal-overlay" id="modal-copiar-plan">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-title">📋 Replicar Plan Analítico</div>
+    <div style="font-size:12px;color:var(--text-2);margin-bottom:16px;line-height:1.5;">
+      Copia los temas y contenidos de otro grupo hacia este grupo para no tener que volver a capturarlos.
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Grupo origen (de donde se copiarán los datos)</label>
+      <select id="modal-copiar-origen">
+        <option value="">Cargando grupos origen...</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">¿Qué periodos deseas copiar?</label>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px;font-size:12.5px;">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+          <input type="radio" name="copiar-scope" value="todos" checked>
+          <span><strong>Todos los periodos</strong> (Plan analítico completo)</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+          <input type="radio" name="copiar-scope" value="periodo_actual">
+          <span><strong>Solo el periodo actual</strong> (<span id="copiar-periodo-etiqueta">--</span>)</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Acción en el grupo destino</label>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px;font-size:12.5px;">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+          <input type="radio" name="copiar-modo" value="reemplazar" checked>
+          <span><strong>Reemplazar</strong> (Borrar lo que tenga este grupo y sustituirlo)</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+          <input type="radio" name="copiar-modo" value="anexar">
+          <span><strong>Anexar</strong> (Añadir al final sin borrar el contenido actual)</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn" onclick="cerrarModalCopiarPlan()">Cancelar</button>
+      <button class="btn btn-primary" id="btn-ejecutar-copia" onclick="ejecutarCopiaPlan()">Replicar plan ahora</button>
     </div>
   </div>
 </div>
@@ -505,6 +558,7 @@
     document.getElementById('info-plan').style.display = 'block'
     document.getElementById('main-nav').style.display = 'flex'
     document.getElementById('save-bar').style.display = 'flex'
+    document.getElementById('btn-copiar-plan').style.display = 'inline-flex'
     document.getElementById('topbar-sub').textContent = selGrupo.options[selGrupo.selectedIndex].textContent
 
     // Mostrar la vista de plan analítico por defecto
@@ -1057,6 +1111,151 @@
       btn.textContent = 'Guardar plan'; btn.disabled = false
     }
   })
+
+  // ── Copiar / Replicar Plan Analítico de otro grupo ─────────
+  window.abrirModalCopiarPlan = async () => {
+    if (!grupoMateriaId) {
+      mostrarToast('Selecciona primero el grupo destino.', 'warning')
+      return
+    }
+    const selOrigen = document.getElementById('modal-copiar-origen')
+    selOrigen.innerHTML = '<option value="">Cargando otros grupos...</option>'
+
+    // Obtener todos los grupos del docente en el ciclo activo
+    const { data: todosGrupos } = await supabase
+      .from('grupos')
+      .select('id, nombre, nivel, grupo_materias(id, materias(nombre))')
+      .eq('docente_id', docenteActivo.id)
+      .eq('ciclo_id', cicloId)
+      .order('nombre')
+
+    const opciones = []
+    todosGrupos?.forEach(g => {
+      g.grupo_materias?.forEach(gm => {
+        if (gm.id !== grupoMateriaId) {
+          opciones.push({
+            gmId: gm.id,
+            label: `${g.nombre} · ${gm.materias?.nombre || 'Materia'} (${g.nivel})`
+          })
+        }
+      })
+    })
+
+    const btnEj = document.getElementById('btn-ejecutar-copia')
+    if (!opciones.length) {
+      selOrigen.innerHTML = '<option value="">No tienes otros grupos en este ciclo</option>'
+      btnEj.disabled = true
+    } else {
+      selOrigen.innerHTML = opciones.map(o => `<option value="${o.gmId}">${o.label}</option>`).join('')
+      btnEj.disabled = false
+    }
+
+    const pAct = periodosActuales.find(p => p.id === periodoId)
+    document.getElementById('copiar-periodo-etiqueta').textContent = pAct?.etiqueta || 'Periodo actual'
+    document.getElementById('modal-copiar-plan').classList.add('open')
+  }
+
+  window.cerrarModalCopiarPlan = () => {
+    document.getElementById('modal-copiar-plan').classList.remove('open')
+  }
+
+  window.ejecutarCopiaPlan = async () => {
+    const origenGmId = document.getElementById('modal-copiar-origen').value
+    if (!origenGmId) {
+      mostrarToast('Selecciona un grupo origen válido', 'error')
+      return
+    }
+
+    const scope = document.querySelector('input[name="copiar-scope"]:checked')?.value || 'todos'
+    const modo  = document.querySelector('input[name="copiar-modo"]:checked')?.value || 'reemplazar'
+
+    const btn = document.getElementById('btn-ejecutar-copia')
+    btn.disabled = true
+    btn.textContent = 'Copiando...'
+
+    try {
+      // 1. Obtener filas del grupo origen
+      let query = supabase
+        .from('plan_analitico_filas')
+        .select('*')
+        .eq('grupo_materia_id', origenGmId)
+        .order('orden')
+
+      if (scope === 'periodo_actual') {
+        query = query.eq('periodo_id', periodoId)
+      }
+
+      const { data: filasOrigen, error: errOrigen } = await query
+      if (errOrigen) throw errOrigen
+
+      if (!filasOrigen || filasOrigen.length === 0) {
+        mostrarToast('El grupo origen seleccionado no tiene temas en su plan analítico.', 'warning')
+        btn.disabled = false
+        btn.textContent = 'Replicar plan ahora'
+        return
+      }
+
+      // 2. Si el modo es reemplazar, borrar las filas del grupo destino
+      if (modo === 'reemplazar') {
+        let delQuery = supabase
+          .from('plan_analitico_filas')
+          .delete()
+          .eq('grupo_materia_id', grupoMateriaId)
+
+        if (scope === 'periodo_actual') {
+          delQuery = delQuery.eq('periodo_id', periodoId)
+        }
+
+        const { error: errDel } = await delQuery
+        if (errDel) throw errDel
+      }
+
+      // 3. Preparar filas clonadas
+      let maxOrden = 0
+      if (modo === 'anexar') {
+        const { data: ultimas } = await supabase
+          .from('plan_analitico_filas')
+          .select('orden')
+          .eq('grupo_materia_id', grupoMateriaId)
+          .order('orden', { ascending: false })
+          .limit(1)
+
+        if (ultimas?.length) maxOrden = ultimas[0].orden || 0
+      }
+
+      const filasClonadas = filasOrigen.map((f, idx) => {
+        const { id, created_at, grupo_materia_id, ...resto } = f
+        return {
+          ...resto,
+          grupo_materia_id: grupoMateriaId,
+          orden: modo === 'anexar' ? maxOrden + idx + 1 : f.orden
+        }
+      })
+
+      // Insertar en lotes de 50
+      const tamLote = 50
+      for (let i = 0; i < filasClonadas.length; i += tamLote) {
+        const { error: errIns } = await supabase
+          .from('plan_analitico_filas')
+          .insert(filasClonadas.slice(i, i + tamLote))
+        if (errIns) throw errIns
+      }
+
+      haycambios = false
+      mostrarToast(`Plan analítico replicado exitosamente (${filasClonadas.length} filas) ✓`)
+      cerrarModalCopiarPlan()
+
+      // Recargar filas del grupo destino
+      await cargarFilas()
+
+    } catch (err) {
+      console.error(err)
+      mostrarToast('Error al replicar el plan: ' + err.message, 'error')
+    } finally {
+      btn.disabled = false
+      btn.textContent = 'Replicar plan ahora'
+    }
+  }
 
   function mostrarToast(msg, tipo='ok') {
     const t = document.getElementById('toast')
