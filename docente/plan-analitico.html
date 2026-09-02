@@ -67,6 +67,14 @@
     .cell-input:focus { outline:none; border-color:var(--az); background:white; }
     .cell-input:hover { border-color:var(--border-m); }
 
+    /* Texto completo debajo de selects (contenido, saber) */
+    .valor-texto {
+      font-size:10.5px; color:var(--text-2); line-height:1.4;
+      padding:4px 6px; margin-top:3px; white-space:pre-wrap;
+      word-wrap:break-word; overflow-wrap:break-word;
+      background:var(--bg); border-radius:3px;
+    }
+
     /* PDA con candado */
     .pda-wrap { position:relative; }
     .pda-text {
@@ -648,7 +656,9 @@
         (f.eje_articulador ? '' : ' disabled') +
         ' onchange="onContenidoChange(' + i + ',this.value)">' +
         '<option value="">— Contenido —</option>' + optsContenido +
-        '</select></td>' +
+        '</select>' +
+        (f.contenido ? '<div class="valor-texto">' + esc(f.contenido) + '</div>' : '') +
+        '</td>' +
         // PDA
         '<td class="col-proceso">' +
         '<div class="pda-wrap">' +
@@ -666,6 +676,7 @@
         '</select>' +
         '<button class="btn-fila" title="Proponer indicador personalizado" onclick="abrirModalPropuesta(' + i + ')" style="flex-shrink:0;padding:4px 7px;font-size:13px;">✏️</button>' +
         '</div>' +
+        (f.saber_hacer ? '<div class="valor-texto">' + esc(f.saber_hacer) + '</div>' : '') +
         '</td>' +
         // Tipo actividad
         '<td><select class="cell-select" style="margin:0;" onchange="editarCelda(' + i + ',\'tipo_actividad\',this.value)">' +
@@ -769,8 +780,22 @@
     const pda  = limpiarPDA(item?.pda || '')
     setPDA(idx, pda)
     filasActuales[idx].aprendizaje_esperado = pda
-    // Actualizar opciones del select Bloom con los textos de este concepto
     actualizarOptsBloom(idx, item)
+    // Mostrar texto completo del contenido seleccionado
+    const row = document.querySelector('tr[data-idx="' + idx + '"]')
+    if (row) {
+      const div = row.querySelector('.col-contenido .valor-texto')
+      if (div) div.textContent = concepto
+      else if (concepto) {
+        const newDiv = document.createElement('div')
+        newDiv.className = 'valor-texto'
+        newDiv.textContent = concepto
+        row.querySelector('.col-contenido').appendChild(newDiv)
+      }
+      // Limpiar saber-texto al cambiar contenido
+      const saberDiv = row.querySelector('.col-saber .valor-texto')
+      if (saberDiv) saberDiv.textContent = ''
+    }
   }
 
   window.onBloomChange = (idx, nivel) => {
@@ -782,6 +807,18 @@
     const item = f.contenido ? (CATS[f.eje_articulador] || []).find(c => c.concepto === f.contenido) : null
     const texto = (item && nivel) ? (item.saber[nivel] || '') : ''
     filasActuales[idx].saber_hacer = texto
+    // Mostrar texto completo del saber seleccionado
+    const row = document.querySelector('tr[data-idx="' + idx + '"]')
+    if (row) {
+      const div = row.querySelector('.col-saber .valor-texto')
+      if (div) div.textContent = texto
+      else if (texto) {
+        const newDiv = document.createElement('div')
+        newDiv.className = 'valor-texto'
+        newDiv.textContent = texto
+        row.querySelector('.col-saber').appendChild(newDiv)
+      }
+    }
   }
 
   // ── Modal: proponer indicador personalizado ───────────────
