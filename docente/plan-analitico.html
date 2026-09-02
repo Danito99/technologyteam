@@ -554,6 +554,8 @@
       periodoId = primerPeriodo.id
       periodoNumero = primerPeriodo.numero
       await cargarFilas()
+    } else {
+      tabsEl.innerHTML = '<div style="padding:16px;color:var(--co);font-size:12px;background:var(--co-l,#fef2f2);border:1px solid #fca5a5;border-radius:6px;">⚠️ No se encontraron periodos para este grupo. Un administrador debe ejecutar el script <strong>supabase_homologar_periodos.sql</strong> en Supabase para inicializar T1, T2, T3.</div>'
     }
     document.getElementById('info-plan').style.display = 'block'
     document.getElementById('main-nav').style.display = 'flex'
