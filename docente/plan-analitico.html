@@ -591,7 +591,6 @@
     // Capturar valores actuales de los selects antes de re-renderizar
     capturarValoresSelect()
 
-    console.log('Renderizando tabla. Valores tipo_actividad:', filasActuales.map((f, i) => `${i}: ${f.tipo_actividad}`));
     const tbody = document.getElementById('plan-tbody')
     document.getElementById('card-tabla').style.display = 'block'
     const CATS = catalogoFiltrado()
@@ -878,7 +877,6 @@
   }
   window.editarCelda = (idx, campo, valor) => {
     filasActuales[idx][campo] = valor;
-    console.log(`Editando fila ${idx}, campo ${campo}, valor: ${valor}`);
     marcarCambios()
   }
   function marcarCambios() {
@@ -948,8 +946,6 @@
     const container = document.getElementById('consulta-contenido')
     container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-3);">Cargando datos de todos los trimestres...</div>'
 
-    console.log('Consultando datos con grupoMateriaId:', grupoMateriaId)
-
     try {
       // Cargar datos de todos los trimestres para este grupo/materia
       const { data: todasLasFilas, error } = await supabase
@@ -958,9 +954,6 @@
         .eq('grupo_materia_id', grupoMateriaId)
         .order('periodo_numero')
         .order('orden')
-
-      console.log('Datos recibidos:', todasLasFilas)
-      console.log('Error:', error)
 
       if (error) {
         console.error('Error en consulta:', error)
@@ -1099,6 +1092,7 @@
             orden:                i
           }))
         )
+        if (insError) throw insError
       }
       haycambios = false
       document.getElementById('save-status').textContent = 'Guardado ✓'
