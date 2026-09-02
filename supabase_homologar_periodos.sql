@@ -24,13 +24,15 @@ alter table public.sesiones
   on delete set null;
 
 -- ── 2. Trimestre canónico = fila con parcial mínimo por (ciclo, numero) ──
-create temp table periodos_canon on commit drop as
+drop table if exists periodos_canon;
+create temp table periodos_canon as
 select distinct on (ciclo_id, numero) id as canon_id, ciclo_id, numero
 from public.periodos
 where tipo = 'trimestre'
 order by ciclo_id, numero, parcial;
 
-create temp table periodo_map on commit drop as
+drop table if exists periodo_map;
+create temp table periodo_map as
 select p.id as old_id, c.canon_id
 from public.periodos p
 join periodos_canon c on c.ciclo_id = p.ciclo_id and c.numero = p.numero
@@ -151,6 +153,8 @@ on conflict (ciclo_id, tipo, numero, parcial) do nothing;
 -- vacío (por eso las filas nuevas del plan nunca creaban su sesión).
 -- Esta versión: alinea por posición, actualiza título/vínculo de las
 -- existentes, crea las faltantes y conserva el estado "completada".
+drop function if exists public.sincronizar_sesiones_con_plan_analitico(uuid);
+
 create or replace function public.sincronizar_sesiones_con_plan_analitico(
   p_grupo_materia_id uuid default null
 )
