@@ -434,6 +434,60 @@
     .lista-row { cursor:pointer; transition:background .1s; }
     .lista-row:hover td { background:var(--bg-hover); }
     .lista-row:last-child td { border-bottom:none; }
+
+    /* ── Print / PDF ── */
+    #print-header-planes { display: none; }
+    #print-view-planes { display: none; }
+
+    @media print {
+      @page { size: A4 landscape; margin: 1.2cm 1cm; }
+      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
+      /* Ocultar UI */
+      #sidebar-container, .topbar, .filtros-container, .acciones-multiples,
+      #grupos-container, #loading { display: none !important; }
+
+      /* Layout */
+      html, body { margin: 0; padding: 0; background: white; }
+      .app-layout { display: block; }
+      .main-area { margin-left: 0 !important; padding: 0; }
+      .page-content { padding: 0; }
+
+      /* Mostrar vistas de impresión */
+      #print-header-planes { display: block !important; margin-bottom: 14px; }
+      #print-view-planes { display: block !important; }
+
+      /* Encabezado de impresión */
+      .ph2-top {
+        display: flex; justify-content: space-between; align-items: flex-end;
+        border-bottom: 2px solid #1E40AF; padding-bottom: 10px; margin-bottom: 12px;
+      }
+
+      /* Tablas de grupos */
+      .pv-grupo { margin-bottom: 20px; page-break-inside: avoid; }
+      .pv-grupo-header {
+        background: #1E40AF !important; color: white !important;
+        padding: 7px 12px; font-weight: 700; font-size: 11px;
+        letter-spacing: .03em;
+      }
+      .pv-tabla { width: 100%; border-collapse: collapse; font-size: 9.5px; }
+      .pv-tabla th {
+        background: #EFF6FF !important; color: #1E40AF !important;
+        border: 1px solid #DBEAFE; padding: 5px 8px; text-align: left;
+        font-size: 8.5px; text-transform: uppercase; letter-spacing: .04em;
+      }
+      .pv-tabla td {
+        border: 1px solid #E5E7EB; padding: 5px 8px;
+        color: #111; vertical-align: top; word-wrap: break-word;
+      }
+      .pv-num { width: 28px; text-align: center; font-weight: 600; color: #374151; }
+      .pv-per { width: 55px; color: #6B7280; white-space: nowrap; }
+      .pv-estado { white-space: nowrap; font-weight: 600; font-size: 9px; }
+      .pv-estado.completada { color: #2E7D32; }
+      .pv-estado.pendiente  { color: #F7941D; }
+      .pv-estado.planificada { color: #2E9BD8; }
+      .pv-estado.no-iniciada { color: #9CA3AF; }
+    }
   </style>
 </head>
 <body>
@@ -450,8 +504,26 @@
       <div style="display:flex;gap:8px;">
         <button class="btn" onclick="toggleExpandAll()">🔄 Expandir/Contraer todo</button>
         <button class="btn btn-primary" onclick="sincronizarTodo()">🔄 Sincronizar con plan analítico</button>
+        <button class="btn" onclick="imprimirPlanesClase()">⬇ Descargar PDF</button>
       </div>
     </div>
+
+    <!-- Encabezado y contenido para impresión -->
+    <div id="print-header-planes">
+      <div class="ph2-top">
+        <div>
+          <div style="font-size:13px;font-weight:700;color:#1E40AF;letter-spacing:.03em;">CHRISTEL HOUSE TECHACADEMIA</div>
+          <div style="font-size:11px;color:#6B7280;margin-top:2px;">Planes de Clase</div>
+        </div>
+        <div style="font-size:20px;font-weight:700;color:#111;">PLANES DE CLASE</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px 24px;font-size:10.5px;margin-bottom:16px;">
+        <div><span style="color:#9CA3AF;">Docente:</span> <strong id="ph2-docente" style="color:#111;"></strong></div>
+        <div><span style="color:#9CA3AF;">Ciclo:</span> <strong id="ph2-ciclo" style="color:#111;"></strong></div>
+        <div><span style="color:#9CA3AF;">Fecha:</span> <strong id="ph2-fecha" style="color:#111;"></strong></div>
+      </div>
+    </div>
+    <div id="print-view-planes"></div>
 
     <div class="page-content">
       <div id="loading" class="loading">Cargando estructura de planes...</div>
@@ -532,6 +604,7 @@
   let filtroEstado            = ''
   let filtroTrimestreEtiqueta = ''
   let filtroVista             = 'jerarquico'
+  let _cicloNombre            = ''
 
   // Cargar datos iniciales
   async function cargarDatos() {
@@ -539,13 +612,14 @@
       // Ciclo activo
       const { data: ciclo } = await supabase
         .from('ciclos_escolares')
-        .select('id')
+        .select('id, nombre')
         .eq('activo', true)
         .single()
 
       if (!ciclo) {
         throw new Error('No hay ciclo escolar activo')
       }
+      _cicloNombre = ciclo.nombre || ''
 
       // Grupos del docente con materias
       const { data: gruposDB } = await supabase
@@ -1374,6 +1448,76 @@
     filtroTrimestreEtiqueta = document.getElementById('filtro-trimestre').value
     filtroVista             = document.getElementById('filtro-vista').value
     renderGrupos()
+  }
+
+  // ── Imprimir / Descargar PDF ─────────────────────────────
+  window.imprimirPlanesClase = () => {
+    const fecha = new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })
+    document.getElementById('ph2-docente').textContent = docenteActivo.nombre
+    document.getElementById('ph2-ciclo').textContent = _cicloNombre
+    document.getElementById('ph2-fecha').textContent = fecha
+
+    let html = ''
+
+    grupos.forEach(grupo => {
+      const periodosFiltrados = filtroTrimestreEtiqueta
+        ? grupo.periodos.filter(p => p.etiqueta === filtroTrimestreEtiqueta)
+        : grupo.periodos
+
+      grupo.grupo_materias?.forEach(gm => {
+        const materiaName = gm.materias?.nombre || 'Materia'
+        const filas = []
+
+        periodosFiltrados.forEach(periodo => {
+          const key = `${gm.id}_${periodo.id}`
+          const sesiones = filtroEstado
+            ? (sesionesData[key] || []).filter(s => determinarEstadoSesion(s).estadoClass === filtroEstado)
+            : (sesionesData[key] || [])
+          sesiones.forEach(sesion => {
+            const est = determinarEstadoSesion(sesion)
+            filas.push({ sesion, periodo, est })
+          })
+        })
+
+        if (!filas.length) return
+
+        const estadoTextoLimpio = (t) => t.replace(/[\u{1F300}-\u{1FFFF}]|[☀-⟿]/gu, '').trim()
+
+        html += `
+          <div class="pv-grupo">
+            <div class="pv-grupo-header">${grupo.nombre} &mdash; ${materiaName} &nbsp;(${grupo.nivel})</div>
+            <table class="pv-tabla">
+              <thead>
+                <tr>
+                  <th style="width:28px;">#</th>
+                  <th style="width:55px;">Periodo</th>
+                  <th style="width:28%;">Sesión / Aprendizaje esperado</th>
+                  <th style="width:14%;">Eje articulador</th>
+                  <th style="width:22%;">Contenido / Saber hacer</th>
+                  <th style="width:11%;">Tipo</th>
+                  <th style="width:10%;">Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${filas.map(({ sesion, periodo, est }) => `
+                  <tr>
+                    <td class="pv-num">${sesion.numero}</td>
+                    <td class="pv-per">${periodo.etiqueta}</td>
+                    <td>${sesion.titulo || sesion.aprendizaje_esperado || '—'}</td>
+                    <td>${sesion.eje_articulador || '—'}</td>
+                    <td>${sesion.contenido || sesion.saber_hacer || '—'}</td>
+                    <td>${sesion.tipo_actividad || 'Trabajo de clase'}</td>
+                    <td class="pv-estado ${est.estadoClass}">${estadoTextoLimpio(est.estadoTexto)}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>`
+      })
+    })
+
+    document.getElementById('print-view-planes').innerHTML = html || '<p style="color:#6B7280;font-size:12px;">Sin sesiones para mostrar.</p>'
+    window.print()
   }
 
   // Inicializar

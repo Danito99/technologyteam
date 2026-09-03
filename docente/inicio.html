@@ -100,7 +100,6 @@
     .eq('docente_id', docenteActivo.id)
     .eq('ciclo_id', ciclo?.id)
   if (gruposErr) console.error('[inicio] grupos error:', gruposErr)
-  console.log('[inicio] docenteActivo.id:', docenteActivo.id, '| ciclo.id:', ciclo?.id, '| grupos:', grupos?.length)
 
   document.getElementById('grupos-badge').textContent = `${grupos?.length || 0} grupos`
 

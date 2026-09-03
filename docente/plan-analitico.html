@@ -229,6 +229,102 @@
       border:1px solid #B5D4F4; border-radius:var(--radius-s);
       padding:8px 12px; margin-bottom:12px;
     }
+
+    /* ── Print header (solo visible al imprimir) ── */
+    #print-header { display: none; }
+    .btn-imprimir-plan { display: none; }
+
+    @media print {
+      @page { size: A4 landscape; margin: 1.2cm 1cm; }
+      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
+      /* Ocultar todo UI */
+      #sidebar-container, .topbar, .info-plan, .main-nav,
+      .tab-periodos, .save-bar, .toast, .btn-add-fila,
+      #vista-consultar, #vista-sesiones,
+      .modal-overlay, .col-acciones { display: none !important; }
+
+      /* Ocultar los botones de fila y lock */
+      .btn-fila, .btn-lock, .pda-textarea { display: none !important; }
+
+      /* Layout limpio */
+      html, body { margin: 0; padding: 0; background: white; }
+      .app-layout { display: block; }
+      .main-area { margin-left: 0 !important; padding: 0; }
+      .page-content { padding: 0; }
+      .card { box-shadow: none !important; border: none !important; padding: 0 !important; margin: 0 !important; }
+
+      /* Mostrar encabezado de impresión */
+      #print-header { display: block !important; margin-bottom: 14px; }
+      #vista-plan-analitico { display: block !important; }
+      #card-tabla { display: block !important; }
+
+      /* Tabla */
+      .plan-table { width: 100%; border-collapse: collapse; font-size: 9.5px; table-layout: fixed; }
+      .plan-table th {
+        background: #1E40AF !important; color: white !important;
+        border: 1px solid #1D4ED8; padding: 5px 7px;
+        font-size: 8.5px; text-transform: uppercase; letter-spacing: .04em;
+        text-align: left; line-height: 1.3;
+      }
+      .plan-table td {
+        border: 1px solid #D1D5DB; padding: 5px 7px;
+        vertical-align: top; color: #111; background: white !important;
+        word-wrap: break-word; overflow-wrap: break-word;
+      }
+      .plan-table tr.examen-row td {
+        background: #F9FAFB !important; color: #6B7280;
+        font-style: italic; text-align: center;
+      }
+
+      /* Anchos de columnas en impresión */
+      .col-semana    { width: 7% !important; min-width: 0 !important; }
+      .col-eje       { width: 12% !important; min-width: 0 !important; }
+      .col-contenido { width: 14% !important; min-width: 0 !important; }
+      .col-proceso   { width: 28% !important; min-width: 0 !important; }
+      .col-saber     { width: 28% !important; min-width: 0 !important; }
+      .col-acciones  { display: none !important; }
+
+      /* Semana: textarea como texto plano */
+      .cell-input {
+        border: none !important; background: transparent !important;
+        resize: none; padding: 0; height: auto !important; min-height: unset !important;
+        overflow: visible; font-size: 9.5px; color: #111; width: 100%;
+      }
+
+      /* Eje: mostrar .print-val, ocultar select */
+      .col-eje .cell-select { display: none !important; }
+      .print-val { display: block !important; font-size: 9.5px; color: #111; }
+
+      /* Contenido: ocultar select, mostrar valor-texto */
+      .col-contenido .cell-select { display: none !important; }
+      .col-contenido .valor-texto {
+        display: block !important; background: transparent !important;
+        border: none !important; padding: 0 !important; margin: 0 !important;
+        font-size: 9.5px; color: #111;
+      }
+
+      /* Saber: ocultar select y botón proponer, mostrar valor-texto */
+      .col-saber > div > .cell-select,
+      .col-saber > div > .btn-fila { display: none !important; }
+      .col-saber .valor-texto {
+        display: block !important; background: transparent !important;
+        border: none !important; padding: 0 !important; margin: 0 !important;
+        font-size: 9.5px; color: #111;
+      }
+
+      /* PDA: mostrar texto, ocultar textarea */
+      .pda-text {
+        display: block !important; background: transparent !important;
+        border: none !important; padding: 0 !important; min-height: unset !important;
+        font-size: 9.5px; color: #111;
+      }
+      .pda-wrap { position: static; }
+
+      /* Tipo actividad (última columna antes de acciones) */
+      td:nth-last-child(2) { width: 11% !important; }
+      td:nth-last-child(2) .cell-select { display: none !important; }
+    }
   </style>
 </head>
 <body>
@@ -250,6 +346,28 @@
         <button class="btn btn-sm btn-ghost" id="btn-copiar-plan" onclick="abrirModalCopiarPlan()" style="display:none;align-items:center;gap:4px;">
           📋 Replicar plan
         </button>
+        <button class="btn btn-sm" id="btn-imprimir-plan" onclick="imprimirPlan()" style="display:none;align-items:center;gap:4px;">
+          ⬇ Descargar PDF
+        </button>
+      </div>
+    </div>
+
+    <!-- Encabezado visible solo al imprimir -->
+    <div id="print-header">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #1E40AF;padding-bottom:10px;margin-bottom:12px;">
+        <div>
+          <div style="font-size:13px;font-weight:700;color:#1E40AF;letter-spacing:.03em;">CHRISTEL HOUSE TECHACADEMIA</div>
+          <div style="font-size:11px;color:#6B7280;margin-top:2px;">Plan Analítico</div>
+        </div>
+        <div style="font-size:20px;font-weight:700;color:#111;">PLAN ANALÍTICO</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px 24px;font-size:10.5px;">
+        <div><span style="color:#9CA3AF;">Docente:</span> <strong id="ph-docente" style="color:#111;"></strong></div>
+        <div><span style="color:#9CA3AF;">Ciclo:</span> <strong id="ph-ciclo" style="color:#111;"></strong></div>
+        <div><span style="color:#9CA3AF;">Fecha:</span> <strong id="ph-fecha" style="color:#111;"></strong></div>
+        <div><span style="color:#9CA3AF;">Grupo:</span> <strong id="ph-grupo" style="color:#111;"></strong></div>
+        <div><span style="color:#9CA3AF;">Materia:</span> <strong id="ph-materia" style="color:#111;"></strong></div>
+        <div><span style="color:#9CA3AF;">Periodo:</span> <strong id="ph-periodo" style="color:#111;"></strong></div>
       </div>
     </div>
 
@@ -454,8 +572,9 @@
   mostrarBadgeVerComo(docenteActivo, verComoId)
 
   const { data: ciclo } = await supabase
-    .from('ciclos_escolares').select('id').eq('activo', true).single()
+    .from('ciclos_escolares').select('id, nombre').eq('activo', true).single()
   cicloId = ciclo?.id
+  const _cicloNombre = ciclo?.nombre || ''
 
   const { data: grupos } = await supabase
     .from('grupos')
@@ -567,6 +686,7 @@
     document.getElementById('main-nav').style.display = 'flex'
     document.getElementById('save-bar').style.display = 'flex'
     document.getElementById('btn-copiar-plan').style.display = 'inline-flex'
+    document.getElementById('btn-imprimir-plan').style.display = 'inline-flex'
     document.getElementById('topbar-sub').textContent = selGrupo.options[selGrupo.selectedIndex].textContent
 
     // Mostrar la vista de plan analítico por defecto
@@ -1286,6 +1406,49 @@
       btn.disabled = false
       btn.textContent = 'Replicar plan ahora'
     }
+  }
+
+  // ── Imprimir / Descargar PDF ──────────────────────────────
+  window.imprimirPlan = () => {
+    // Inyectar .print-val en celdas de eje y tipo (no tienen div de texto)
+    document.querySelectorAll('#plan-tbody tr[data-idx]:not(.examen-row)').forEach(row => {
+      // Eje articulador (primera celda .col-eje)
+      const ejeCell = row.querySelector('.col-eje')
+      if (ejeCell) {
+        const sel = ejeCell.querySelector('select')
+        let span = ejeCell.querySelector('.print-val')
+        if (!span) { span = document.createElement('span'); span.className = 'print-val'; ejeCell.appendChild(span) }
+        span.textContent = sel?.options[sel.selectedIndex]?.text?.replace(/^— .+ —$/, '') || ''
+      }
+      // Tipo actividad: penúltima td
+      const tds = [...row.querySelectorAll('td')]
+      const tipoCell = tds[tds.length - 2]
+      if (tipoCell) {
+        const sel = tipoCell.querySelector('select')
+        let span = tipoCell.querySelector('.print-val')
+        if (!span) { span = document.createElement('span'); span.className = 'print-val'; tipoCell.appendChild(span) }
+        const v = sel?.options[sel.selectedIndex]?.text || ''
+        span.textContent = v === '—' ? '' : v
+      }
+    })
+
+    // Rellenar encabezado
+    const grupoLabel = selGrupo.options[selGrupo.selectedIndex]?.text || ''
+    const selMat = document.getElementById('sel-materia')
+    const materiaLabel = selMat.style.display !== 'none'
+      ? (selMat.options[selMat.selectedIndex]?.text || '')
+      : ([...selMat.options].find(o => o.value)?.text || '')
+    const periodoLabel = document.querySelector('.tab-periodo.active')?.textContent?.trim() || ''
+    const fecha = new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })
+
+    document.getElementById('ph-docente').textContent = docenteActivo.nombre
+    document.getElementById('ph-ciclo').textContent = _cicloNombre
+    document.getElementById('ph-grupo').textContent = grupoLabel
+    document.getElementById('ph-materia').textContent = materiaLabel
+    document.getElementById('ph-periodo').textContent = periodoLabel
+    document.getElementById('ph-fecha').textContent = fecha
+
+    window.print()
   }
 
   function mostrarToast(msg, tipo='ok') {
