@@ -435,25 +435,27 @@
           .eq('id', editId)
       } else {
         // Crear grupo
-        const { data: nuevoGrupo } = await supabase.from('grupos').insert({
+        const { data: nuevoGrupo, error: grupoErr } = await supabase.from('grupos').insert({
           ciclo_id: window._cicloId,
-          docente_id: profile.id,
+          docente_id: docenteActivo.id,
           nombre, nivel, grado,
           sistema_periodos: sistema
         }).select('id').single()
 
+        if (grupoErr) throw grupoErr
         grupoId = nuevoGrupo.id
 
         // Crear o reutilizar materia
         if (materia) {
           let { data: mat } = await supabase.from('materias')
-            .select('id').eq('docente_id', profile.id)
+            .select('id').eq('docente_id', docenteActivo.id)
             .eq('ciclo_id', window._cicloId).eq('nombre', materia).single()
 
           if (!mat) {
-            const { data: nuevaMat } = await supabase.from('materias').insert({
-              docente_id: profile.id, ciclo_id: window._cicloId, nombre: materia
+            const { data: nuevaMat, error: matErr } = await supabase.from('materias').insert({
+              docente_id: docenteActivo.id, ciclo_id: window._cicloId, nombre: materia
             }).select('id').single()
+            if (matErr) throw matErr
             mat = nuevaMat
           }
 

@@ -87,18 +87,20 @@
   // Ciclo activo
   const { data: ciclo } = await supabase
     .from('ciclos_escolares')
-    .select('nombre')
+    .select('id, nombre')
     .eq('activo', true)
     .single()
 
   document.getElementById('ciclo-label').textContent = `Ciclo ${ciclo?.nombre || '—'}`
 
   // Grupos del docente
-  const { data: grupos } = await supabase
+  const { data: grupos, error: gruposErr } = await supabase
     .from('grupos')
     .select('id, nombre, nivel, grado, grupo_materias(id)')
     .eq('docente_id', docenteActivo.id)
     .eq('ciclo_id', ciclo?.id)
+  if (gruposErr) console.error('[inicio] grupos error:', gruposErr)
+  console.log('[inicio] docenteActivo.id:', docenteActivo.id, '| ciclo.id:', ciclo?.id, '| grupos:', grupos?.length)
 
   document.getElementById('grupos-badge').textContent = `${grupos?.length || 0} grupos`
 
