@@ -612,7 +612,8 @@
   // Auto-sincronizar sesiones si no existen
   async function sincronizarSesionesAutomatico() {
     try {
-      const { data, error } = await supabase.rpc('sincronizar_sesiones_con_plan_analitico')
+      const rpcParams = docenteActivo.id !== profile.id ? { p_docente_id: docenteActivo.id } : {}
+      const { data, error } = await supabase.rpc('sincronizar_sesiones_con_plan_analitico', rpcParams)
 
       if (error) {
         console.warn('Error en sincronización automática:', error)
@@ -1294,7 +1295,8 @@
       btn.disabled = true
       btn.textContent = '🔄 Sincronizando...'
 
-      const { data, error } = await supabase.rpc('sincronizar_sesiones_con_plan_analitico')
+      const rpcParams = docenteActivo.id !== profile.id ? { p_docente_id: docenteActivo.id } : {}
+      const { data, error } = await supabase.rpc('sincronizar_sesiones_con_plan_analitico', rpcParams)
 
       if (error) throw error
 
